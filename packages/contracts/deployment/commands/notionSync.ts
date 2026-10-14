@@ -12,7 +12,7 @@ import { MAPPINGS, Mapping } from '../world/notion/mapping';
 // world-data CSVs. READ-ONLY — it never writes a CSV and never deploys. It is
 // the review gate for the Notion->CSV->deploy flow: a human reads this diff,
 // then selectively applies + deploys index-scoped. See deployment/world/notion/
-// README.md and the deploy runbook's "World data" doctrine.
+// README.md.
 
 const argv = yargs(hideBin(process.argv))
   .usage('Usage: NODE_ENV=<env> ts-node deployment/commands/notionSync.ts [--table <label>]')
@@ -29,7 +29,7 @@ const TOKEN = (process.env.NOTION_PAT || '').split('#')[0].trim().replace(/^["']
 // notion caps ~3 req/s; a small gap keeps well under the limit
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-// ── terminal formatting (house style, cf. game2 scripts/balance/core/format.ts) ──
+// ── terminal formatting (house style) ──
 // colors gate on a REAL tty (piping the diff to a file must stay clean); use
 // FORCE_COLOR=1 to override, NO_COLOR to suppress
 const FMT_TTY =
@@ -218,7 +218,7 @@ function normSeq(v: string): string {
 }
 
 // deploy implication of a Notion Status, per the world-data flag mechanics
-// (runbook Procedure B "Status flags"): --args ignores status, but a BULK deploy
+// (status flags): --args ignores status, but a BULK deploy
 // only writes these. Annotating each row with this tells the reviewer what
 // applying + bulk-deploying it would actually do.
 function deployImpl(status: string): string {

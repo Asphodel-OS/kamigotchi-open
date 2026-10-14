@@ -11,7 +11,7 @@
 8 8888     `Y8. .8'       `8. `88888. ,8'         `         `8.`8888.  8 8888      `8888888P'        `8888888P'           8 8888           `8888888P'    8 8888        8  8 8888
 ```
 
-![Screen Shot 2023-10-06 at 6 22 13 PM (2)](https://github.com/Asphodel-OS/kamigotchi/assets/109483360/a2fc7839-5ded-48df-8c15-248374b19ff1)
+![Screen Shot 2023-10-06 at 6 22 13 PM (2)](static/readme/screenshot-1.png)
 
 ```
 8 8888     ,88'          .8.                   ,8.       ,8.           8 8888      ,o888888o.        ,o888888o.     8888888 8888888888     ,o888888o.    8 8888        8  8 8888
@@ -61,14 +61,16 @@ _baby steps_
 <br>
 <br>
 
-first we clone the repo
+first we clone the repo. [Asphodel-OS/kamigotchi-open](https://github.com/Asphodel-OS/kamigotchi-open) is the public mirror of `main`, updated on every push
+
+PRs are welcome there. we merge them through our development repo with their commits intact, so they show as merged once they reach `main`
 
 ```sh
 # with github cli
-gh repo clone Asphodel-OS/kamigotchi
+gh repo clone Asphodel-OS/kamigotchi-open
 
 # rawdogging ssh with git
-git clone git@github.com:Asphodel-OS/kamigotchi.git
+git clone git@github.com:Asphodel-OS/kamigotchi-open.git
 ```
 
 <br>
@@ -260,7 +262,7 @@ _listen to the voices_
 
 <br>
 
-![Screen Shot 2023-10-06 at 6 19 56 PM (2)](https://github.com/Asphodel-OS/kamigotchi/assets/109483360/93dd98a5-3b39-476b-a511-75d771deb6fe)
+![Screen Shot 2023-10-06 at 6 19 56 PM (2)](static/readme/screenshot-2.png)
 
 <br>
 
@@ -268,7 +270,7 @@ _they're right you know_
 
 <br>
 
-![Screen Shot 2023-10-06 at 6 21 03 PM (2)](https://github.com/Asphodel-OS/kamigotchi/assets/109483360/3d104a18-4019-4c48-8f82-f698b4425e14)
+![Screen Shot 2023-10-06 at 6 21 03 PM (2)](static/readme/screenshot-3.png)
 
 <br>
 

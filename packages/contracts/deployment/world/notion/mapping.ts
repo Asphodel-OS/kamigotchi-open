@@ -1,6 +1,6 @@
 // Notion database <-> world-data CSV mapping for the notion-diff tool.
 //
-// Doctrine (see /dev KAMIGOTCHI_DEPLOY_RUNBOOK "World data: three sources"):
+// Doctrine:
 // the CHAIN is canon, Notion is design intent (a DRAFTING surface that carries
 // WIP + errors), the CSVs are the deploy vehicle. This tool DIFFS Notion against
 // the CSVs — it never auto-writes and never deploys. A human reviews the diff,

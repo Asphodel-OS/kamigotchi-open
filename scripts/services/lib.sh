@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # lib.sh — shared paths, config, and helpers for the local dev scripts.
 #
-# SOURCE this (do not execute). Mirrors game2/scripts/services/lib.sh: every
+# SOURCE this (do not execute). Every
 # path resolves relative to this file's location so the scripts work
 # regardless of the caller's cwd.
 

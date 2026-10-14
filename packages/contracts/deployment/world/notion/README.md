@@ -4,7 +4,7 @@ A **read-only** tool that compares the Notion design databases against the world
 
 ## Doctrine (why this is a diff, not an auto-sync)
 
-Per the deploy runbook's "World data: three sources": **the chain is canon, Notion is design intent, the CSVs are the deploy vehicle.** Notion is a *drafting surface* — it carries work-in-progress, shelved ideas, and errors. So this tool **never writes a CSV and never deploys.** It surfaces the delta; a human decides what (if anything) ships.
+**The chain is canon, Notion is design intent, the CSVs are the deploy vehicle.** Notion is a *drafting surface* — it carries work-in-progress, shelved ideas, and errors. So this tool **never writes a CSV and never deploys.** It surfaces the delta; a human decides what (if anything) ships.
 
 A blind "sync Notion → CSV → deploy" would ship Shelved/Idea rows and clobber intentional CSV corrections. The July 2026 reconciliation proved drift runs both ways. Hence: diff, review, apply-scoped, deploy-index-scoped, verify-against-chain.
 
@@ -20,7 +20,7 @@ pnpm world:notion:diff:prod          # same, prod env file
 Reads `NOTION_PAT` from `.env.<NODE_ENV>` (see Setup). Output per table:
 
 - `key "X": unique on both sides ✓` — matching is trustworthy (or `! ABORT` if the key repeats).
-- `+ only in Notion` / `~ changed` — each row shows `[status: X → <deploy implication>]`, per the world-data flag mechanics (runbook Procedure B): `To Deploy` → bulk-init candidate, `To Update`/`Revise Deployment` → bulk-revise candidate, `To Remove` → bulk-DELETE candidate (`To Delete` is flagged but inert — the script matches `To Remove`), `In Game` → live, `Ready`/`Test` → staged, everything else → **WIP / inert in bulk**. So you can see at a glance what applying + bulk-deploying a row would do (a `--args` deploy ignores status — you name what ships). Lookup-table rows show `ships with parent row` instead (they have no Status; they deploy with their parent quest/item/listing).
+- `+ only in Notion` / `~ changed` — each row shows `[status: X → <deploy implication>]`, per the world-data flag mechanics: `To Deploy` → bulk-init candidate, `To Update`/`Revise Deployment` → bulk-revise candidate, `To Remove` → bulk-DELETE candidate (`To Delete` is flagged but inert — the script matches `To Remove`), `In Game` → live, `Ready`/`Test` → staged, everything else → **WIP / inert in bulk**. So you can see at a glance what applying + bulk-deploying a row would do (a `--args` deploy ignores status — you name what ships). Lookup-table rows show `ships with parent row` instead (they have no Status; they deploy with their parent quest/item/listing).
 - `! only in CSV` — **reverse drift**: a row in the deploy vehicle that Notion lacks. Suspicious — verify before trusting (this is how a phantom listing gets caught).
 - `~ changed` — per-cell value differences on matched rows.
 - `not compared (complex types)` — relation/files/people columns are surfaced but not diffed.
@@ -51,4 +51,4 @@ Add one line to `MAPPINGS` in `mapping.ts` (`{label, csv, db, key}`), re-run, an
 
 ## Setup
 
-`NOTION_PAT` (the "Asphodel Studios" internal integration token) lives in the gitignored `.env.testing` / `.env.production` — same place the deploy commands read their secrets, never committed. The integration must be shared with each Notion database it reads (Share → add the integration). The loader strips a trailing `# comment` from the token value automatically.
+`NOTION_PAT` (a Notion internal integration token) lives in the gitignored `.env.testing` / `.env.production` — same place the deploy commands read their secrets, never committed. The integration must be shared with each Notion database it reads (Share → add the integration). The loader strips a trailing `# comment` from the token value automatically.

@@ -16,7 +16,7 @@ fi
 c()   { printf '%s▸ %s%s\n'   "$CYAN"  "$*" "$RESET"; }
 err() { printf '%s  ✗ %s%s\n' "$RED"   "$*" "$RESET" >&2; }
 
-# color-coded -h matching the game2 ops tools' layout
+# color-coded -h
 help() {
   printf '%b\n' "
 ${BOLD}auth-roles${RESET} ${DIM}— who holds which auth role on a Kamigotchi world${RESET}

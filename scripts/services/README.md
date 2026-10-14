@@ -1,7 +1,6 @@
 # `scripts/services/` — local Kamigotchi stack
 
-One-command bring-up of the local dev stack, mirroring
-`game2/scripts/services`. Run via `pnpm --filter services <script>` from the
+One-command bring-up of the local dev stack. Run via `pnpm --filter services <script>` from the
 repo root, or invoke `stack.sh` directly.
 
 | Command | What it does |
