@@ -284,6 +284,13 @@ _the intrusive thoughts should win_
 - testing [`.env.testing`]
 - production [`.env.production`]
 
+# License
+
+- code: [AGPL-3.0-only](LICENSE), unless a file's SPDX header says otherwise
+- art, sound, writing and the Kamigotchi and Asphodel names and logos: all rights reserved, with a community-use allowance
+
+details and third-party credits in [NOTICE.md](NOTICE.md)
+
 ```
 8 8888     ,88'          .8.                   ,8.       ,8.           8 8888      ,o888888o.        ,o888888o.     8888888 8888888888     ,o888888o.    8 8888        8  8 8888
 8 8888    ,88'          .888.                 ,888.     ,888.          8 8888     8888     `88.   . 8888     `88.         8 8888          8888     `88.  8 8888        8  8 8888
