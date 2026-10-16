@@ -59,8 +59,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Node sizes its default heap from runner RAM (~2 GB on the 8 GB private runners); the build needs more
       - name: Build client
         run: pnpm --filter client build:prod
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Check bundle sizes
         working-directory: packages/client
