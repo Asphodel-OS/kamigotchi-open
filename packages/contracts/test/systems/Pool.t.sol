@@ -1034,21 +1034,16 @@ contract PoolTest is SetupTemplate {
     assertGt(_worldEventIndex(logs, "POOL_SYNC"), _worldEventIndex(logs, "POOL_SWAP"));
   }
 
-  // reserves can be inflated out of band via ItemTransferSystem. that emits no
-  // POOL_SYNC, but the next pool call must report the true balance
+  // reserves can be inflated out of band (a harvest tax can name the pool as recipient).
+  // that emits no POOL_SYNC, but the next pool call must report the true balance
   function testDonationGapSelfHeals() public {
     uint256 poolID = _createPool();
-    _fundAccount(alice.index, 10_000); // covers TRANSFER_FEE
     _giveItem(alice, ITEM_A, 10_000);
 
-    uint32[] memory indices = new uint32[](1);
-    uint256[] memory amts = new uint256[](1);
-    indices[0] = ITEM_A;
-    amts[0] = 5_000;
-
     vm.recordLogs();
-    vm.prank(alice.owner);
-    _ItemTransferSystem.executeTyped(indices, amts, poolID);
+    vm.startPrank(deployer);
+    LibInventory.incFor(components, poolID, ITEM_A, 5_000);
+    vm.stopPrank();
     assertFalse(_hasWorldEvent(vm.getRecordedLogs(), "POOL_SYNC"));
     assertEq(_getItemBal(poolID, ITEM_A), SEED_A + 5_000);
 

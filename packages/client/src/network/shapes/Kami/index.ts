@@ -19,6 +19,10 @@ export {
   query as queryKamis,
   queryByState as queryKamisByState,
 } from './queries';
+export {
+  getSoulboundEnd as getKamiSoulboundEnd,
+  isSoulbound as isKamiSoulbound,
+} from './soulbound';
 export { getStats as getKamiStats } from './stats';
 export { getTimes as getKamiTimes } from './times';
 export { getTraits as getKamiTraits, queryTraits as queryKamiTraits } from './traits';

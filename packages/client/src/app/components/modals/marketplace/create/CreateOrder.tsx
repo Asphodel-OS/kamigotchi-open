@@ -51,6 +51,7 @@ export const CreateOrder = ({
   utils: {
     getAccountKamis: () => Kami[];
     getRestingKamis: () => Kami[];
+    isSoulbound: (kami: Kami) => boolean;
     searchKamis: (term: string) => BaseKami[];
   };
   createSellOrder: (
@@ -98,7 +99,9 @@ export const CreateOrder = ({
     const refreshKamiLists = () => {
       const nextAccountKamis = utils.getAccountKamis();
       setAccountKamis(nextAccountKamis);
-      setRestingKamis(nextAccountKamis.filter((kami) => kami.state === 'RESTING'));
+      setRestingKamis(
+        nextAccountKamis.filter((kami) => kami.state === 'RESTING' && !utils.isSoulbound(kami))
+      );
     };
 
     refreshKamiLists();

@@ -47,6 +47,7 @@ export const Display = ({
     getAccountKamis: () => Kami[];
     getMintConfig: () => GachaMintConfig;
     getMintData: (id: EntityID) => GachaMintData;
+    getSoulboundEnd: (kami: Kami) => number;
   };
 }) => {
   const { mode, setMode, tab } = controls;

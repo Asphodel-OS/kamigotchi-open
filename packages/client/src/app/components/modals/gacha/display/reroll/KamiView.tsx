@@ -23,12 +23,13 @@ export const KamiView = ({
   };
   utils: {
     getAccountKamis: () => Kami[];
+    getSoulboundEnd: (kami: Kami) => number;
   };
   isVisible: boolean;
 }) => {
   const { account } = data;
   const { setQuantity, selectedKamis, setSelectedKamis, tick } = state;
-  const { getAccountKamis } = utils;
+  const { getAccountKamis, getSoulboundEnd } = utils;
   const gachaModalVisible = useVisibility((s) => s.modals.gacha);
 
   const [partyKamis, setPartyKamis] = useState<Kami[]>([]);
@@ -45,7 +46,7 @@ export const KamiView = ({
 
   // select or deselect a kami
   const handleSelect = (kami: Kami) => {
-    if (kami.state !== 'RESTING') return;
+    if (!canReroll(kami)) return;
 
     let newSelected = [];
     if (selectedKamis.includes(kami)) {
@@ -60,9 +61,12 @@ export const KamiView = ({
   /////////////////
   // INTERPRETATION
 
+  // seconds left on a kami's soulbind
+  const getBoundFor = (kami: Kami) => getSoulboundEnd(kami) - Date.now() / 1000;
+
   // determines whether a kami can be rerolled
   const canReroll = (kami: Kami) => {
-    return kami.state === 'RESTING';
+    return kami.state === 'RESTING' && getBoundFor(kami) <= 0;
   };
 
   // get the tooltip of a kami based on state and reroll selection
@@ -71,6 +75,10 @@ export const KamiView = ({
     if (selectedKamis.includes(kami)) return [`${kami.name} never liked you anyway..`];
     if (kami.state !== 'RESTING') {
       return [`${kami.name} is ${kami.state}`, '> only RESTING kamis can be rerolled'];
+    }
+    const boundFor = getBoundFor(kami);
+    if (boundFor > 0) {
+      return [`${kami.name} is soulbound`, `> can be rerolled in ${Math.ceil(boundFor / 3600)}h`];
     }
     return [`Reroll ${kami.name} ?`];
   };

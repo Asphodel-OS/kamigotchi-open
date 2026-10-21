@@ -266,6 +266,18 @@ library LibAccount {
     if (!LibEntityType.isShape(components, id, "ACCOUNT")) revert("Account: no account detected");
   }
 
+  /// @notice the account owned by addr, else the account addr operates
+  /// @dev owner first: an owner address never resolves to an account that merely named it operator
+  function getByOwnerOrOperator(
+    IUintComp components,
+    address addr
+  ) internal view returns (uint256 id) {
+    id = uint256(uint160(addr));
+    if (LibEntityType.isShape(components, id, "ACCOUNT")) return id;
+    id = CacheOpComponent(getAddrByID(components, CacheOpCompID)).safeGet(id);
+    if (id == 0) revert("Account: no account detected");
+  }
+
   // Get kamis owned
   function getKamis(IUintComp components, uint256 accID) internal view returns (uint256[] memory) {
     return

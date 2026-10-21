@@ -170,6 +170,13 @@ export async function setupMUDNetwork<
  * @param component component to find
  * @returns component if it exists in components object, otherwise the component passed in
  */
+// defaults the client also registers itself (network/components/register.ts)
+const CLIENT_DEFINED = [
+  'component.LoadingState',
+  'world.component.components',
+  'world.component.systems',
+];
+
 function findOrDefineComponent<Cs extends ContractComponents, C extends ContractComponent>(
   components: Cs,
   component: C
@@ -178,7 +185,7 @@ function findOrDefineComponent<Cs extends ContractComponents, C extends Contract
     (c) => c.metadata.contractId === component.metadata.contractId
   ) as C;
 
-  if (existingComponent && component.metadata.contractId !== 'component.LoadingState') {
+  if (existingComponent && !CLIENT_DEFINED.includes(component.metadata.contractId)) {
     console.warn(
       'Component with contract id',
       component.metadata.contractId,

@@ -18,10 +18,11 @@ contract ItemTransferSystem is System {
       (uint32[], uint256[], uint256)
     );
 
-    uint256 accID = LibAccount.getByOwner(components, msg.sender);
+    uint256 accID = LibAccount.getByOwnerOrOperator(components, msg.sender);
 
     // checks
     require(indices.length == amts.length, "ItemTransfer: arrays length mismatch");
+    require(LibAccount.isAccount(components, targetID), "ItemTransfer: target is not an account");
     LibInventory.verifyTransferable(components, indices);
 
     // transfer

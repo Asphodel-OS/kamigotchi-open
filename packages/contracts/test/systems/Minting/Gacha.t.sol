@@ -404,6 +404,83 @@ contract GachaTest is MintTemplate {
     _KamiGachaRevealSystem.reveal(ids);
   }
 
+  function testGachaMintAsOperator() public {
+    uint256 ogPet = _batchMint(1)[0];
+
+    vm.roll(++_currBlock);
+    _giveGachaTicket(alice, 1);
+    vm.prank(alice.operator);
+    uint256 commitID = abi.decode(_KamiGachaMintSystem.executeTyped(1), (uint256[]))[0];
+
+    uint256 newPet = _reveal(commitID);
+    _assertOutGacha(newPet, 0, 1);
+    assertEq(ogPet, newPet);
+  }
+
+  function testGachaRerollAsOperator() public {
+    _batchMint(2);
+    uint256 kamiID = _mintKami(alice);
+
+    vm.roll(++_currBlock);
+    _giveItem(alice, REROLL_TICKET_INDEX, 1);
+    uint256[] memory kamiIDs = new uint256[](1);
+    kamiIDs[0] = kamiID;
+    vm.prank(alice.operator);
+    uint256[] memory commits = _KamiGachaRerollSystem.reroll(kamiIDs);
+
+    _assertCommit(commits[0], 0, _currBlock, 1);
+    _assertInGacha(kamiID);
+  }
+
+  function testGachaRerollRevertsWhileSoulbound() public {
+    _batchMint(2);
+    uint256 kamiID = _mintKami(alice);
+    vm.prank(deployer);
+    _ValueComponent.set(
+      uint256(keccak256(abi.encode(kamiID, "SOULBOUND"))),
+      block.timestamp + 3 days
+    );
+
+    vm.roll(++_currBlock);
+    _giveItem(alice, REROLL_TICKET_INDEX, 1);
+    uint256[] memory kamiIDs = new uint256[](1);
+    kamiIDs[0] = kamiID;
+    vm.prank(alice.operator);
+    vm.expectRevert("kami is soulbound");
+    _KamiGachaRerollSystem.reroll(kamiIDs);
+
+    vm.warp(block.timestamp + 3 days);
+    vm.prank(alice.operator);
+    _KamiGachaRerollSystem.reroll(kamiIDs);
+    _assertInGacha(kamiID);
+  }
+
+  function testAuctionBuyAsOperator() public {
+    uint32 itemIndex = 777;
+    _createGenericItem(MUSU_INDEX);
+    _createGenericItem(itemIndex);
+    vm.prank(deployer);
+    __AuctionRegistrySystem.create(
+      itemIndex,
+      MUSU_INDEX,
+      10,
+      86400,
+      750000,
+      32,
+      1000,
+      block.timestamp
+    );
+    _giveItem(alice, MUSU_INDEX, 1e9);
+
+    vm.prank(alice.operator);
+    _AuctionBuySystem.executeTyped(itemIndex, 1);
+    assertEq(_getItemBal(alice, itemIndex), 1);
+
+    vm.prank(address(0xBAD));
+    vm.expectRevert("Account: no account detected");
+    _AuctionBuySystem.executeTyped(itemIndex, 1);
+  }
+
   ///////////
   // UTILS //
   ///////////

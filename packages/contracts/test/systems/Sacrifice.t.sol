@@ -424,6 +424,28 @@ contract SacrificeTest is MintTemplate {
     _SacrificeCommitSystem.executeTyped(99999);
   }
 
+  function testCannotSacrificeSoulboundKami() public {
+    uint256 kamiID = _mintKami(alice);
+    uint32 kamiIndex = LibKami.getIndex(components, kamiID);
+
+    // a newbie-vendor kami stays with its buyer until the bind expires
+    vm.prank(deployer);
+    _ValueComponent.set(
+      uint256(keccak256(abi.encode(kamiID, "SOULBOUND"))),
+      block.timestamp + 3 days
+    );
+
+    vm.roll(_currBlock++);
+    vm.prank(alice.operator);
+    vm.expectRevert("kami is soulbound");
+    _SacrificeCommitSystem.executeTyped(kamiIndex);
+
+    vm.warp(block.timestamp + 3 days);
+    vm.prank(alice.operator);
+    _SacrificeCommitSystem.executeTyped(kamiIndex);
+    assertEq(LibKami.getState(components, kamiID), "DEAD");
+  }
+
   /////////////////
   // REVEAL TESTS
 

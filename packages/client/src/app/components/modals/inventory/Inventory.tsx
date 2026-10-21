@@ -12,7 +12,7 @@ import { getItemByIndex } from 'app/cache/item';
 import { EmptyText, ModalHeader, ModalWrapper } from 'app/components/library';
 import { useLayers } from 'app/root/hooks';
 import { UIComponent } from 'app/root/types';
-import { useAccount, useNetwork, useVisibility } from 'app/stores';
+import { useAccount, useVisibility } from 'app/stores';
 import { InventoryIcon } from 'assets/images/icons/menu';
 import { MUSU_INDEX, OBOL_INDEX, WONDER_EGG_INDEX } from 'constants/items';
 import {
@@ -108,8 +108,6 @@ export const InventoryModal: UIComponent = {
     const [inventories, setInventories] = useState<Inventory[]>([]);
     const [kamis, setKamis] = useState<Kami[]>([]);
 
-    const apis = useNetwork((s) => s.apis);
-    const selectedAddress = useNetwork((s) => s.selectedAddress);
     const modalOpen = useVisibility((s) => s.modals.inventory);
 
     /////////////////
@@ -146,8 +144,6 @@ export const InventoryModal: UIComponent = {
 
     // send a list of items to another account
     const sendItemsTx = async (items: Item[], amts: number[], account: Account) => {
-      const api = apis.get(selectedAddress);
-      if (!api) return console.error(`API not established for ${selectedAddress}`);
       const actionID = uuid() as EntityID;
       const itemsIndexes = items.map((i) => i.index);
       const itemNames = items.map((i) => getItem(i.index as EntityIndex)?.name ?? `#${i.index}`);
@@ -160,7 +156,7 @@ export const InventoryModal: UIComponent = {
             ? `Sending ${amts[0]} ${itemNames[0]} to ${account.name}`
             : `Sending [${amts.join(', ')}] of [${itemNames.join(', ')}] to ${account.name}`,
         execute: async () => {
-          return api.account.item.transfer(itemsIndexes, amts, account.id);
+          return api.player.account.item.transfer(itemsIndexes, amts, account.id);
         },
       });
       const completed = await didActionSucceed(actions.Action, tx);

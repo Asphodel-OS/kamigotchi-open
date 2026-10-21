@@ -1,6 +1,6 @@
 # Kami Marketplace
 
-An on-chain orderbook for bridged-out Kamis (`721_EXTERNAL` state). Follows an OpenSea-style model: **ETH** for instant buys, **WETH** for offers and collection offers (approval-based, no escrow).
+An on-chain orderbook for in-world Kamis. Follows an OpenSea-style model: **ETH** for instant buys, **WETH** for offers and collection offers (approval-based, no escrow).
 
 ---
 
@@ -37,22 +37,21 @@ An on-chain orderbook for bridged-out Kamis (`721_EXTERNAL` state). Follows an O
 
 ```
   Setup:
-    Sellers: Kami721.setApprovalForAll(vault, true)     // one-time
     Buyers:  WETH.approve(vault, maxUint)               // one-time
 
   Listings (ETH):
-    [Buyer] --ETH--> BuySystem --vault.transferKami()--> [Buyer gets Kami]
+    [Buyer] --ETH--> BuySystem --IDOwnsKami reassigned--> [Buyer gets Kami]
                           |---ETH-fee--> [Seller]
                           |---fee------> [Treasury]
 
   Offers (WETH):
-    [Seller] --> AcceptOfferSystem --vault.transferKami()--> [Buyer gets Kami]
+    [Seller] --> AcceptOfferSystem --IDOwnsKami reassigned--> [Buyer gets Kami]
                           |---vault.transferWETH()--> [Seller gets WETH-fee]
                           |---vault.transferWETH()--> [Treasury gets fee]
 
-  Note: No escrow. Kami stays in seller's wallet until purchase.
-        KamiMarketVault is the persistent approval target for both
-        Kami721 and WETH, surviving system upgrades.
+  Note: No escrow. Kami stays in the seller's account until purchase.
+        KamiMarketVault is the persistent WETH approval target,
+        surviving system upgrades.
 ```
 
 The system is composed of:
@@ -60,7 +59,7 @@ The system is composed of:
 - **5 user-facing systems** (list, buy, offer, accept-offer, cancel)
 - **1 admin system** (registry for configuration)
 - **1 library** (`LibKamiMarket`) containing all business logic
-- **1 persistent vault** (`KamiMarketVault`) for WETH and Kami721 transfers
+- **1 persistent vault** (`KamiMarketVault`) for WETH transfers
 - **1 new component** (`IDOwnsKamiOrderComponent`) for order ownership
 
 ---
@@ -79,24 +78,14 @@ Listings use native ETH because the buyer initiates and can send value directly.
 
 ## Kami Transfer Model
 
-**No escrow.** Like OpenSea, the seller keeps the kami in their wallet while it's listed. The kami's ECS state is set to `"LISTED"` to mark it, but the ERC-721 token stays with the seller.
+**No escrow.** The seller keeps the kami in their account while it's listed. The kami's ECS state is set to `"LISTED"` to mark it.
 
-All kami transfers go through the `KamiMarketVault` using standard ERC-721 `transferFrom`. Sellers approve the vault once (via `Kami721.setApprovalForAll(vaultAddress, true)`), and the vault persists across system upgrades.
+Kamis never leave the world: a sale reassigns `IDOwnsKami` to the buyer's account, sets the state to `"RESTING"` and starts a purchase cooldown. There is no ERC-721 transfer, so sellers need no Kami721 approval.
 
-- **Listing**: Kami state set to `"LISTED"`. **No token movement** — kami stays in seller's wallet.
-- **Buy**: State restored to `"721_EXTERNAL"`, then `vault.transferKami(seller, buyer, tokenId)` calls `Kami721.transferFrom`.
-- **Accept offer**: `vault.transferKami(seller, buyer, tokenId)` — direct ERC-721 transfer. Works for both `"721_EXTERNAL"` and `"LISTED"` kamis (if listed, state is restored first).
-- **Cancel listing**: Kami state restored to `"721_EXTERNAL"`. No token movement needed.
-
-### Seller Approval
-
-Sellers must approve the `KamiMarketVault` for Kami721 transfers before listing or accepting offers:
-
-```solidity
-Kami721.setApprovalForAll(vaultAddress, true);  // one-time, survives system upgrades
-```
-
-This mirrors the OpenSea model where sellers approve the Seaport conduit contract.
+- **Listing**: Kami state set to `"LISTED"`. No ownership change.
+- **Buy**: Equipment returned to the seller, `IDOwnsKami` set to the buyer, state `"RESTING"`.
+- **Accept offer**: Same reassignment. Works for `"RESTING"` and `"LISTED"` kamis (open listings on the kami are cancelled first).
+- **Cancel listing**: Kami state restored to `"RESTING"` if still listed.
 
 ### Bridge-in Prevention
 
@@ -154,7 +143,7 @@ All configuration is stored via `LibConfig` (key-value store) and managed throug
 
 **Path**: `src/tokens/KamiMarketVault.sol`
 
-A persistent relay contract for WETH and Kami721 transfers — the OpenSea conduit equivalent. Buyers approve it for WETH, sellers approve it for Kami721 (`setApprovalForAll`). The vault address persists across system upgrades, so users only approve once.
+A persistent relay contract for WETH transfers, the OpenSea conduit equivalent. Buyers approve it for WETH. The vault address persists across system upgrades, so users only approve once.
 
 ```solidity
 contract KamiMarketVault is Ownable {
@@ -170,7 +159,7 @@ contract KamiMarketVault is Ownable {
 ```
 
 - **`transferWETH`**: Calls `WETH.transferFrom(from, to, amount)` via `SafeTransferLib`. Only callable by authorized system addresses.
-- **`transferKami`**: Calls `KAMI721.transferFrom(from, to, tokenId)` — standard ERC-721 transfer. Seller must have approved the vault.
+- **`transferKami`**: Calls `KAMI721.transferFrom(from, to, tokenId)`. Unused: kamis stay in-world, so no system calls it.
 - **`authorizeCaller`** / **`unauthorizeCaller`**: Owner manages which system addresses can call vault functions. Must be called after each system redeployment.
 
 ### IDOwnsKamiOrderComponent
@@ -201,9 +190,9 @@ Contains all marketplace business logic, organized into sections:
 
 | Function | Returns | Description |
 |----------|---------|-------------|
-| `fillListing(comps, id, buyerAccID, buyerAddress)` | `(sellerAddress, price, kamiIndex)` | Verifies seller still owns kami, `vault.transferKami` to buyer, marks filled |
-| `fillOffer(comps, id, sellerAccID, sellerAddress)` | `(buyerAddress, price, kamiIndex)` | `vault.transferKami` to buyer, marks filled |
-| `fillCollectionOffer(comps, id, sellerAccID, sellerAddress, kamiIndex)` | `(buyerAddress, price)` | `vault.transferKami` to buyer, decrements Balance. Marks filled when Balance reaches 0 |
+| `fillListing(comps, id, buyerAccID, buyerAddress)` | `(sellerAddress, price, kamiIndex)` | Verifies seller still owns kami, reassigns `IDOwnsKami` to buyer, marks filled |
+| `fillOffer(comps, id, sellerAccID, sellerAddress)` | `(buyerAddress, price, kamiIndex)` | Reassigns `IDOwnsKami` to buyer, marks filled |
+| `fillCollectionOffer(comps, id, sellerAccID, sellerAddress, kamiIndex)` | `(buyerAddress, price)` | Reassigns `IDOwnsKami` to buyer, decrements Balance. Marks filled when Balance reaches 0 |
 
 #### Cancel Functions
 
@@ -409,8 +398,8 @@ Buyer                     KamiMarketBuySystem                Vault            Se
   |                              |   verify active/expiry     |                  |
   |                              |   fillListing():           |                  |
   |                              |     verify seller owns kami|                  |
-  |                              |     setState("721_EXTERNAL")                  |
-  |                              |     vault.transferKami() ->|-- transferFrom ->|
+  |                              |     setOwner(buyer)        |                  |
+  |                              |     setState("RESTING")    |                  |
   |                              |   ETH transfer ------------|----------------->|
   |                              |-- fee to treasury          |                  |
   |                              |-- refund excess ETH ------>|                  |
@@ -451,7 +440,8 @@ Seller                    KamiMarketAcceptOfferSystem        Vault             B
   |-- executeTyped(offerID,idx)->|                            |                  |
   |                              |-- verify checks            |                  |
   |                              |-- fillOffer()              |                  |
-  |                              |   vault.transferKami() --->|-- Kami721 ------>|
+  |                              |   setOwner(buyer)          |                  |
+  |                              |   setState("RESTING")      |                  |
   |                              |                            |                  |
   |                              |-- vault.transferWETH() --->|-- WETH --------->|
   |                              |   (buyer -> seller - fee)  |                  |
@@ -563,13 +553,10 @@ IDOwnsKamiOrder: "component.id.kamiorder.owns"  // Uint256, indexed
 
 ### Approvals
 
-Both sellers and buyers approve the `KamiMarketVault` (persistent address, survives system upgrades):
+Buyers approve the `KamiMarketVault` for WETH (persistent address, survives system upgrades). Sellers need no approval: kamis stay in-world.
 
 ```typescript
 const vaultAddress = /* from config: KAMI_MARKET_VAULT */;
-
-// Sellers: approve vault to transfer Kami721 tokens (for listings + accepting offers)
-await kami721Contract.setApprovalForAll(vaultAddress, true);
 
 // Buyers: approve vault to spend WETH (for offers)
 await wethContract.approve(vaultAddress, ethers.MaxUint256);

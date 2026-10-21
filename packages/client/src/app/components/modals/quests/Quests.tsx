@@ -8,7 +8,7 @@ import { UIComponent } from 'app/root/types';
 import { useNetwork } from 'app/stores';
 import { QuestsIcon } from 'assets/images/icons/menu';
 import { DEAD_ADDRESS } from 'constants/addresses';
-import { getAccount, queryAccountFromEmbedded } from 'network/shapes/Account';
+import { NullAccount, getAccount, queryAccountFromEmbedded } from 'network/shapes/Account';
 import { getItemBalance as _getItemBalance } from 'network/shapes/Item';
 import {
   Quest,
@@ -43,10 +43,9 @@ export const QuestModal: UIComponent = {
       const { network } = layers;
       const { world, components } = network;
       const accountEntity = queryAccountFromEmbedded(network);
-      const account = getAccount(world, components, accountEntity, {
-        kamis: true,
-        inventory: true,
-      });
+      const account = accountEntity
+        ? getAccount(world, components, accountEntity, { kamis: true, inventory: true })
+        : NullAccount;
 
       return {
         network,

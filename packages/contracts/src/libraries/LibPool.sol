@@ -302,7 +302,7 @@ library LibPool {
 
   /// @notice emit the pool's post-action reserves and LP supply
   /// @dev emits absolute state, never deltas. reserves can be inflated out of band
-  ///      (ItemTransferSystem and harvest tax both accept an arbitrary target id), so
+  ///      (a harvest tax accepts an arbitrary recipient id), so
   ///      reading state here is what lets the next call self-correct rather than
   ///      compound the drift. never accept these values from the caller.
   function logSync(

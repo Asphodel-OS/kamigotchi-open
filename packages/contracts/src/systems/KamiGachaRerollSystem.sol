@@ -10,6 +10,7 @@ import { LibEquipment } from "libraries/LibEquipment.sol";
 import { LibGacha } from "libraries/LibGacha.sol";
 import { LibInventory, REROLL_TICKET_INDEX } from "libraries/LibInventory.sol";
 import { LibKami } from "libraries/LibKami.sol";
+import { LibSoulbound } from "libraries/LibSoulbound.sol";
 
 uint256 constant ID = uint256(keccak256("system.kami.gacha.reroll"));
 
@@ -19,11 +20,11 @@ contract KamiGachaRerollSystem is System {
   constructor(IWorld _world, address _components) System(_world, _components) {}
 
   function reroll(uint256[] memory kamiIDs) external returns (uint256[] memory) {
-    uint256 accID = LibAccount.getByOwner(components, msg.sender);
-    require(accID != 0, "no account detected");
+    uint256 accID = LibAccount.getByOwnerOrOperator(components, msg.sender);
     LibArray.sortAndVerifyNoRepeats(kamiIDs); // sort in place in this step
     LibKami.verifyAccount(components, kamiIDs, accID);
     LibKami.verifyState(components, kamiIDs, "RESTING");
+    for (uint256 i; i < kamiIDs.length; i++) LibSoulbound.verify(components, kamiIDs[i]);
 
     // on an empty pool a reroll only hands back the deposit; refuse before the ticket burn
     require(LibGacha.getNumFree(components) > 0, "gacha pool exhausted");

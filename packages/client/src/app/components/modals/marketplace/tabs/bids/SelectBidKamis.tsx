@@ -23,6 +23,7 @@ export const SelectBidKamis = ({
   isVisible,
   restingKamis,
   unavailableKamis,
+  isSoulbound,
   selectedCount,
   canSelectKami,
   isSelected,
@@ -37,6 +38,7 @@ export const SelectBidKamis = ({
   isVisible: boolean;
   restingKamis: Kami[];
   unavailableKamis: Kami[];
+  isSoulbound: (kami: Kami) => boolean;
   selectedCount: number;
   canSelectKami: (index: number) => boolean;
   isSelected: (index: number) => boolean;
@@ -86,7 +88,7 @@ export const SelectBidKamis = ({
           </KamiSlot>
         ))}
         {sortedUnavailable.map((kami) => {
-          const lines = getOverlayLabel(kami.state);
+          const lines = isSoulbound(kami) ? ['SOULBOUND'] : getOverlayLabel(kami.state);
           return (
             <LockedKamiSlot key={kami.index}>
               <KamiSlotImage src={kami.image} alt={kami.name} />

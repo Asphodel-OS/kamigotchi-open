@@ -240,6 +240,57 @@ contract TradeTest is SetupTemplate {
     assertEq(LibInventory.getAllForHolder(components, tradeID).length, 0);
   }
 
+  /// @notice operators run the full lifecycle
+  function testTradeOperatorSigned() public {
+    uint32 buyIndex = 1;
+    uint256 buyAmt = 100;
+    uint32 sellIndex = 2;
+    uint256 sellAmt = 5;
+    _giveItem(alice, sellIndex, sellAmt);
+    _giveItem(bob, buyIndex, buyAmt);
+
+    uint256 tradeID = _createTrade(_asOperator(alice), buyIndex, buyAmt, sellIndex, sellAmt, 0);
+    _executeTrade(_asOperator(bob), tradeID);
+    _completeTrade(_asOperator(alice), tradeID);
+
+    assertEq(_getItemBal(alice, buyIndex), buyAmt);
+    assertEq(_getItemBal(alice, sellIndex), 0);
+    assertEq(_getItemBal(bob, buyIndex), 0);
+    assertEq(_getItemBal(bob, sellIndex), sellAmt);
+  }
+
+  /// @notice trades are keyed by account, so owner- and operator-signed calls mix freely
+  function testTradeMixedSigners() public {
+    uint32 buyIndex = 1;
+    uint256 buyAmt = 3;
+    uint32 sellIndex = 2;
+    uint256 sellAmt = 5;
+    _giveItem(alice, sellIndex, sellAmt * 2);
+    _giveItem(bob, buyIndex, buyAmt);
+
+    // owner creates, operator cancels
+    uint256 tradeID = _createTrade(alice, buyIndex, buyAmt, sellIndex, sellAmt, 0);
+    _cancelTrade(_asOperator(alice), tradeID);
+    assertEq(_getItemBal(alice, sellIndex), sellAmt * 2);
+
+    // operator creates, owners execute and complete
+    tradeID = _createTrade(_asOperator(alice), buyIndex, buyAmt, sellIndex, sellAmt, 0);
+    _executeTrade(bob, tradeID);
+    _completeTrade(alice, tradeID);
+    assertEq(_getItemBal(alice, buyIndex), buyAmt);
+    assertEq(_getItemBal(bob, sellIndex), sellAmt);
+  }
+
+  function testTradeRevertsForStranger() public {
+    uint32[] memory indices = new uint32[](1);
+    uint256[] memory amts = new uint256[](1);
+    amts[0] = 1;
+
+    vm.prank(address(0xBAD));
+    vm.expectRevert("Account: no account detected");
+    _TradeCreateSystem.executeTyped(indices, amts, indices, amts, 0);
+  }
+
   /////////////////
   // HELPERS
 
@@ -292,6 +343,12 @@ contract TradeTest is SetupTemplate {
     );
     vm.stopPrank();
     return abi.decode(tradeID, (uint256));
+  }
+
+  // the helpers sign with acc.owner; this routes them through the operator
+  function _asOperator(PlayerAccount memory acc) internal pure returns (PlayerAccount memory) {
+    acc.owner = acc.operator;
+    return acc;
   }
 
   function _cancelTrade(PlayerAccount memory acc, uint256 tradeID) public {

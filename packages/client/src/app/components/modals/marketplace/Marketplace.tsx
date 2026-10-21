@@ -23,6 +23,7 @@ import {
 import {
   getAllKamis as _getAllKamis,
   getBaseKami as _getBaseKami,
+  isKamiSoulbound as _isKamiSoulbound,
   queryKamiByIndex as _queryKamiByIndex,
   queryKamis as _queryKamis,
 } from 'network/shapes/Kami';
@@ -98,6 +99,7 @@ export const MarketplaceModal: UIComponent = {
           _getKami(world, components, entity, { live: 0, traits: 0, stats: 0, progress: 0 }),
         queryKamiByIndex: (index: number) => _queryKamiByIndex(world, components, index),
         getAccountByID: (id: string) => _getAccountByID(world, components, id as EntityID),
+        isSoulbound: (kami: BaseKami) => _isKamiSoulbound(world, components, kami.id),
       }),
       [world, components, accountEntity, ownedKamiIds]
     );
@@ -110,12 +112,6 @@ export const MarketplaceModal: UIComponent = {
     const { refetch: refetchApproval, data: approvalData } = useReadContracts({
       contracts: [
         {
-          address: kamiNFTAddress,
-          abi: erc721ABI,
-          functionName: 'isApprovedForAll',
-          args: [account.ownerAddress, marketVaultAddress],
-        },
-        {
           address: Tokens.ETH.address,
           abi: erc20Abi,
           functionName: 'allowance',
@@ -126,8 +122,7 @@ export const MarketplaceModal: UIComponent = {
 
     useWatchBlockNumber({ onBlockNumber: () => refetchApproval() });
 
-    const isVaultApproved = approvalData?.[0]?.result === true;
-    const wethAllowance = (approvalData?.[1]?.result as bigint) ?? 0n;
+    const wethAllowance = (approvalData?.[0]?.result as bigint) ?? 0n;
     const isWethApproved = wethAllowance > 0n;
 
     const restingKamis = useMemo(
@@ -220,32 +215,6 @@ export const MarketplaceModal: UIComponent = {
     /////////////////
     // ACTIONS
 
-    const ensureVaultApproval = async () => {
-      if (isVaultApproved) return;
-      if (!marketVaultAddress) throw new Error('KAMI_MARKET_VAULT is not configured');
-
-      const ownerApi = apis.get(selectedAddress);
-      if (!ownerApi) throw new Error(`API not established for ${selectedAddress}`);
-
-      const actionID = uuid() as EntityID;
-      const tx = actions.add({
-        id: actionID,
-        action: 'KamiMarketVaultApproval',
-        params: [kamiNFTAddress, marketVaultAddress, true],
-        description: `Approving marketplace vault to transfer your Kami`,
-        execute: async () =>
-          ownerApi.erc721.setApprovalForAll(
-            kamiNFTAddress,
-            marketVaultAddress,
-            true
-          ),
-      });
-
-      const succeeded = await didActionSucceed(actions.Action, tx);
-      if (!succeeded) throw new Error('Vault approval failed');
-      await refetchApproval();
-    };
-
     const ensureWethApproval = async () => {
       if (isWethApproved) return;
       if (!marketVaultAddress) throw new Error('KAMI_MARKET_VAULT is not configured');
@@ -277,7 +246,6 @@ export const MarketplaceModal: UIComponent = {
       price: BigNumberish,
       expiry: BigNumberish
     ) => {
-      await ensureVaultApproval();
       const tx = actions.add({
         action: 'KamiMarketList',
         params: [kamiIndex, price, expiry],
@@ -335,7 +303,6 @@ export const MarketplaceModal: UIComponent = {
     };
 
     const acceptOfferBatch = async (offerID: BigNumberish, kamiIndices: number[]) => {
-      await ensureVaultApproval();
       const tx = actions.add({
         action: 'KamiMarketAcceptOffer',
         params: [offerID, kamiIndices],
@@ -348,7 +315,6 @@ export const MarketplaceModal: UIComponent = {
     };
 
     const acceptOffer = async (offerID: BigNumberish, kamiIndex: number) => {
-      await ensureVaultApproval();
       const tx = actions.add({
         action: 'KamiMarketAcceptOffer',
         params: [offerID, kamiIndex],

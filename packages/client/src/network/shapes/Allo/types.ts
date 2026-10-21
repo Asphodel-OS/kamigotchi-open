@@ -27,7 +27,7 @@ export const getAllo = (world: World, comps: Components, entity: EntityIndex): A
     type,
     index: getIndex(comps, entity),
     value,
-    sourceID: getSourceID(comps, entity),
+    sourceID: getSourceID(comps, entity, false), // allos created before SourceID have none
   };
 
   /////////////////

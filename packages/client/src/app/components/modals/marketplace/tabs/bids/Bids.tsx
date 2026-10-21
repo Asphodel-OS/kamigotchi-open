@@ -51,6 +51,7 @@ export const Bids = ({
     queryKamiByIndex: (index: number) => EntityIndex | undefined;
     getKami: (entity: EntityIndex) => Kami;
     getAccountByID: (id: string) => { name: string; index: number };
+    isSoulbound: (kami: Kami) => boolean;
     isDifferentAccountId: (lhs: string, rhs: string) => boolean;
     formatEthPrice: (weiString: string, decimals: number) => string;
   };
@@ -139,7 +140,9 @@ export const Bids = ({
     if (!isVisible) return;
     const refresh = () => {
       const nextAccount = utils.getAccountKamis();
-      const nextResting = nextAccount.filter((k) => k.state === 'RESTING' && !recentlySoldIndices.has(k.index));
+      const nextResting = nextAccount.filter(
+        (k) => k.state === 'RESTING' && !recentlySoldIndices.has(k.index) && !utils.isSoulbound(k)
+      );
       const nextWild = utils.getWildKamis();
       setAccountKamis(nextAccount);
       setRestingKamis(nextResting);
@@ -506,6 +509,7 @@ export const Bids = ({
         isVisible={showBottomSection}
         restingKamis={restingKamis}
         unavailableKamis={unavailableKamis}
+        isSoulbound={utils.isSoulbound}
         selectedCount={selectedKamis.size}
         canSelectKami={canSelectKami}
         isSelected={(index) => selectedKamis.has(index)}

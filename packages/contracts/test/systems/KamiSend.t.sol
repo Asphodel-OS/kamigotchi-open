@@ -136,16 +136,20 @@ contract KamiSendTest is SetupTemplate {
     _KamiSendSystem.executeTyped(kamiIndex, bob.operator);
   }
 
-  function testSendSoulboundKami() public {
+  function testRevertSendSoulboundKami() public {
     (uint256 kamiID, uint32 kamiIndex) = _createStakedKami(alice);
 
-    // Make kami soulbound — send should still work (no soulbound check, matching marketplace buy)
+    // a newbie-vendor kami stays with its buyer until the bind expires
     uint256 soulboundEntity = uint256(keccak256(abi.encode(kamiID, "SOULBOUND")));
     vm.prank(deployer);
     _ValueComponent.set(soulboundEntity, block.timestamp + 3 days);
 
-    _sendKami(alice, kamiIndex, bob.operator);
+    vm.prank(alice.operator);
+    vm.expectRevert("kami is soulbound");
+    _KamiSendSystem.executeTyped(kamiIndex, bob.operator);
 
+    vm.warp(block.timestamp + 3 days);
+    _sendKami(alice, kamiIndex, bob.operator);
     assertEq(LibKami.getAccount(components, kamiID), bob.id);
     assertEq(LibKami.getState(components, kamiID), "RESTING");
   }

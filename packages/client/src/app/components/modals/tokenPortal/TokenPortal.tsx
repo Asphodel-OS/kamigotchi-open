@@ -160,7 +160,6 @@ export const TokenPortalModal: UIComponent = {
       const onyxItem = options.find((item: Item) => item.index === ONYX_INDEX);
       const fallback = onyxItem ?? options[0];
       if (fallback) setSelected(fallback);
-      else console.warn('no portal token items found');
     }, [options.length]);
 
     // set the account if the connected entity changes

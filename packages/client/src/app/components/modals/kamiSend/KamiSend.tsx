@@ -22,7 +22,7 @@ import {
   queryAllAccounts as _queryAllAccounts,
   queryAccountFromEmbedded,
 } from 'network/shapes/Account';
-import { Kami } from 'network/shapes/Kami';
+import { Kami, isKamiSoulbound } from 'network/shapes/Kami';
 import { didActionSucceed } from 'network/utils';
 import { History } from './History';
 import { KamiSendLine } from './KamiSendLine';
@@ -53,6 +53,7 @@ export const KamiSendModal: UIComponent = {
           accountEntity,
           getAccount: (entity: EntityIndex) => _getAccount(world, components, entity),
           getAccountKamis: () => _getAccountKamis(world, components, accountEntity, { live: 0 }),
+          isSoulbound: (kami: Kami) => isKamiSoulbound(world, components, kami.id),
           queryAllAccounts: () => _queryAllAccounts(components),
         },
       };
@@ -125,7 +126,11 @@ export const KamiSendModal: UIComponent = {
 
       const refresh = () => {
         const kamis = utils.getAccountKamis();
-        setSendableKamis(kamis.filter((k) => k.state === 'RESTING' || k.state === 'LISTED'));
+        setSendableKamis(
+          kamis.filter(
+            (k) => (k.state === 'RESTING' || k.state === 'LISTED') && !utils.isSoulbound(k)
+          )
+        );
       };
 
       refresh();

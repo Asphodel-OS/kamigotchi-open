@@ -124,7 +124,7 @@ export const get = (
     const updateTs = PfpURITs.get(entity) ?? 0;
     const updateDelta = (now - updateTs) / 1000; // convert to seconds
     if (updateDelta > options.pfp) {
-      acc.pfpURI = getMediaURI(components, entity);
+      acc.pfpURI = getMediaURI(components, entity, false);
       PfpURITs.set(entity, now);
     }
   }

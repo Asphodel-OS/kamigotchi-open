@@ -9,7 +9,7 @@ import { Palette } from 'app/components/library/pastel';
 import { useLayers } from 'app/root/hooks';
 import { UIComponent } from 'app/root/types';
 import { useSelected, useVisibility } from 'app/stores';
-import { getAccount, queryAccountFromEmbedded } from 'network/shapes/Account';
+import { NullAccount, getAccount, queryAccountFromEmbedded } from 'network/shapes/Account';
 import { getItemBalance as _getItemBalance } from 'network/shapes/Item';
 import {
   Quest,
@@ -43,10 +43,9 @@ export const QuestDetailsModal: UIComponent = {
       const { network } = layers;
       const { world, components } = network;
       const accountEntity = queryAccountFromEmbedded(network);
-      const account = getAccount(world, components, accountEntity, {
-        kamis: true,
-        inventory: true,
-      });
+      const account = accountEntity
+        ? getAccount(world, components, accountEntity, { kamis: true, inventory: true })
+        : NullAccount;
       return {
         network,
         data: {

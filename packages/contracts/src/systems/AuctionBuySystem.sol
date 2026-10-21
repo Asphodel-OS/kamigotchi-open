@@ -20,7 +20,7 @@ contract AuctionBuySystem is System {
   function execute(bytes memory arguments) public returns (bytes memory) {
     (uint32 itemIndex, uint32 amt) = abi.decode(arguments, (uint32, uint32));
 
-    uint256 accID = LibAccount.verifyOwner(components);
+    uint256 accID = LibAccount.getByOwnerOrOperator(components, msg.sender);
     uint256 id = LibAuction.verifyBuyParams(components, itemIndex, amt);
     LibAuction.verifyRequirements(components, id, accID);
 

@@ -8,6 +8,7 @@ import { IWorld } from "solecs/interfaces/IWorld.sol";
 import { LibAccount } from "libraries/LibAccount.sol";
 import { LibKami } from "libraries/LibKami.sol";
 import { LibSacrifice } from "libraries/LibSacrifice.sol";
+import { LibSoulbound } from "libraries/LibSoulbound.sol";
 
 uint256 constant ID = uint256(keccak256("system.kami.sacrifice.commit"));
 
@@ -19,6 +20,7 @@ uint256 constant ID = uint256(keccak256("system.kami.sacrifice.commit"));
  * Requirements:
  * - Kami must be owned by the caller's account
  * - Kami must be in RESTING state (not harvesting, dead, or external)
+ * - Kami must not be soulbound
  * - Only 1 kami can be sacrificed per transaction
  *
  * Pity System:
@@ -41,6 +43,7 @@ contract KamiSacrificeCommitSystem is System {
     // Checks
     require(kamiID != 0, "kami does not exist");
     LibKami.verifyAccount(components, kamiID, accID);
+    LibSoulbound.verify(components, kamiID);
 
     // Kami must be in RESTING state to be sacrificed
     string memory state = LibKami.getState(components, kamiID);

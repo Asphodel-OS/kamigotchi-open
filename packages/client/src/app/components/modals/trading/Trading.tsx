@@ -12,7 +12,7 @@ import { getTrade as _getTrade, getTradeHistory as _getTradeHistory } from 'app/
 import { ModalHeader, ModalWrapper, Overlay } from 'app/components/library';
 import { useLayers } from 'app/root/hooks';
 import { UIComponent } from 'app/root/types';
-import { useNetwork, useSelected, useVisibility } from 'app/stores';
+import { useSelected, useVisibility } from 'app/stores';
 import { TradeIcon } from 'assets/images/icons/menu';
 import { getKamidenClient } from 'clients/kamiden';
 import { Trade as TradeHistory, TradesRequest } from 'clients/kamiden/proto';
@@ -74,13 +74,11 @@ export const TradingModal: UIComponent = {
       };
     })();
 
-    const { actions } = network;
+    const { actions, api } = network;
     const { accountEntity } = data;
     const { ActionComp } = types;
     const { getAccount, getTrade, queryTrades } = utils;
 
-    const apis = useNetwork((s) => s.apis);
-    const selectedAddress = useNetwork((s) => s.selectedAddress);
     const modalVisible = useVisibility((s) => s.modals.trading);
 
     const [account, setAccount] = useState<Account>(NullAccount);
@@ -237,9 +235,6 @@ export const TradingModal: UIComponent = {
       haveItems: Item[],
       haveAmts: number[]
     ) => {
-      const api = apis.get(selectedAddress);
-      if (!api) return console.error(`API not established for ${selectedAddress}`);
-
       const wantIndices = wantItems.map((item) => item.index);
       const haveIndices = haveItems.map((item) => item.index);
 
@@ -249,7 +244,7 @@ export const TradingModal: UIComponent = {
         params: [],
         description: `Creating Order`,
         execute: async () => {
-          return api.account.trade.create(wantIndices, wantAmts, haveIndices, haveAmts, 0);
+          return api.player.account.trade.create(wantIndices, wantAmts, haveIndices, haveAmts, 0);
         },
       });
       return actionID;
@@ -257,16 +252,13 @@ export const TradingModal: UIComponent = {
 
     // execute an open trade offer
     const executeTrade = (trade: Trade) => {
-      const api = apis.get(selectedAddress);
-      if (!api) return console.error(`API not established for ${selectedAddress}`);
-
       const actionID = uuid() as EntityID;
       actions.add({
         action: 'Executing Order',
         params: [trade.id],
         description: `Executing Order`,
         execute: async () => {
-          return api.account.trade.execute(trade.id);
+          return api.player.account.trade.execute(trade.id);
         },
       });
       return actionID;
@@ -274,16 +266,13 @@ export const TradingModal: UIComponent = {
 
     // complete an executed trade offer
     const completeTrade = (trade: Trade) => {
-      const api = apis.get(selectedAddress);
-      if (!api) return console.error(`API not established for ${selectedAddress}`);
-
       const actionID = uuid() as EntityID;
       actions.add({
         action: 'Complete Order',
         params: [trade.id],
         description: `Completing Order`,
         execute: async () => {
-          return api.account.trade.complete(trade.id);
+          return api.player.account.trade.complete(trade.id);
         },
       });
       return actionID;
@@ -291,16 +280,13 @@ export const TradingModal: UIComponent = {
 
     // cancel an existing trade offer
     const cancelTrade = (trade: Trade) => {
-      const api = apis.get(selectedAddress);
-      if (!api) return console.error(`API not established for ${selectedAddress}`);
-
       const actionID = uuid() as EntityID;
       actions.add({
         action: 'Cancel Order',
         params: [trade.id],
         description: `Canceling Order`,
         execute: async () => {
-          return api.account.trade.cancel(trade.id);
+          return api.player.account.trade.cancel(trade.id);
         },
       });
       return actionID;

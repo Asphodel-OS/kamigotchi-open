@@ -25,7 +25,7 @@ contract KamiGachaMintSystem is System {
     //   "public mint has not yet started"
     // ); // launch: enforce 1h after public mint start
 
-    uint256 accID = LibAccount.getByOwner(components, msg.sender);
+    uint256 accID = LibAccount.getByOwnerOrOperator(components, msg.sender);
 
     // served from what the pool holds beyond unrevealed commits, plus what creation can
     // still add under the 721 cap. checked before the ticket burn so a refused claim keeps it

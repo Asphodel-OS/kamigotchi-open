@@ -21,7 +21,7 @@ contract TradeCreateSystem is System {
       uint256 targetID
     ) = abi.decode(arguments, (uint32[], uint256[], uint32[], uint256[], uint256));
 
-    uint256 accID = LibAccount.getByOwner(components, msg.sender);
+    uint256 accID = LibAccount.getByOwnerOrOperator(components, msg.sender);
     LibTrade.verifyMaxOrders(components, accID);
     LibTrade.verifyStructure(components, buyIndices, sellIndices);
     LibTrade.verifyTradable(components, buyIndices, sellIndices);

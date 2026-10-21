@@ -84,10 +84,10 @@ export const getMax = (comps: Components, entity: EntityIndex): number => {
   return (result ?? 0) * 1;
 };
 
-export const getMediaURI = (comps: Components, entity: EntityIndex): string => {
+export const getMediaURI = (comps: Components, entity: EntityIndex, debug = true): string => {
   const { MediaURI } = comps;
   const result = getComponentValue(MediaURI, entity)?.value;
-  if (result === undefined) console.warn('getMediaURI(): undefined for entity', entity);
+  if (debug && result === undefined) console.warn('getMediaURI(): undefined for entity', entity);
   return result ?? '';
 };
 
@@ -327,10 +327,10 @@ export const getOwnsWithdwalID = (comps: Components, entity: EntityIndex): Entit
   return formatEntityID(result ?? '');
 };
 
-export const getSourceID = (comps: Components, entity: EntityIndex): EntityID => {
+export const getSourceID = (comps: Components, entity: EntityIndex, debug = true): EntityID => {
   const { SourceID } = comps;
   const result = getComponentValue(SourceID, entity)?.value;
-  if (result === undefined) console.warn('getSourceID(): undefined for entity', entity);
+  if (debug && result === undefined) console.warn('getSourceID(): undefined for entity', entity);
   return formatEntityID(result ?? '');
 };
 

@@ -39,8 +39,8 @@ contract _PoolRegistrySystem is System, AuthRoles {
     require(LibPoolRegistry.get(components, indexA, indexB) == 0, "Pool already exists");
 
     // the pool id is a pure hash of the item pair, so anyone can precompute it
-    // and pre-fund the entity before creation (ItemTransferSystem does not
-    // require an account target). sweep any pre-funded balance to the caller:
+    // and pre-fund the entity before creation (a harvest tax accepts an
+    // arbitrary recipient id). sweep any pre-funded balance to the caller:
     // reverting instead would let a 1-unit deposit permanently brick the pair
     // (no donate/remove path exists pre-creation), and seeding on top would
     // launch the pool at a skewed price. sweeping keeps the launch price at

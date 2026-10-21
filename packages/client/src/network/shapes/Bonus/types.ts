@@ -40,7 +40,8 @@ export const getRegistry = (
     type: getType(comps, entity),
     value: getValueComp(comps, entity),
     endType: getComponentValue(Subtype, entity)?.value as string,
-    source: getDetailedEntityByID(world, comps, getSourceID(comps, entity)),
+    // registries created before SourceID (most skill bonuses) have none
+    source: getDetailedEntityByID(world, comps, getSourceID(comps, entity, false)),
   };
 };
 

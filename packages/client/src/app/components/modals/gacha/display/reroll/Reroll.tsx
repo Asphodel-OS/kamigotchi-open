@@ -31,6 +31,7 @@ export const Reroll = ({
   };
   utils: {
     getAccountKamis: () => Kami[];
+    getSoulboundEnd: (kami: Kami) => number;
   };
   isVisible: boolean;
 }) => {

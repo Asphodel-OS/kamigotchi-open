@@ -75,8 +75,68 @@ contract ItemTransferTest is ItemTemplate {
     assertEq(musuBefore - musuAfter, TRANSFER_FEE * 3);
   }
 
+  function testTransferAsOperator() public {
+    uint32 itemA = 2;
+    _giveItem(alice, itemA, 3);
+    _fundAccount(alice.index, 100);
+
+    _transferAs(alice.operator, bob.id, itemA, 1);
+    assertEq(_getItemBal(alice, itemA), 2);
+    assertEq(_getItemBal(bob, itemA), 1);
+  }
+
+  function testTransferRevertsForStranger() public {
+    uint32 itemA = 2;
+    _giveItem(alice, itemA, 3);
+
+    vm.expectRevert("Account: no account detected");
+    _transferAs(address(0xBAD), bob.id, itemA, 1);
+  }
+
+  function testTransferRevertsForNonAccountTarget() public {
+    uint32 itemA = 2;
+    _giveItem(alice, itemA, 3);
+
+    vm.expectRevert("ItemTransfer: target is not an account");
+    _transferAs(alice.owner, uint256(keccak256("not.an.account")), itemA, 1);
+
+    // unregistered owner address
+    vm.expectRevert("ItemTransfer: target is not an account");
+    _transferAs(alice.owner, uint256(uint160(address(0xBEEF))), itemA, 1);
+  }
+
+  // an address that operates alice but owns its own account acts on its own account
+  function testTransferDualRoleUsesOwnAccount() public {
+    uint32 itemA = 2;
+    address dual = alice.operator;
+    address dualOperator = address(uint160(uint256(keccak256("dual.operator"))));
+    vm.prank(dual);
+    uint256 dualID = abi.decode(
+      _AccountRegisterSystem.executeTyped(dualOperator, "dual"),
+      (uint256)
+    );
+    PlayerAccount memory dualAcc = PlayerAccount(dualID, 99, dualOperator, dual);
+    _giveItem(dualAcc, itemA, 3);
+    _giveItem(dualAcc, MUSU_INDEX, 100);
+    _giveItem(alice, itemA, 3);
+
+    _transferAs(dual, bob.id, itemA, 1);
+    assertEq(_getItemBal(dualID, itemA), 2);
+    assertEq(_getItemBal(alice, itemA), 3);
+    assertEq(_getItemBal(bob, itemA), 1);
+  }
+
   ////////////////////
   // UTILS
+
+  function _transferAs(address signer, uint256 targetID, uint32 itemIndex, uint256 amt) internal {
+    uint32[] memory itemIndices = new uint32[](1);
+    itemIndices[0] = itemIndex;
+    uint256[] memory amts = new uint256[](1);
+    amts[0] = amt;
+    vm.prank(signer);
+    _ItemTransferSystem.executeTyped(itemIndices, amts, targetID);
+  }
 
   function _transfer(
     PlayerAccount memory from,

@@ -16,7 +16,7 @@ contract TradeCompleteSystem is System, AuthRoles {
   function execute(bytes memory arguments) public returns (bytes memory) {
     uint256 id = abi.decode(arguments, (uint256));
 
-    uint256 accID = LibAccount.getByOwner(components, msg.sender);
+    uint256 accID = LibAccount.getByOwnerOrOperator(components, msg.sender);
     LibTrade.verifyIsTrade(components, id);
     LibTrade.verifyState(components, id, "EXECUTED");
     LibTrade.verifyMaker(components, id, accID);

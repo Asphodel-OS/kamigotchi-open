@@ -21,7 +21,7 @@ import { NullAuction } from 'network/shapes/Auction';
 import { Commit, filterRevealableCommits } from 'network/shapes/Commit';
 import { hasFlag } from 'network/shapes/Flag';
 import { getGachaCommits, getGachaMintData } from 'network/shapes/Gacha';
-import { Kami, queryKamis } from 'network/shapes/Kami';
+import { Kami, getKamiSoulboundEnd, queryKamis } from 'network/shapes/Kami';
 import { getCompAddr } from 'network/shapes/utils';
 import { waitForActionCompletion } from 'network/utils';
 import { playVend } from 'utils/sounds';
@@ -68,6 +68,7 @@ export const GachaModal: UIComponent = {
           getKami: (entity: EntityIndex) => _getKami(world, components, entity, kamiOptions, false),
           getMintConfig: () => getGachaMintConfig(world, components),
           getMintData: (accountID: EntityID) => getGachaMintData(world, components, accountID),
+          getSoulboundEnd: (kami: Kami) => getKamiSoulboundEnd(world, components, kami.id),
           isWhitelisted: (entity: EntityIndex) =>
             hasFlag(world, components, entity, 'MINT_WHITELISTED'),
         },
@@ -190,8 +191,6 @@ export const GachaModal: UIComponent = {
 
     // purchase an item from auction
     const auctionTx = async (item: Item, amt: number) => {
-      const api = apis.get(selectedAddress);
-      if (!api) return console.error(`API not established for ${selectedAddress}`);
       const actionID = uuid() as EntityID;
       actions!.add({
         id: actionID,
@@ -199,7 +198,7 @@ export const GachaModal: UIComponent = {
         params: [item.index, amt],
         description: `Buying ${amt} ${item.name} from auction`,
         execute: async () => {
-          return api.auction.buy(item.index, amt);
+          return api.player.auction.buy(item.index, amt);
         },
       });
 
@@ -264,9 +263,6 @@ export const GachaModal: UIComponent = {
 
     // pull a pet from gacha with a Gacha Ticket
     const pullTx = (amount: number) => {
-      const api = apis.get(selectedAddress);
-      if (!api) return console.error(`API not established for ${selectedAddress}`);
-
       const actionID = uuid() as EntityID;
       actions!.add({
         id: actionID,
@@ -274,7 +270,7 @@ export const GachaModal: UIComponent = {
         params: [amount],
         description: `Minting ${amount} Kami`,
         execute: async () => {
-          return api.gacha.pet.mint(amount);
+          return api.player.gacha.pet.mint(amount);
         },
       });
       return actionID;
@@ -282,9 +278,6 @@ export const GachaModal: UIComponent = {
 
     // reroll a pet with a Reroll Ticket
     const rerollTx = (kamis: Kami[]) => {
-      const api = apis.get(selectedAddress);
-      if (!api) return console.error(`API not established for ${selectedAddress}`);
-
       const actionID = uuid() as EntityID;
       actions!.add({
         id: actionID,
@@ -292,7 +285,7 @@ export const GachaModal: UIComponent = {
         params: [kamis.map((n) => n.name)],
         description: `Rerolling ${kamis.length} Kami`,
         execute: async () => {
-          return api.gacha.pet.reroll(kamis.map((n) => n.id));
+          return api.player.gacha.pet.reroll(kamis.map((n) => n.id));
         },
       });
       return actionID;

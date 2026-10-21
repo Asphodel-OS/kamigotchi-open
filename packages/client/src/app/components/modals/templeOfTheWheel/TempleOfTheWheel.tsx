@@ -14,7 +14,7 @@ import { UIComponent } from 'app/root/types';
 import { useSelected, useVisibility } from 'app/stores';
 import { hoverFx } from 'app/styles/effects';
 import { queryAccountFromEmbedded } from 'network/shapes/Account';
-import { Kami, NullKami } from 'network/shapes/Kami';
+import { isKamiSoulbound, Kami, NullKami } from 'network/shapes/Kami';
 import {
   getRarePityProgress,
   getSacrificeTotal,
@@ -31,7 +31,7 @@ export const TempleOfTheWheel: UIComponent = {
 
     const {
       network,
-      utils: { getKamis, getUncommonPity, getRarePity, getTotalSacrifices },
+      utils: { getKamis, getUncommonPity, getRarePity, getTotalSacrifices, isSoulbound },
     } = (() => {
       const { network } = layers;
       const { world, components } = network;
@@ -46,6 +46,7 @@ export const TempleOfTheWheel: UIComponent = {
           getUncommonPity: () => getUncommonPityProgress(world, components, account),
           getRarePity: () => getRarePityProgress(world, components, account),
           getTotalSacrifices: () => getSacrificeTotal(world, components),
+          isSoulbound: (kami: Kami) => isKamiSoulbound(world, components, kami.id),
         },
       };
     })();
@@ -63,7 +64,7 @@ export const TempleOfTheWheel: UIComponent = {
     useEffect(() => {
       if (!templeOfTheWheelVisible) return;
       const kamis = getKamis();
-      const restingKamis = kamis.filter((kami) => isResting(kami));
+      const restingKamis = kamis.filter((kami) => isResting(kami) && !isSoulbound(kami));
       const options = restingKamis.map((kami) => ({
         image: kami.image,
         text: kami.name,
