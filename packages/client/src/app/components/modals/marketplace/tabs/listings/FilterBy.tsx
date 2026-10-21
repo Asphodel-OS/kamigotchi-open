@@ -6,10 +6,13 @@ import { DropdownToggle } from 'app/components/library/buttons/DropdownToggle';
 import { TraitIcons } from 'assets/images/icons/traits';
 import { playClick } from 'utils/sounds';
 import { AffinityIcons } from 'constants/affinities';
+import { ExpIcon } from 'assets/images/icons/stats';
 import { StatColors, StatIcons } from 'constants/stats';
 import { Trait, TraitType } from 'network/shapes/Trait';
+import { isStatFilterActive } from '../../constants';
 
 const STAT_DEFS = [
+  { key: 'Level', icon: ExpIcon, color: '#A8D8A8', min: 1, max: 50, step: 1 },
   { key: 'Health', icon: StatIcons.health, color: StatColors.health, min: 10, max: 300, step: 10 },
   { key: 'Power', icon: StatIcons.power, color: StatColors.power, min: 10, max: 50, step: 1 },
   { key: 'Violence', icon: StatIcons.violence, color: StatColors.violence, min: 10, max: 50, step: 1 },
@@ -221,7 +224,7 @@ export const FilterBy = ({
           <StatsGrid>
             {STAT_DEFS.map((stat) => {
               const val = localStats[stat.key] ?? stat.min;
-              const isActive = stat.key === 'Slots' ? val > 0 : val > 10;
+              const isActive = isStatFilterActive(stat.key, val);
               const ratio = (val - stat.min) / (stat.max - stat.min);
               return (
                 <StatCard key={stat.key} $color={stat.color} $ratio={ratio}>

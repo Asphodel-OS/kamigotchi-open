@@ -12,6 +12,7 @@ import { getKamidenClient, KamiMarketListing } from 'clients/kamiden';
 import { EntityIndex } from 'engine/recs';
 import { Kami } from 'network/shapes/Kami';
 import { playClick } from 'utils/sounds';
+import { isStatFilterActive } from '../../constants';
 import { formatExpiry, isExpired } from '../../helpers';
 import { Cart } from './Cart';
 import { ListingCard } from './ListingCard';
@@ -171,7 +172,7 @@ export const Listings = ({
   const hasActiveFilters = useMemo(() => {
     const traitActive = Object.values(filters.selected).some((set) => set.size > 0);
     const statActive = Object.entries(filters.stats).some(([key, value]) =>
-      key === 'Slots' ? value > 0 : value > 10
+      isStatFilterActive(key, value)
     );
     const affinityActive = filters.affinity.body !== null || filters.affinity.hand !== null;
     return traitActive || statActive || affinityActive;
@@ -183,7 +184,7 @@ export const Listings = ({
       0
     );
     const statCount = Object.entries(filters.stats).reduce(
-      (sum, [key, value]) => sum + (key === 'Slots' ? (value > 0 ? 1 : 0) : value > 10 ? 1 : 0),
+      (sum, [key, value]) => sum + (isStatFilterActive(key, value) ? 1 : 0),
       0
     );
     const affinityCount = (filters.affinity.body !== null ? 1 : 0) + (filters.affinity.hand !== null ? 1 : 0);
@@ -216,13 +217,13 @@ export const Listings = ({
       if (filters.affinity.hand && traits.hand?.affinity !== filters.affinity.hand) return false;
 
       const meetsStat = (key: string, statTotal?: number) => {
-        const min = filters.stats[key] ?? 10;
-        const base = key === 'Slots' ? 0 : 10;
-        if (min <= base) return true;
+        const min = filters.stats[key];
+        if (min === undefined || !isStatFilterActive(key, min)) return true;
         if (statTotal == null) return false;
         return statTotal >= min;
       };
 
+      if (!meetsStat('Level', kamiDetailed.progress?.level)) return false;
       if (!meetsStat('Health', stats.health?.total)) return false;
       if (!meetsStat('Power', stats.power?.total)) return false;
       if (!meetsStat('Violence', stats.violence?.total)) return false;
