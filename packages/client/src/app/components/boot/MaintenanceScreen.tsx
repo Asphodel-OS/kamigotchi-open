@@ -11,6 +11,13 @@ import { loadingScreens } from 'assets/images/loading';
 // mid-ceremony. Self-contained by design — no stores, providers or network
 // hooks, since none of that exists when it mounts. Banner pick mirrors
 // BootScreen's rotation but seeds locally (no useNetwork store).
+// VITE_MAINTENANCE_TITLE / _MESSAGE override the copy per deploy (e.g. a
+// chain outage) without a code change; unset keeps the generic copy.
+const DISCORD_URL = 'https://discord.gg/eyUAtzZsE8';
+const DEFAULT_TITLE = 'KAMIGOTCHI UNDER MAINTENANCE';
+const DEFAULT_MESSAGE = 'back soon! check the Discord for updates';
+const title = import.meta.env.VITE_MAINTENANCE_TITLE || DEFAULT_TITLE;
+const message = import.meta.env.VITE_MAINTENANCE_MESSAGE || DEFAULT_MESSAGE;
 const bannerKeys = Object.keys(loadingScreens);
 const bannerIndex = Math.floor(Math.random() * bannerKeys.length);
 
@@ -20,8 +27,11 @@ export const MaintenanceScreen = () => {
       <Image src={Object.values(loadingScreens)[bannerIndex]} />
       <Dimmer />
       <StatusContainer>
-        <Title>KAMIGOTCHI UNDER MAINTENANCE</Title>
-        <Subline>back soon! check the Discord for updates</Subline>
+        <Title>{title}</Title>
+        <Subline>{message}</Subline>
+        <DiscordLink href={DISCORD_URL} target='_blank' rel='noopener noreferrer'>
+          join the Discord
+        </DiscordLink>
       </StatusContainer>
       <TagContainer>
         <Tag>banner by: </Tag>
@@ -58,6 +68,7 @@ const StatusContainer = styled.div`
   gap: 3vh;
 
   width: 100%;
+  box-sizing: border-box;
   display: flex;
   flex-flow: column nowrap;
   justify-content: center;
@@ -76,7 +87,24 @@ const Subline = styled.div`
   color: #bbb;
   text-align: center;
   font-size: 2vh;
+  line-height: 3vh;
+  max-width: 120vh;
   text-shadow: 0.2vh 0.2vh 0 #000;
+`;
+
+const DiscordLink = styled.a`
+  color: #fff;
+  font-size: 2vh;
+  text-decoration: none;
+  text-shadow: 0.2vh 0.2vh 0 #000;
+  padding: 1.2vh 2.4vh;
+  border: 0.3vh solid #fff;
+  border-radius: 0.6vh;
+  background-color: rgba(88, 101, 242, 0.85);
+
+  &:hover {
+    background-color: rgba(88, 101, 242, 1);
+  }
 `;
 
 const TagContainer = styled.div`
