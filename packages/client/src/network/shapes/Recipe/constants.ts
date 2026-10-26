@@ -6,6 +6,7 @@ export const NullRecipe: Recipe = {
   id: '0' as EntityID,
   index: 0,
   entity: 0 as EntityIndex,
+  type: '',
   inputs: [],
   outputs: [],
   experience: 0,

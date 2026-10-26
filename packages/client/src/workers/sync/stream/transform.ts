@@ -35,7 +35,7 @@ export const createTransformWorldEvents = (decode: Decode) => {
 
       const value =
         ecsEvent.eventType === 'ComponentValueSet'
-          ? decode(component, ecsEvent.value)
+          ? decode(component, ecsEvent.value!)
           : undefined;
 
       // Since ECS events are coming in ordered over the wire, we check if the following event has a

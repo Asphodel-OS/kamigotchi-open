@@ -1,6 +1,9 @@
-import { EntityIndex, Has, HasValue, runQuery, World } from 'engine/recs';
+import { EntityIndex, World } from 'engine/recs';
 
 import { Components } from 'network/';
+
+// kills are emitted as world events, not stored as entities, so no KillLog entities exist;
+// kill history is served by kamiden (see app/cache/battles)
 
 // query KillLog entities by a killer Kami entity
 export const queryForKiller = (
@@ -8,10 +11,7 @@ export const queryForKiller = (
   components: Components,
   entity: EntityIndex
 ): EntityIndex[] => {
-  if (!entity) return [];
-  const { IsKill, SourceID } = components;
-  const id = world.entities[entity];
-  return Array.from(runQuery([HasValue(SourceID, { value: id }), Has(IsKill)]));
+  return [];
 };
 
 // query KillLog entities by a victim Kami entity
@@ -20,8 +20,5 @@ export const queryForVictim = (
   components: Components,
   entity: EntityIndex
 ): EntityIndex[] => {
-  if (!entity) return [];
-  const { IsKill, TargetID } = components;
-  const id = world.entities[entity];
-  return Array.from(runQuery([HasValue(TargetID, { value: id }), Has(IsKill)]));
+  return [];
 };

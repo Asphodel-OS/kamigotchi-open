@@ -1,8 +1,7 @@
-import { interval, map } from 'rxjs';
 import styled from 'styled-components';
 
 import { ModalHeader, ModalWrapper } from 'app/components/library';
-import { UIComponent } from 'app/root/types';
+import { UIComponent, useLayers } from 'app/root';
 import { SettingsIcon } from 'assets/images/icons/menu';
 import { ShaderStack } from 'app/components/shaders/ShaderStack';
 import { makeSteamLayer } from 'app/components/shaders/SteamShader';
@@ -20,11 +19,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 // Only available in development mode (localhost:3000)
 export const AnimationStudio: UIComponent = {
   id: 'AnimationStudio',
-  requirement: (layers) =>
-    interval(1000).pipe(
-      map(() => ({ network: layers.network }))
-    ),
-  Render: ({ network }) => {
+  Render: () => {
+    const { network } = useLayers();
     // Only allow in development mode (localhost:3000)
     const isDev = window.location.hostname === 'localhost' &&
                   window.location.port === '3000';
@@ -124,7 +120,7 @@ export const AnimationStudio: UIComponent = {
 
     const [blockNumber, setBlockNumber] = useState<number | null>(null);
     useEffect(() => {
-      const sub = (network?.blockNumber$ as any)?.subscribe?.((bn: any) => {
+      const sub = (network as any)?.blockNumber$?.subscribe?.((bn: any) => {
         const n = typeof bn === 'bigint' ? Number(bn) : Number(bn ?? NaN);
         if (!Number.isNaN(n)) setBlockNumber(n);
       });
@@ -325,11 +321,9 @@ export const AnimationStudio: UIComponent = {
               </KamiPreviewHeader>
               <KamiCard
                 kami={simKami}
-                description={[`Status: ${kamiState}`, realKami ? 'Using live Kami data' : 'Fallback mock']}
-                showCooldown
-                showBattery
-                showLevelUp
-                showSkillPoints
+                content={`Status: ${kamiState} · ${realKami ? 'Using live Kami data' : 'Fallback mock'}`}
+                show={{ battery: true, cooldown: true, levelUp: true, skillPoints: true }}
+                tick={tick}
               />
               <KamiControls>
                 <StateButton onClick={() => setKamiState('idle')}>Idle</StateButton>

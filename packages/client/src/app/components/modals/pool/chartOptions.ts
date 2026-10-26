@@ -1,3 +1,5 @@
+import type { ChartOptions } from 'chart.js';
+
 import { fmtAxisDate, fmtValue } from './utils';
 
 const GRID = '#e8e8e8';
@@ -43,7 +45,11 @@ export const RightEdgePlugin = {
   },
 };
 
-export const buildChartOptions = (bounds: Axis, span: Span, trackHover: (args: any) => void) => ({
+export const buildChartOptions = (
+  bounds: Axis,
+  span: Span,
+  trackHover: (args: any) => void
+): ChartOptions<'line'> => ({
   responsive: true,
   maintainAspectRatio: false,
   animation: false,

@@ -23,7 +23,9 @@ export const Controls = ({
       <TopSection>
         <Text size={0.9}>{`Import (${selectedWild.length})`}</Text>
         <IconButton
-          onClick={() => expand && actions.import(selectedWild)}
+          onClick={() => {
+            if (expand) actions.import(selectedWild);
+          }}
           text={'Import'}
           disabled={!expand}
           color='#C2F0C2'

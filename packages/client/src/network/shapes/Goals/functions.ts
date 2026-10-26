@@ -24,7 +24,7 @@ export const canClaim = (goal: Goal, contribution: Contribution | undefined): [b
   if (goal.disabled) return [false, 'This co-op is paused'];
   if (!goal.complete) return [false, 'Goal still in progress (be patient!)'];
 
-  if (!contribution || contribution.score == 0)
+  if (!contribution || contribution.value == 0)
     return [false, 'You did not contribute - stop slacking and lock in, loser.'];
   else if (contribution.claimed) return [false, 'Already claimed!'];
 

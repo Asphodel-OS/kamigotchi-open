@@ -87,7 +87,7 @@ export const Chart = ({
       labels: data.map((d) => new Date(d.time * 1000).toLocaleString()),
       datasets: [
         {
-          type: 'line',
+          type: 'line' as const,
           label: 'Price',
           data: data.map((d) => d.price),
           borderColor: 'rgb(75, 192, 1)',
@@ -95,7 +95,7 @@ export const Chart = ({
           yAxisID: 'y1',
         },
         {
-          type: 'bar',
+          type: 'bar' as const,
           label: 'Sales',
           data: data.map((d) => d.sales),
           backgroundColor: 'rgb(1, 120, 192)',

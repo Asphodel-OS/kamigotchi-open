@@ -24,7 +24,7 @@ export const KamisCollapsed = ({
     HarvestButton: (account: Account, kami: Kami, node: Node) => JSX.Element;
     UseItemButton: (kami: Kami, account: Account, icon: string) => JSX.Element;
     OnyxReviveButton: (account: Account, kami: Kami) => JSX.Element;
-    levelUp: (kami: Kami) => void;
+    levelUp?: (kami: Kami) => void;
   };
   state: {
     displayedKamis: Kami[];
@@ -32,7 +32,7 @@ export const KamisCollapsed = ({
   };
   isVisible: boolean;
   utils: {
-    levelUp: (kami: Kami) => void;
+    levelUp?: (kami: Kami) => void;
     calcExpRequirement: (lvl: number) => number;
     getTempBonuses: (kami: Kami) => Bonus[];
   };

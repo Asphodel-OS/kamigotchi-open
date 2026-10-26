@@ -74,6 +74,8 @@ const HistoryRow = ({
   formatPrice: (wei: string) => string;
 }) => {
   const kami = resolveKami(order.kamiIndex);
+  const total = order.total ?? 0;
+  const quantity = order.quantity ?? 0;
 
   return (
     <Row>
@@ -91,19 +93,17 @@ const HistoryRow = ({
               />
             )}
           </OrderKami>
-        ) : getBidProgress(order.total, order.quantity) ? (
+        ) : getBidProgress(total, quantity) ? (
           <TextTooltip
-            text={[
-              `${order.total - order.quantity}/${order.total} kami in this bid have already been purchased.`,
-            ]}
+            text={[`${total - quantity}/${total} kami in this bid have already been purchased.`]}
           >
             <CellText>
-              {order.bidType === 'Kami' ? `Kami #${order.kamiIndex} ` : ''}
-              {getBidProgress(order.total, order.quantity)}
+              {order.bidType === 'specific' ? `Kami #${order.kamiIndex} ` : ''}
+              {getBidProgress(total, quantity)}
             </CellText>
           </TextTooltip>
         ) : (
-          <CellText>{order.bidType === 'Kami' ? `Kami #${order.kamiIndex}` : ''}</CellText>
+          <CellText>{order.bidType === 'specific' ? `Kami #${order.kamiIndex}` : ''}</CellText>
         )}
       </Column>
       <Column>

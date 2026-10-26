@@ -1,5 +1,5 @@
 import { Components, ComponentValue, EntityID, SchemaOf } from 'engine/recs';
-import { Interface, Result } from 'ethers';
+import { InterfaceAbi, Result } from 'ethers';
 
 import { ProviderConfig } from 'engine/providers';
 import { Contracts } from 'engine/types';
@@ -7,7 +7,7 @@ import { TxMetadata } from 'engine/types/ecs-stream/ecs-stream';
 
 export type ContractConfig = {
   address: string;
-  abi: Interface;
+  abi: InterfaceAbi;
 };
 
 export type ContractsConfig<C extends Contracts> = {

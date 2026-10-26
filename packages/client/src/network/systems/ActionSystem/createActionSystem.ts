@@ -22,12 +22,12 @@ import { ActionRequest } from './types';
 
 export type ActionSystem = ReturnType<typeof createActionSystem>;
 
-export function createActionSystem<M = undefined>(
+export function createActionSystem(
   world: World,
   txReduced$: Observable<string>,
   provider: Provider
 ) {
-  const Action = defineActionComponent<M>(world);
+  const Action = defineActionComponent<string>(world);
   const requests = new Map<EntityIndex, ActionRequest>();
 
   /**

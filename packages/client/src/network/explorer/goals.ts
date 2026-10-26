@@ -9,6 +9,6 @@ export const goals = (world: World, components: Components) => {
     get: (entity: EntityIndex) => getGoal(world, components, entity),
     getByIndex: (index: number) => getGoalByIndex(world, components, index),
     contributions: (goalIndex: number) =>
-      getContributions(world, components, getGoalByIndex(world, components, goalIndex).id),
+      getContributions(components, getGoalByIndex(world, components, goalIndex).id),
   };
 };

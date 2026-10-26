@@ -36,7 +36,7 @@ export const KamiList = ({
     HarvestButton: (account: Account, kami: Kami, node: Node) => JSX.Element;
     UseItemButton: (kami: Kami, account: Account, icon: string) => JSX.Element;
     OnyxReviveButton: (account: Account, kami: Kami) => JSX.Element;
-    levelUp: (kami: Kami) => void;
+    levelUp?: (kami: Kami) => void;
   };
   state: {
     displayedKamis: Kami[];

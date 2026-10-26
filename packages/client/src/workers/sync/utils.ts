@@ -1,7 +1,7 @@
 import { awaitPromise, range, to256BitString } from '@mud-classic/utils';
 import { abi as worldAbi } from 'abi/World.json';
 import { Components, EntityID } from 'engine/recs';
-import { Interface, Provider } from 'ethers';
+import { Contract, Interface, JsonRpcProvider, Provider } from 'ethers';
 import { Observable, concatMap, map, of } from 'rxjs';
 import { World } from 'types/ethers-contracts';
 
@@ -177,7 +177,7 @@ export async function fetchEventsInBlockRangeChunked(
  * @returns World contract topics for the `ComponentValueSet` and `ComponentValueRemoved` events.
  */
 export function createWorldTopics() {
-  return createTopics<{ World: World }>({
+  return createTopics<{ World: World & Contract }>({
     World: { abi: new Interface(worldAbi), topics: ['ComponentValueSet', 'ComponentValueRemoved'] },
   });
 }
@@ -191,7 +191,7 @@ export function createWorldTopics() {
  * @returns Function to fetch World contract events in a given block range.
  */
 export function createFetchWorldEventsInBlockRange<C extends Components>(
-  provider: Provider,
+  provider: JsonRpcProvider,
   worldConfig: ContractConfig,
   batch: boolean | undefined,
   decode: ReturnType<typeof createDecode>

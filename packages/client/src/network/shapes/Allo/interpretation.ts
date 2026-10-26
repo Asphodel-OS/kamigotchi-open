@@ -1,5 +1,5 @@
 import * as placeholder from 'assets/images/icons/placeholder.png';
-import { World } from 'engine/recs';
+import { EntityIndex, World } from 'engine/recs';
 import { Components } from 'network/components';
 import { Allo } from '.';
 import { getBonusesByParent, parseBonusText } from '../Bonus';
@@ -61,6 +61,7 @@ const parseBasic = (world: World, components: Components, allo: Allo): DetailedE
 const parseBonus = (world: World, components: Components, allo: Allo): DetailedEntity[] => {
   const bonuses = getBonusesByParent(world, components, allo.id);
   return bonuses.map((bonus) => ({
+    entity: 0 as EntityIndex,
     ObjectType: 'BONUS',
     name: parseBonusText(bonus),
     description: parseBonusText(bonus),
@@ -74,6 +75,7 @@ const parseDroptable = (world: World, components: Components, allo: Allo): Detai
 
   // consolidate individual entries into one
   return {
+    entity: 0 as EntityIndex,
     ObjectType: 'DROPTABLE',
     image: placeholder,
     name: 'Potential drops',
@@ -97,6 +99,7 @@ const parseStat = (allo: Allo): DetailedEntity => {
   const quantity = '+' + parseQuantityStat(name, stat);
 
   return {
+    entity: 0 as EntityIndex,
     ObjectType: 'STAT',
     image: getStatImage(name),
     name,

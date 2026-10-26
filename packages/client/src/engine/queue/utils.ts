@@ -381,7 +381,7 @@ export async function sendTx(
           );
         }
       }
-      return reconcileSubmittedTx(signer.provider, { txHash, from, nonce });
+      return reconcileSubmittedTx(signer.provider, { txHash: txHash!, from, nonce });
     }
 
     throw e;

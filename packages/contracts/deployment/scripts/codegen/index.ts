@@ -4,3 +4,4 @@ export { generateImports } from './imports';
 export { clearInitWorld, generateInitWorld } from './initWorld';
 export { genClientSystemData, genContractSystemData } from './mappings';
 export { generateComponentSchemas } from './schemas';
+export { pruneFactoryExports } from './typechain';

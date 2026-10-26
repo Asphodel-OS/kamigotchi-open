@@ -89,5 +89,7 @@ export const fromStore = async (store: StateStore): Promise<StateCache> => {
     lastKamigazeEntity,
     lastKamigazeComponent,
     kamigazeNonce,
+    lastStateValuesBlock: 0,
+    lastStateRemovalsBlock: 0,
   };
 };

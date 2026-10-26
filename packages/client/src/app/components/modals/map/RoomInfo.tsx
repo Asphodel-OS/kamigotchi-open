@@ -18,7 +18,6 @@ export const RoomInfo = ({
   return (
     <Container>
       <Title>{room.name}</Title>
-      {room.owner && <Description>{room.owner.name}</Description>}
       <Description>{room.description}</Description>
     </Container>
   );

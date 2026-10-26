@@ -15,6 +15,8 @@ export const NullAccount: Account = {
   roomIndex: 0,
   reputation: {
     agency: 0,
+    mina: 0,
+    nursery: 0,
   },
   stamina: { base: 0, shift: 0, boost: 0, sync: 0, rate: 0, total: 20 },
   time: {

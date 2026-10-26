@@ -11,13 +11,13 @@ export const ChartOptions = {
       beginAtZero: true,
       display: true,
       ticks: { display: false },
-      position: 'right',
+      position: 'right' as const,
     },
     y2: {
       beginAtZero: true,
       display: true,
       ticks: { display: false },
-      position: 'left',
+      position: 'left' as const,
       grid: {
         drawOnChartArea: false,
       },

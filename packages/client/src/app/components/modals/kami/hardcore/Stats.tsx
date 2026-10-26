@@ -13,7 +13,7 @@ export const Stats = ({
   return (
     <Container>
       {/* <Title size={0.9}>Stats</Title> */}
-      {Object.entries(kami.stats).map(([key, value]) => {
+      {Object.entries(kami.stats!).map(([key, value]) => {
         if (key === 'stamina') return null;
         const description = StatDescriptions[key as keyof typeof StatDescriptions];
         const icon = StatIcons[key as keyof typeof StatIcons];

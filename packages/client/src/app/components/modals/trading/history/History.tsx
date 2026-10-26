@@ -5,7 +5,9 @@ import styled from 'styled-components';
 import { TradeType } from 'app/cache/trade';
 import { Trade as TradeHistoryType } from 'clients/kamiden/proto';
 import { Account, Item } from 'network/shapes';
+import { Allo } from 'network/shapes/Allo';
 import { Trade } from 'network/shapes/Trade/types';
+import { DetailedEntity } from 'network/shapes/utils';
 import { Offers as OffersTable } from '../orderbook/offers/Offers';
 
 export const History = ({
@@ -23,6 +25,8 @@ export const History = ({
     getItemByIndex: (index: number) => Item;
     getAccountByID: (id: EntityID) => Account;
     getTradeHistory: (tradeHistory: TradeHistoryType) => Trade;
+    parseAllos: (allo: Allo[]) => DetailedEntity[];
+    displayItemRequirements: (item: Item) => string;
   };
 }) => {
   const [typeFilter, setTypeFilter] = useState<TradeType>('All' as any);
@@ -45,7 +49,11 @@ export const History = ({
           account: data.account as unknown as any,
           trades: data.tradeHistory.map((th) => utils.getTradeHistory(th)),
         }}
-        utils={{ getItemByIndex: utils.getItemByIndex }}
+        utils={{
+          getItemByIndex: utils.getItemByIndex,
+          parseAllos: utils.parseAllos,
+          displayItemRequirements: utils.displayItemRequirements,
+        }}
         extraFilter={(t) =>
           t.state !== 'PENDING' &&
           (t.maker?.entity === data.account.entity || t.taker?.entity === data.account.entity)

@@ -12,8 +12,8 @@ export const CraftMenuButton = () => {
     leaderboard: false,
     node: false,
     marketplace: false,
-    portal: false,
     presale: false,
+    tokenPortal: false,
     trading: false,
   };
 

@@ -5,10 +5,6 @@ export const NullAuction: Auction = {
   id: '0' as EntityID,
   entity: 0 as EntityIndex,
   ObjectType: 'AUCTION',
-  items: {
-    outIndex: 0,
-    inIndex: 0,
-  },
   params: {
     value: 0,
     period: 0,

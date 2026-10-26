@@ -10,7 +10,7 @@ export default defineConfig({
     dsv(),
     react(),
     // Add bundle analyzer in dev
-    process.env.ANALYZE &&
+    !!process.env.ANALYZE &&
       visualizer({
         filename: 'dist/bundle-analysis.html',
         open: true,

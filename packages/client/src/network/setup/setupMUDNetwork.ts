@@ -137,7 +137,6 @@ export async function setupMUDNetwork<
         ...syncWorkerConfig,
         provider: providerConfig,
         worldContract: { abi: WorldAbi, address: networkConfig.worldAddress },
-        initialBlockNumber: networkConfig.initialBlockNumber ?? 0,
         disableCache: networkConfig.devMode, // Disable cache on local networks (hardhat / anvil)
         fetchSystemCalls: options?.fetchSystemCalls,
       },

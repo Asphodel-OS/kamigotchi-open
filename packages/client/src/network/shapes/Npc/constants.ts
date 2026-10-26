@@ -8,4 +8,5 @@ export const NullNPC: NPC = {
   entity: 0 as EntityIndex,
   name: '',
   roomIndex: 0,
+  listings: [],
 };

@@ -13,6 +13,5 @@ export type TxCall = (
   callOverrides?: Overrides
 ) => Promise<{
   hash: string;
-  wait: () => Promise<TransactionReceipt>;
-  response: Promise<any>;
+  receipt?: TransactionReceipt;
 }>;

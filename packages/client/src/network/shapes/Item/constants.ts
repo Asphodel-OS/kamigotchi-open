@@ -7,12 +7,14 @@ export const NullItem: Item = {
   entity: 0 as EntityIndex,
   index: 0,
   type: '',
+  rarity: 0,
   for: '',
   image: '',
   name: 'None',
   requirements: { use: [] },
-  effects: { use: [] },
+  effects: { use: [], equip: [] },
   is: {
+    disabled: false,
     tradeable: false,
   },
 };

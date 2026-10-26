@@ -7,7 +7,7 @@ import {
   getTradeHistory,
   getTradeHistoryState,
   State,
-  Timestamp,
+  Timestamps,
   Trade,
 } from 'network/shapes/Trade';
 import { HistoryUpdated, TradeCache } from './base';
@@ -24,7 +24,7 @@ export const processHistory = (
   if (TradeCache.has(id)) {
     trade = TradeCache.get(id)!;
     trade.state = getTradeHistoryState(comps, tradeHistory) as State;
-    trade.timestamps = getTradeHistoryState(comps, tradeHistory, true) as Timestamp;
+    trade.timestamps = getTradeHistoryState(comps, tradeHistory, true) as Timestamps;
     // if the trade is not in the cache, create a new one
   } else {
     trade = getTradeHistory(world, comps, tradeHistory, {

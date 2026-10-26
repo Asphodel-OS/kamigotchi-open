@@ -16,7 +16,7 @@ export const Warning = ({
   };
   tooltip?: string[];
   action?: {
-    onClick: () => void;
+    onClick?: () => void;
     label?: string;
   };
 }) => {
