@@ -9,7 +9,7 @@ import { DeployConfig, WorldAddresses } from '../utils';
 import { filterDeployConfigByEnv, getCompIDByName, getSystemIDByName } from '../utils/deploy';
 import { getCompAddr } from '../utils/addresses';
 import { UintCompABI } from '../contracts/mappings/worldABIs';
-import { readFile, generateRegID } from '../world/state/utils';
+import { readFile, generateRegID, toItemRarity } from '../world/state/utils';
 import { getProvider } from '../utils/chain';
 
 ///////////////
@@ -416,6 +416,13 @@ async function run() {
 
     const indexContract = new ethers.Contract(indexAddr, UintCompABI, provider);
 
+    // item rarity is only written at creation, so compare it too: drift reads as STALE
+    let rarityContract: ethers.Contract | undefined;
+    if (entityType.label === 'Items') {
+      const rarityAddr = await getCompAddr('component.rarity');
+      if (rarityAddr !== ZERO_ADDR) rarityContract = new ethers.Contract(rarityAddr, UintCompABI, provider);
+    }
+
     console.log(`\n  ${entityType.label} (${rows.length} entries)`);
 
     for (const row of rows) {
@@ -432,10 +439,19 @@ async function run() {
 
       try {
         const onChain: boolean = await indexContract.has(entityID);
-        const state = classifyState(csvStatus, onChain);
+        let state = classifyState(csvStatus, onChain);
+        let detail = STATE_DETAIL[state];
+        const expected = toItemRarity(row['Rarity']);
+        if (rarityContract && onChain && state === 'CURRENT' && expected > 0) {
+          const actual = (await rarityContract.has(entityID)) ? Number(await rarityContract.get(entityID)) : 0;
+          if (actual !== expected) {
+            state = 'STALE';
+            detail = `rarity ${actual} on-chain, ${expected} (${row['Rarity']}) in CSV: items setRarity`;
+          }
+        }
         const icon = STATE_ICONS[state];
-        stateResults.push({ category: entityType.label, name: `${name} (#${idx})`, status: csvStatus, onChain, state, detail: STATE_DETAIL[state] });
-        console.log(`    ${icon}  ${entityType.label} #${idx} (${name})  [${state}]`);
+        stateResults.push({ category: entityType.label, name: `${name} (#${idx})`, status: csvStatus, onChain, state, detail });
+        console.log(`    ${icon}  ${entityType.label} #${idx} (${name})  [${state}]${state === 'STALE' ? `  ${detail}` : ''}`);
       } catch (e: any) {
         stateResults.push({ category: entityType.label, name: `${name} (#${idx})`, status: csvStatus, onChain: false, state: 'ERROR', detail: `RPC error: ${e.message?.slice(0, 60)}` });
         console.log(`    !!  ${entityType.label} #${idx} (${name})  [ERROR]`);

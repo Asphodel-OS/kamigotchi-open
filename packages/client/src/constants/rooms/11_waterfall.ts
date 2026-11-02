@@ -1,4 +1,5 @@
 import { triggerGoalModal } from 'app/triggers/triggerGoalModal';
+import { triggerOfferingModal } from 'app/triggers/triggerOfferingModal';
 import { triggerPetNamingModal } from 'app/triggers/triggerPetNamingModal';
 import {
   bgTremorsDay,
@@ -15,10 +16,36 @@ export const room11: Room = {
     key: 'glitter',
     path: glitter,
   },
+  // lake and shore first: later boxes sit on top, so the shrine, lantern and board keep their clicks
   objects: [
     {
+      name: 'lake shore',
+      coordinates: { x1: 10, y1: 56, x2: 26, y2: 88 },
+      onClick: triggerOfferingModal,
+    },
+    {
+      name: 'lake',
+      coordinates: { x1: 26, y1: 58, x2: 40, y2: 94 },
+      onClick: triggerOfferingModal,
+    },
+    {
+      name: 'lake',
+      coordinates: { x1: 72, y1: 56, x2: 96, y2: 94 },
+      onClick: triggerOfferingModal,
+    },
+    {
+      name: 'lake',
+      coordinates: { x1: 96, y1: 62, x2: 128, y2: 80 },
+      onClick: triggerOfferingModal,
+    },
+    {
+      name: 'waterfall',
+      coordinates: { x1: 66, y1: 2, x2: 114, y2: 44 },
+      dialogue: 113,
+    },
+    {
       name: 'ema board',
-      coordinates: { x1: 92, y1: 76, x2: 127, y2: 115 },
+      coordinates: { x1: 93, y1: 80, x2: 127, y2: 114 },
       onClick: triggerPetNamingModal,
     },
     {
@@ -28,13 +55,8 @@ export const room11: Room = {
     },
     {
       name: 'small shrine',
-      coordinates: { x1: 39, y1: 62, x2: 77, y2: 108 },
+      coordinates: { x1: 40, y1: 58, x2: 72, y2: 102 },
       onClick: () => triggerGoalModal([14]),
-    },
-    {
-      name: 'waterfall',
-      coordinates: { x1: 59, y1: 30, x2: 117, y2: 60 },
-      dialogue: 113,
     },
   ],
 };

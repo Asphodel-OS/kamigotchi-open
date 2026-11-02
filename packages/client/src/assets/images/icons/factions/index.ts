@@ -1,4 +1,4 @@
-import nursery from './kamigotchi_nursery.png';
+import nursery from '../menu/obolshop_3.png';
 import agency from './kamigotchi_tourism_agency.png';
 import mina from './minas_shop.png';
 

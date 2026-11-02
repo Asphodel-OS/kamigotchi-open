@@ -61,6 +61,7 @@ const IconTile = styled.div<{ kind?: ObjectiveIcon['kind'] }>`
     width: ${({ kind }) => (kind === 'room' ? '100%' : '1.35vw')};
     height: ${({ kind }) => (kind === 'room' ? '100%' : '1.35vw')};
     object-fit: cover;
+    image-rendering: ${({ kind }) => (kind === 'room' ? 'auto' : 'pixelated')};
   }
 `;
 

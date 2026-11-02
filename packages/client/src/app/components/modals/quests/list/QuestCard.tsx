@@ -1,7 +1,13 @@
 import styled from 'styled-components';
 
 import { ActionListButton, TextTooltip } from 'app/components/library';
-import { getObjectiveIcon, ObjectiveRow, Palette, RewardChip } from 'app/components/library/pastel';
+import {
+  getObjectiveIcon,
+  getQuestTint,
+  ObjectiveRow,
+  Palette,
+  RewardChip,
+} from 'app/components/library/pastel';
 import { useSelected } from 'app/stores';
 import { triggerQuestDetailsModal } from 'app/triggers/triggerQuestDetailsModal';
 import { mainQuestIcon } from 'assets/images/icons/misc';
@@ -56,17 +62,18 @@ export const QuestCard = ({
     return tracking.startsWith('[') ? tracking.slice(1, -1) : undefined;
   };
 
-  // get the Faction image of a Quest based on whether it has a REPUTATION reward
-  // NOTE: hardcoded to agency for now
-  const getFactionStamp = (quest: Quest) => {
-    const reward = quest.rewards.find((r) => r.type === 'REPUTATION');
-    if (!reward) return null;
-    const index = reward.index ?? 0;
+  // one faction stamp per faction the quest pays reputation to
+  const getFactionStamps = (quest: Quest) => {
+    const reps = quest.rewards.filter((r) => r.type === 'REPUTATION');
+    const indices = [...new Set(reps.map((r) => r.index ?? 0))].sort((a, b) => a - b);
+    return indices.map((index) => ({ index, stamp: getFactionStamp(index) }));
+  };
 
+  const getFactionStamp = (index: number) => {
     let iconKey = '';
     if (index === 1) iconKey = 'agency';
     else if (index === 2) iconKey = 'mina';
-    else if (index === 3) iconKey = 'kami';
+    else if (index === 3) iconKey = 'nursery';
 
     const key = `faction-${index}`;
     if (!imageCache.has(key)) {
@@ -140,9 +147,9 @@ export const QuestCard = ({
   /////////////////
   // RENDER
 
-  const factionStamp = getFactionStamp(quest);
+  const factionStamps = getFactionStamps(quest);
   const isMainQuest = quest.typeComp === 'MAIN';
-  const tint = quest.repeatable ? CardTints.daily : isMainQuest ? CardTints.main : CardTints.side;
+  const tint = getQuestTint(quest);
   const buttonText = getButtonText(status);
   const rewards = quest.rewards.filter((r) => r.type !== 'NFT');
 
@@ -165,7 +172,9 @@ export const QuestCard = ({
               </TextTooltip>
             </Faction>
           )}
-          {factionStamp && <Faction>{factionStamp}</Faction>}
+          {factionStamps.map(({ index, stamp }) => (
+            <Faction key={index}>{stamp}</Faction>
+          ))}
         </IconsContainer>
       </Head>
 
@@ -201,9 +210,6 @@ export const QuestCard = ({
     </Container>
   );
 };
-
-// card tint by quest kind: daily blue, main green, side golden brown
-const CardTints = { daily: '#eaf3fd', main: '#eef8ef', side: '#faf6ec' };
 
 const Container = styled.div`
   display: flex;
@@ -303,5 +309,6 @@ const Button = styled.button<{ primary: boolean }>`
 const IconImage = styled.img<{ size: number }>`
   height: ${({ size }) => size}vw;
   width: ${({ size }) => size}vw;
+  image-rendering: pixelated;
   user-drag: none;
 `;

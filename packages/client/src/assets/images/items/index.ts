@@ -80,9 +80,12 @@ import homecoming_data_chip from './homecoming_data_chip.png';
 import honeydew_scale from './honeydew_scale.png';
 import hostility_potion from './hostility_potion.png';
 import ice_cream from './ice_cream.png';
+import igors_amulet from './igors_amulet.png';
+import igors_candy from './igors_candy.png';
 import ingot from './ingot.png';
 import inverted_teardrop_jewel from './inverted_teardrop_jewel.png';
 import irradiated_root from './irradiated_root.png';
+import jack_o_lantern from './jack_o_lantern.png';
 import kami_mochi from './kami_mochi.png';
 import kamigotchi_world_citizen_giftbox from './kamigotchi_world_citizen_giftbox.png';
 import kamigotchi_world_passport from './kamigotchi_world_passport.png';
@@ -147,6 +150,7 @@ import sarcophagus_honey from './sarcophagus_honey.png';
 import scrap_metal from './scrap_metal.png';
 import screwdriver from './screwdriver.png';
 import shredded_mint from './shredded_mint.png';
+import silt_caked_box from './silt_caked_box.png';
 import spice_grinder from './spice_grinder.png';
 import spirit_glue from './spirit_glue.png';
 import stone from './stone.png';
@@ -264,9 +268,12 @@ export const ItemImages = {
   honeydew_scale: honeydew_scale,
   hostility_potion: hostility_potion,
   ice_cream: ice_cream,
+  igors_amulet: igors_amulet,
+  igors_candy: igors_candy,
   ingot: ingot,
   inverted_teardrop_jewel: inverted_teardrop_jewel,
   irradiated_root: irradiated_root,
+  jack_o_lantern: jack_o_lantern,
   kami_mochi: kami_mochi,
   kamigotchi_world_citizen_giftbox: kamigotchi_world_citizen_giftbox,
   kamigotchi_world_passport: kamigotchi_world_passport,
@@ -331,6 +338,7 @@ export const ItemImages = {
   scrap_metal: scrap_metal,
   screwdriver: screwdriver,
   shredded_mint: shredded_mint,
+  silt_caked_box: silt_caked_box,
   spice_grinder: spice_grinder,
   spirit_glue: spirit_glue,
   stone: stone,

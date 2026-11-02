@@ -59,6 +59,19 @@ export function itemsAPI(generateCallData: GenerateCallData, compiledCalls: stri
     compiledCalls.push(callData);
   }
 
+  // set an item's rarity (the registry skips token-backed items); a call burns ~258k gas
+  // on Yominet, well above forge's estimate, so it carries its own limit
+  async function setRarity(index: number, rarity: number) {
+    const callData = generateCallData(
+      'system.item.registry',
+      [index, rarity],
+      'setRarity',
+      ['uint32', 'uint32'],
+      '400000'
+    );
+    compiledCalls.push(callData);
+  }
+
   async function enable(index: number) {
     const callData = generateCallData('system.item.registry', [index], 'enable');
     compiledCalls.push(callData);
@@ -193,6 +206,7 @@ export function itemsAPI(generateCallData: GenerateCallData, compiledCalls: stri
       },
     },
     set: {
+      rarity: setRarity,
       slot: setSlot,
     },
     delete: remove,

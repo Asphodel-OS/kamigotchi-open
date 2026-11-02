@@ -100,6 +100,7 @@ const Box = styled.div`
 
 const Icon = styled.img`
   height: 1.5vw;
+  image-rendering: pixelated;
 `;
 
 const Text = styled.p`

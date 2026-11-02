@@ -1,6 +1,6 @@
 import { AdminAPI } from '../../api';
 import { getSheet, stringToNumberArray, toDelete, toRevise } from '../utils';
-import { addToolRequirement } from './requirements';
+import { addRoomRequirement, addToolRequirement } from './requirements';
 
 // initialize a single recipe from a csv entry. this does not include requirements
 export async function initRecipe(api: AdminAPI, entry: any) {
@@ -70,6 +70,7 @@ export async function initRecipes(api: AdminAPI, indices?: number[], all?: boole
     const success = await initRecipe(api, entry);
     if (!success) continue;
     await addToolRequirement(api, entry);
+    await addRoomRequirement(api, entry);
   }
 }
 

@@ -13,18 +13,24 @@ export type SpeechLine = {
 };
 export type SpeechGroup = SpeechLine & { lines: { text: string; index: number }[] };
 
-const SPEAKER_TAG = /^([A-Za-z][A-Za-z0-9 .'-]{0,23}):\s*(.+)$/;
+const SPEAKER_TAG = /^([A-Za-z][A-Za-z0-9 .'-]{0,23}|\?\?\?):\s*(.+)$/;
 const WRAPPING_QUOTES = /^[“"]|[”"]$/g;
+
+// unnamed speakers: the npc's card, but the tag as the name ("???" is Igor before he introduces himself)
+const HiddenSpeakers: Record<string, string> = {
+  '???': 'Igor',
+};
 
 // "NAME: “line”" -> speaker + unquoted line; a tag counts if it is a known npc or ALL CAPS
 export const parseSpeechLine = (raw: string): SpeechLine => {
   const match = raw.match(SPEAKER_TAG);
   if (!match) return { text: raw };
   const [, tag, rest] = match;
-  const npc = getNpcByName(tag);
+  const hiddenNpc = HiddenSpeakers[tag];
+  const npc = getNpcByName(hiddenNpc ?? tag);
   if (!npc && tag !== tag.toUpperCase()) return { text: raw };
   return {
-    speaker: npc?.name ?? tag,
+    speaker: hiddenNpc ? tag : (npc?.name ?? tag),
     npc,
     pfp: npc ? (getNpcPfp(npc.name) ?? npc.img) : undefined,
     pfpZoom: npc ? getNpcPfpZoom(npc.name) : 1,

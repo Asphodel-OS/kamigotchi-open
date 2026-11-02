@@ -5,6 +5,7 @@ import bgOriginal from './backgrounds/original.png';
 import bgPlaytestDay from './backgrounds/glow-a.png';
 import bgPlaytestEvening from './backgrounds/glow-b.png';
 import bgPlaytestNight from './backgrounds/glow-c.png';
+import bgHalloween from './backgrounds/glow-halloween.gif';
 import bgPretest from './backgrounds/pretest.png';
 
 import objectClearing from './objects/clearing.png';
@@ -13,6 +14,7 @@ import objectHollowStump from './objects/hollow-stump.png';
 import objectShopDoor from './objects/shop-door.png';
 
 export {
+  bgHalloween,
   bgOriginal,
   bgPlaytestDay,
   bgPlaytestEvening,

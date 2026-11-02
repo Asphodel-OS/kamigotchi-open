@@ -10,6 +10,7 @@ export const ModalWrapper = ({
   canExit,
   children,
   footer,
+  frameless,
   header,
   id,
   noInternalBorder,
@@ -27,6 +28,7 @@ export const ModalWrapper = ({
   canExit?: boolean;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  frameless?: boolean; // the modal draws, sizes and centers its own frame; the rest of its area is click-through
   header?: React.ReactNode;
   id: keyof Modals;
   noInternalBorder?: boolean;
@@ -99,12 +101,14 @@ export const ModalWrapper = ({
       id={id}
       isOpen={isVisible}
       isDisplayed={shouldDisplay}
+      frameless={!!frameless}
       overlay={!!overlay}
       style={gridStyle}
       shuffle={shuffle}
     >
       <Content
         backgroundColor={backgroundColor}
+        frameless={!!frameless}
         isOpen={isVisible}
         truncate={truncate}
         data-resizable={id === 'trading'}
@@ -116,6 +120,8 @@ export const ModalWrapper = ({
           </ButtonRow>
         )}
         <Children
+          frameless={!!frameless}
+          isOpen={isVisible}
           scrollBarColor={scrollBarColor}
           noScroll={noScroll}
           noPadding={noPadding}
@@ -146,6 +152,7 @@ const Shuffle = keyframes`
 // Wrapper is an invisible animated wrapper around all modals sans any frills.
 // isOpen drives the fade animations; isDisplayed lags close by the fade-out duration.
 const Wrapper = styled.div<{
+  frameless: boolean;
   isOpen: boolean;
   isDisplayed: boolean;
   overlay: boolean;
@@ -155,7 +162,7 @@ const Wrapper = styled.div<{
   position: ${({ overlay }) => (overlay ? 'relative' : 'static')};
   z-index: ${({ overlay }) => (overlay ? 3 : 0)};
   /* fading-out modals must not eat clicks; Content drops pointer-events too */
-  pointer-events: ${({ isOpen }) => (isOpen ? 'auto' : 'none')};
+  pointer-events: ${({ isOpen, frameless }) => (isOpen && !frameless ? 'auto' : 'none')};
   ${({ isOpen, shuffle }) => css`
     animation: ${isOpen
         ? css`
@@ -173,6 +180,7 @@ const Wrapper = styled.div<{
 `;
 
 const Content = styled.div<{
+  frameless?: boolean;
   isOpen: boolean;
   truncate?: boolean;
   backgroundColor?: string;
@@ -203,6 +211,9 @@ const Content = styled.div<{
     &::-webkit-scrollbar { display: none; }
   }
   background-color: ${({ backgroundColor }) => backgroundColor || 'white'};
+  ${({ frameless }) =>
+    frameless &&
+    `border: none; border-radius: 0; background-color: transparent; pointer-events: none;`}
 `;
 
 const ButtonRow = styled.div`
@@ -231,6 +242,8 @@ const Footer = styled.div<{ noBorder?: boolean }>`
 `;
 
 const Children = styled.div<{
+  frameless?: boolean;
+  isOpen?: boolean;
   noPadding?: boolean;
   scrollBarColor?: string;
   noScroll?: boolean;
@@ -263,6 +276,8 @@ const Children = styled.div<{
     scrollbar-width: none;
     &::-webkit-scrollbar { display: none; }
   `}
+  ${({ frameless, isOpen }) =>
+    frameless && `pointer-events: none; & > * { pointer-events: ${isOpen ? 'auto' : 'none'}; }`}
 `;
 
 const fadeIn = keyframes`

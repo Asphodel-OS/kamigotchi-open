@@ -11,6 +11,7 @@ export const Palette = {
   button: { bg: '#c9ecd3', hover: '#b3e3c1', disabled: '#ecebe6' },
   info: { bg: '#e1efff', hover: '#cfe4fd' },
   neutral: { bg: '#efeee9', edge: '#bdb8aa' },
+  warn: { bg: '#fbe4df', edge: '#c8553d' },
 };
 
 const TierColors: Record<string, { bg: string; edge: string }> = {

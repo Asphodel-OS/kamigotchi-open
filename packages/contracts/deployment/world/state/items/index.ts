@@ -6,5 +6,6 @@ export {
   initItems,
   initLocalItems,
   reviseItems,
+  setItemRarities,
 } from './items';
 export { addRequirement } from './requirements';

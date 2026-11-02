@@ -13,6 +13,7 @@ export const Dialogue = ({
   justCompleted,
   isModalOpen,
   onOutroFinished,
+  tint,
 }: {
   text: string;
   completionText?: string;
@@ -21,6 +22,7 @@ export const Dialogue = ({
   isAccepted: boolean;
   justCompleted: boolean;
   onOutroFinished?: () => void;
+  tint?: string; // the quest's card tint, painted behind the dialogue to match its card in the list
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const userScrolledRef = useRef(false);
@@ -44,7 +46,7 @@ export const Dialogue = ({
   const showOutro = isComplete && !!completionText;
 
   return (
-    <Scroll ref={scrollRef} onScroll={handleScroll}>
+    <Scroll ref={scrollRef} onScroll={handleScroll} $tint={tint}>
       <Card>
         <SpeechTypewriter
           text={text}
@@ -71,11 +73,12 @@ export const Dialogue = ({
   );
 };
 
-const Scroll = styled.div`
+const Scroll = styled.div<{ $tint?: string }>`
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding: 1vw 1.2vw;
+  background: ${({ $tint }) => $tint ?? 'transparent'};
 
   display: flex;
   flex-direction: column;

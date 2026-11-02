@@ -1,5 +1,5 @@
 import { AdminAPI } from '../../api';
-import { getItemImage, getSheet, readFile, toRevise } from '../utils';
+import { getItemImage, getSheet, readFile, toItemRarity, toRevise } from '../utils';
 import { addAllos } from './allos';
 import { addRequirements, addTypeRequirement } from './requirements';
 
@@ -95,6 +95,26 @@ export async function reviseItems(api: AdminAPI, overrideIndices?: number[]) {
   await initItems(api, indices);
 }
 
+// re-sync on-chain rarity from the sheet, for the given items or every item if unspecified.
+// rarity is only written at creation, so this fixes drift without a delete and re-init
+export async function setItemRarities(api: AdminAPI, indices?: number[]) {
+  const itemsCSV = await getSheet('items', 'items');
+  if (!itemsCSV) return console.log('No items/items.csv found');
+
+  console.log('\n==SETTING ITEM RARITIES==');
+  for (const row of itemsCSV) {
+    const index = Number(row['Index']);
+    if (indices && indices.length > 0 && !indices.includes(index)) continue;
+    const rarity = toItemRarity(row['Rarity']);
+    if (rarity === 0) {
+      console.warn(`  skipping item ${index}: unknown rarity "${row['Rarity']}"`);
+      continue;
+    }
+    console.log(`  item ${index} (${row['Name']}): ${row['Rarity']} (${rarity})`);
+    await api.registry.item.set.rarity(index, rarity);
+  }
+}
+
 export async function enableItems(api: AdminAPI, indices: number[]) {
   console.log('\n==ENABLING ITEMS==');
   for (let i = 0; i < indices.length; i++) {
@@ -122,8 +142,6 @@ export async function disableItems(api: AdminAPI, indices: number[]) {
 ////////////////
 // SUB-SHAPES
 
-const Rarities = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary'];
-
 // create a basic item
 async function createBasic(api: AdminAPI, entry: any) {
   const createEP = api.registry.item.create;
@@ -131,8 +149,7 @@ async function createBasic(api: AdminAPI, entry: any) {
   const type = entry['Type'].toUpperCase();
   const name = entry['Name'].trim();
   const description = entry['Description'];
-  const rarityKey = entry['Rarity'];
-  const rarity = Rarities.indexOf(rarityKey) + 1;
+  const rarity = toItemRarity(entry['Rarity']);
 
   const image = getItemImage(name);
   console.log(`creating ${type} item ${name} (${index})`);
@@ -148,8 +165,7 @@ async function createConsumable(api: AdminAPI, entry: any) {
   const type = entry['Type'].toUpperCase();
   const name = entry['Name'].trim();
   const description = entry['Description'];
-  const rarityKey = entry['Rarity'];
-  const rarity = Rarities.indexOf(rarityKey) + 1;
+  const rarity = toItemRarity(entry['Rarity']);
 
   const image = getItemImage(name);
   const for_ = (entry['For'] ?? 'KAMI').toUpperCase();
@@ -166,8 +182,7 @@ async function createEquipment(api: AdminAPI, entry: any) {
   const type = entry['Type'].toUpperCase();
   const name = entry['Name'].trim();
   const description = entry['Description'];
-  const rarityKey = entry['Rarity'];
-  const rarity = Rarities.indexOf(rarityKey) + 1;
+  const rarity = toItemRarity(entry['Rarity']);
   const slot = entry['For']; // Slot is stored in the For column
 
   const image = getItemImage(name);

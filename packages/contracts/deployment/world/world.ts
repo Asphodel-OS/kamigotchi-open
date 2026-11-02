@@ -62,7 +62,7 @@ import {
   unsetPortalTokens,
 } from './state';
 import { setPause as setAuctionPause } from './state/auctions';
-import { disableItems, enableItems } from './state/items';
+import { disableItems, enableItems, setItemRarities } from './state/items';
 import { setPortalLaneItems, togglePortal } from './state/portal';
 import { disableQuests, enableQuests } from './state/quests/quests';
 import { cancelTrades, completeTrades } from './state/trades';
@@ -145,6 +145,7 @@ export class WorldState {
       revise: (indices: number[]) => this.genCalls((api) => reviseItems(api, indices)),
       enable: (indices: number[]) => this.genCalls((api) => enableItems(api, indices)),
       disable: (indices: number[]) => this.genCalls((api) => disableItems(api, indices)),
+      setRarity: (indices?: number[]) => this.genCalls((api) => setItemRarities(api, indices)),
     } as SubFunc,
     listings: {
       init: (indices?: number[], npcIndices?: number[]) =>

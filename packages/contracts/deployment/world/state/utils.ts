@@ -8,6 +8,11 @@ export const MUSU_INDEX = 1;
 export const GACHA_TICKET_INDEX = 10;
 export const DataSheets = new Map<string, any>();
 
+// item rarity names in on-chain order (Common = 1 ... Legendary = 5); 0 means unset or unknown
+export const ItemRarities = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary'];
+export const toItemRarity = (name?: string): number =>
+  ItemRarities.indexOf((name ?? '').trim()) + 1;
+
 ////////////////
 // DATA SHEETS
 

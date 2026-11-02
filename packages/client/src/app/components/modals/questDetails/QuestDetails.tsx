@@ -5,14 +5,13 @@ import styled from 'styled-components';
 
 import { getItemByIndex } from 'app/cache/item';
 import { ModalWrapper } from 'app/components/library';
-import { Palette } from 'app/components/library/pastel';
+import { getQuestTint, Palette } from 'app/components/library/pastel';
 import { useLayers } from 'app/root/hooks';
 import { UIComponent } from 'app/root/types';
 import { useSelected, useVisibility } from 'app/stores';
 import { NullAccount, getAccount, queryAccountFromEmbedded } from 'network/shapes/Account';
 import { getItemBalance as _getItemBalance } from 'network/shapes/Item';
 import {
-  Quest,
   canRepeatQuest,
   filterOngoingQuests,
   findNextQuestInChain,
@@ -24,6 +23,7 @@ import {
   populateQuest,
   queryQuestInstance,
   queryRegistryQuests,
+  Quest,
 } from 'network/shapes/Quest';
 import { BaseQuest } from 'network/shapes/Quest/quest';
 import { getRoomIndexByName } from 'network/shapes/Room';
@@ -320,6 +320,7 @@ export const QuestDetailsModal: UIComponent = {
           isAccepted={quest.startTime !== 0}
           justCompleted={justCompleted}
           onOutroFinished={() => setJustCompleted(false)}
+          tint={getQuestTint(quest)}
         />
       </ModalWrapper>
     );

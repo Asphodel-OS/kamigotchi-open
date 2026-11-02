@@ -1,23 +1,32 @@
 import pluralize from 'pluralize';
 import { useEffect, useState } from 'react';
+import styled from 'styled-components';
 
-import { getAccount } from 'app/cache/account';
+import { calcCurrentStamina, getAccount } from 'app/cache/account';
 import { getItemByIndex as _getItemByIndex } from 'app/cache/item';
 import { getAllRecipes } from 'app/cache/recipes';
-import { ActionButton, EmptyText, ModalHeader, ModalWrapper } from 'app/components/library';
+import { ModalHeader, ModalWrapper } from 'app/components/library';
+import { Palette } from 'app/components/library/pastel';
 import { useLayers } from 'app/root/hooks';
 import { UIComponent } from 'app/root/types';
 import { useVisibility } from 'app/stores';
 import { CraftIcon } from 'assets/images/icons/actions';
 import { Account, queryAccountFromEmbedded } from 'network/shapes/Account';
-import { playCrafting } from 'utils/sounds';
 import { parseAllos as _parseAllos, Allo } from 'network/shapes/Allo';
 import { parseConditionalText, passesConditions } from 'network/shapes/Conditional';
 import { getItemBalance as _getItemBalance, Item } from 'network/shapes/Item';
 import { Kami } from 'network/shapes/Kami';
 import { hasIngredients as _hasIngredients, Ingredient, Recipe } from 'network/shapes/Recipe';
+import { playClick, playCrafting } from 'utils/sounds';
 import { Recipes } from './Recipes/Recipes';
-import { Tabs } from './tabs/Tabs';
+
+// recipe type -> tab label and its pastel when selected
+const TABS = [
+  { key: 'consumable', label: 'Consumables', color: '#c9ecd3' },
+  { key: 'reagent', label: 'Extracts', color: '#fbeebb' },
+  { key: 'material', label: 'Building', color: '#e1efff' },
+  { key: 'special', label: 'Key Items', color: '#f3dde2' },
+];
 
 export const CraftingModal: UIComponent = {
   id: 'CraftingModal',
@@ -72,31 +81,40 @@ export const CraftingModal: UIComponent = {
       };
     })();
 
-    const setModals = useVisibility((s) => s.setModals);
     const craftingModalVisible = useVisibility((s) => s.modals.crafting);
     const [recipes, setRecipes] = useState<Recipe[]>([]);
-    const [showAll, setShowAll] = useState<boolean>(true);
+    const [craftableOnly, setCraftableOnly] = useState(false);
     const [tab, setTab] = useState('consumable'); //  consumable | material | reagent | special
+    const [stamina, setStamina] = useState(0);
+    const [tick, setTick] = useState(Date.now());
 
     /////////////////
+    // stamina regenerates over time, so tick while open
     useEffect(() => {
       if (!craftingModalVisible) return;
-      // close lootbox modal
-      setModals({ lootBox: false });
+      const timerID = setInterval(() => setTick(Date.now()), 5000);
+      return () => clearInterval(timerID);
     }, [craftingModalVisible]);
+
+    useEffect(() => {
+      setStamina(calcCurrentStamina(account));
+    }, [account.stamina.sync, tick]);
 
     // update the list of recipes depending on the filter
     useEffect(() => {
       const recipes = getAllRecipes(world, components);
       const currentTabRecipes = recipes.filter((recipe) => recipe.type === tab.toUpperCase());
-      if (showAll) setRecipes(currentTabRecipes);
+      if (!craftableOnly) setRecipes(currentTabRecipes);
       else
         setRecipes(
           currentTabRecipes.filter(
-            (recipe) => meetsRequirementsRecipe(recipe) && hasIngredients(recipe)
+            (recipe) =>
+              meetsRequirementsRecipe(recipe) &&
+              hasIngredients(recipe) &&
+              stamina >= recipe.cost.stamina
           )
         );
-    }, [showAll, tab, craftingModalVisible]);
+    }, [craftableOnly, tab, craftingModalVisible, stamina, tick]);
 
     /////////////////
     // INTERPRETATION
@@ -126,41 +144,173 @@ export const CraftingModal: UIComponent = {
       playCrafting();
     };
 
+    const toggleCraftable = () => {
+      playClick();
+      setCraftableOnly(!craftableOnly);
+    };
+
     /////////////////
     // DISPLAY
+
+    const selectTab = (key: string) => {
+      if (key === tab) return;
+      playClick();
+      setTab(key);
+    };
+
+    const TabRow = (
+      <Tabs key='tabs'>
+        {TABS.map(({ key, label, color }) => (
+          <TabButton
+            key={key}
+            $color={color}
+            $active={tab === key}
+            disabled={tab === key}
+            onClick={() => selectTab(key)}
+          >
+            {label}
+          </TabButton>
+        ))}
+      </Tabs>
+    );
 
     return (
       <ModalWrapper
         id='crafting'
-        header={<ModalHeader title='Crafting' icon={CraftIcon} />}
+        header={[<ModalHeader key='header' title='Crafting' icon={CraftIcon} />, TabRow]}
         canExit
+        noPadding
       >
-        <Tabs tab={tab} setTab={setTab} />
-        <ActionButton onClick={() => setShowAll(!showAll)} text='Filter by Available' />
-        {recipes.length == 0 ? (
-          <EmptyText text={['There are no recipes here.', 'Look somewhere else!']} size={1} />
-        ) : (
-          <Recipes
-            data={{
-              account,
-              recipes,
-              tab,
-            }}
-            actions={{
-              craft,
-            }}
-            utils={{
-              meetsRequirementsRecipe,
-              meetsRequirements,
-              displayRecipeRequirements,
-              displayItemRequirements,
-              getItemBalance,
-              parseAllos,
-              getItemByIndex,
-            }}
-          />
-        )}
+        <Content>
+          <Toolbar>
+            <Count>
+              {pluralize('item', new Set(recipes.map((r) => r.outputs[0]?.index)).size, true)}
+            </Count>
+            <Toggle $active={craftableOnly} aria-pressed={craftableOnly} onClick={toggleCraftable}>
+              <Box $active={craftableOnly}>{craftableOnly ? '✓' : ''}</Box>
+              Craftable only
+            </Toggle>
+          </Toolbar>
+          {recipes.length == 0 ? (
+            <Empty>
+              {craftableOnly
+                ? 'Nothing here you can craft right now.'
+                : 'There are no recipes here.'}
+            </Empty>
+          ) : (
+            <Recipes
+              data={{ account, recipes, stamina }}
+              actions={{ craft }}
+              utils={{
+                hasIngredients,
+                meetsRequirementsRecipe,
+                meetsRequirements,
+                displayRecipeRequirements,
+                displayItemRequirements,
+                getItemBalance,
+                parseAllos,
+                getItemByIndex,
+              }}
+            />
+          )}
+        </Content>
       </ModalWrapper>
     );
   },
 };
+
+const Tabs = styled.div`
+  width: 100%;
+  display: flex;
+  flex-flow: row nowrap;
+  background-color: white;
+  border-top: solid black 0.15vw;
+`;
+
+const TabButton = styled.button<{ $color: string; $active: boolean }>`
+  flex: 1 1 0;
+  padding: 0.5vw;
+  font-family: Pixel;
+  font-size: 0.75vw;
+  color: black;
+  text-align: center;
+  background-color: ${({ $active, $color }) => ($active ? $color : 'white')};
+  border: none;
+  border-right: solid black 0.15vw;
+  cursor: pointer;
+
+  &:last-child {
+    border-right: none;
+  }
+  &:hover {
+    background-color: ${({ $color }) => $color}88;
+  }
+  &:disabled {
+    cursor: default;
+    pointer-events: none;
+  }
+`;
+
+const Content = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.6vw;
+  padding: 0.7vw 0.8vw;
+  user-select: none;
+`;
+
+const Toolbar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6vw;
+`;
+
+const Count = styled.span`
+  font-family: Pixel;
+  font-size: 0.6vw;
+  color: ${Palette.muted};
+`;
+
+const Toggle = styled.button<{ $active: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 0.4vw;
+  padding: 0.3vw 0.6vw;
+  font-family: Pixel;
+  font-size: 0.6vw;
+  color: ${Palette.ink};
+  background: ${({ $active }) => ($active ? Palette.button.bg : Palette.paper)};
+  border: solid ${({ $active }) => ($active ? Palette.ink : Palette.line)} 0.12vw;
+  border-radius: 0.45vw;
+  cursor: pointer;
+
+  &:hover {
+    background: ${({ $active }) => ($active ? Palette.button.hover : Palette.soft)};
+  }
+`;
+
+const Box = styled.span<{ $active: boolean }>`
+  width: 0.85vw;
+  height: 0.85vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5vw;
+  color: ${Palette.progress.edge};
+  background: ${Palette.paper};
+  border: solid ${({ $active }) => ($active ? Palette.progress.edge : Palette.faint)} 0.1vw;
+  border-radius: 0.2vw;
+`;
+
+const Empty = styled.div`
+  padding: 2vw 1vw;
+  text-align: center;
+  font-family: Pixel;
+  font-size: 0.7vw;
+  line-height: 1.6;
+  color: ${Palette.muted};
+  background: ${Palette.soft};
+  border: dashed ${Palette.line} 0.12vw;
+  border-radius: 0.7vw;
+`;

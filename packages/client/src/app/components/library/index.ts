@@ -11,7 +11,6 @@ export {
   CircleExitButton,
   CollectButton,
   CopyButton,
-  CraftButton,
   ExpandableIconButton,
   HarvestButton,
   IconButton,

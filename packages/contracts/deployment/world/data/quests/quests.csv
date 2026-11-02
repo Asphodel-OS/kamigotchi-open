@@ -1293,10 +1293,9 @@ MENU: “Give me a handful. I’ll run a battery of tests.”","MENU: “Results
 MENU: “The metal is even more pure than I initially thought.”
 MENU: “These coins are multiple times older than Greek civilization itself.”
 MENU: “It’s like they just got dreamed into existence. I can’t make sense of it.”",Own at least 1 Obol,Give 5 Obols,"2x Agency Reputation,1x Booster Pack"
-SQ016,3016,In Game,Go Suck An Egg,No,SIDE,MENU,"MENU: “I know there’s a window on me somewhere, a secret shop where you can use those Obols to buy something.”
-MENU: “Don’t tell me it’s not real, I can feel it there.”
-MENU: “They refuse to sell to me, so you’re going to have to shell out just this once.”
-MENU: “I want you to buy what they’re selling and give it to Mina.”
+SQ016,3016,In Game,Go Suck An Egg,No,SIDE,MENU,"MENU: “Those coins in your pack keep tugging toward the waterfall. Toward the lake.”
+MENU: “Whatever’s down there takes them, and sometimes it gives something back.”
+MENU: “Toss a few in. If you fish out an egg, take it to Mina.”
 MENU: “She’ll probably be able to tell us something about it.”","MINA: “They’re serpent eggs, hollowed out and filled with treasure.”
 MENU: “She got really upset when I asked if she had anything to do with it.”
 MINA: ”It’s distasteful to the extreme.”
@@ -1793,6 +1792,41 @@ MINA: “He’s demanding, and personally repellent, but interesting.”
 MINA: “Working with him has given me an idea.”
 MINA: “Menu, you might appreciate this. We’ll have to talk later.”
 MENU: “Is it about that thing you mentioned last time? Awesome!”",Complete SQ117,Make 20 Scavenging Rolls at the Techno Temple,"7x Booster Pack,2x Agency Reputation"
+SQ119,3119,To Deploy,The Legend,No,SIDE,MENU,"MENU: “Okay, this is completely unscientific, but I found something in my old files.”
+MENU: “A forum post from the 1998 alpha. Someone swears that if you craft this amulet in the Butterfly Forest… something appears.”
+MENU: “Three other testers replied saying they saw it too. Then none of them ever posted again.”
+MENU: “Probably just quit the game. Probably.”
+MINA: “Oh, I know that story. Nasty thing. Hollow eyes. It takes whatever you’re carrying.”
+MENU: “Mina, you’re making that up.”
+MINA: “Am I?”
+MENU: “Anyway. Everything you need for it is lying right there in the forest. Sticks, stones, a bit of resin. Have the Kami dig some up.”","MENU: “That’s everything for the amulet. Don’t craft it yet.”
+MENU: “The post says it only shows up for people who’ve spent time in the forest. Let the Kami harvest here for a while first.”",Complete MSQ009,Make 3 Scavenging Rolls at Butterfly Forest,2x Agency Reputation
+SQ120,3120,To Deploy,Something Follows You,No,SIDE,MENU,"MENU: “Okay. Set the Kami down and let them harvest.”
+MENU: “I’ll keep watch. From very close to you.”","MENU: “Did you hear that? Something giggled. In that little house.”
+MENU: “There’s… candy wrappers on the path. Fresh ones.”
+MENU: “Wait. Look at the doorway. Don’t make it obvious.”
+MENU: “…There. Two eyes. Gold ones. And… gone.”
+MENU: “I’ve been logging movement in that doorway for hours. I thought it was a glitch in my sensors.”
+MENU: “It’s been watching us the whole time.”
+MENU: “I’m not scared. I just want that on the record.”",Complete SQ119,Harvest for >720 minutes at Butterfly Forest,1x ”Neith’s River of Life” Spell Card
+SQ121,3121,To Deploy,The Thing in the Woods,No,SIDE,MENU,"MENU: “Okay. You’ve got everything. Craft it here, in the forest.”
+MENU: “I’ll be right here. Behind you. Way behind you.”","MENU: “Wait. My sensors are picking up butterflies. Even for this forest, that’s a LOT of butterflies. All in one spot.”
+MENU: “Inside the house. In the doorway.”
+MENU: “It’s coming out.”
+???: “…”
+???: “p-please don’t eat me”
+MENU: “…What.”
+???: “i only wanted candy. please.”
+MENU: “I think the monster is… scared of YOU.”",Complete SQ120,"In Room: Butterfly Forest,Craft 1 Igors Amulet",
+SQ122,3122,To Deploy,Trick or Treat,No,SIDE,IGOR,"MENU: “Hold out the amulet. Slowly. No sudden movements.”
+???: “…is that… for me?”","???: “oh. oh, it’s a real one. you made it for me?”
+???: “nobody gives me anything anymore.”
+???: “i’m Igor.”
+IGOR: “here. you can have some of mine. you’re nice for a shadow thing.”
+MENU: “Mina. You knew.”
+MINA: “Of course I knew. You should have seen your face.”
+MENU: “I don’t HAVE a face!”
+MINA: “And yet.”","Complete SQ121,In Room: Butterfly Forest",Give 1 Igors Amulet,3x Igors Candy
 SQ802,3802,Defunct,Quest Diagnostics,No,SIDE,MENU,"MENU: “Excuse me. Sorry to butt in, if you’re busy.”
 MENU: “I’ve been running the usual diagnostics and defrags. Usually nothing comes up.”
 MENU: “But this time, I think there’s been a real change.”
@@ -1817,6 +1851,20 @@ MENU: “Mina said there were no lost souls left there. Not even remnants. So wh
 MENU: “Whatever it is, it feels cold. Bring three sticks and let’s give it a fire.”","MENU: “Whoa. That’s a lot of flame for three sticks.”
 MENU: “There’s something in the ashes… a card. It’s warm. Looks like someone climbing out of a fire.”
 MENU: “The tug’s gone quiet. I bet it’ll be back tomorrow.”",,"Move to the Trash-Strewn Graves,Give 3 Wooden Sticks",1x ”Melkarth’s Heroic Awakening” Spell Card
+SQ901,3901,To Deploy,Wash Your Hands,Yes,SIDE,REFLECTION,"REFLECTION: “We look tired. Our hands are stained.”
+REFLECTION: “The caves keep shaking loose into the lake. Rock, rust, bones… and now and then something worth keeping.”
+REFLECTION: “Coins are meant for the dead. Bring one to the lake and let it sink. The water will take the rest.”","REFLECTION: “The coin sinks. The red drains out of the water. Somewhere below, something swallows.”
+REFLECTION: “It remembers who fed it.”",Complete SQ015,Offer an Obol at the lake,1x Nursery Dedication
+SQ902,3902,To Deploy,Same Time Tomorrow,Yes,SIDE,IGOR,"IGOR: “oh. you came back.”
+IGOR: “the sign wore off in the night. they always wear off by morning.”
+MENU: “He’s been sitting in the doorway since sunrise. I checked. Twice.”
+MINA: “He saved you a spot on the step.”
+IGOR: “if you make another one… i still have candy.”
+MENU: “Sticks, stones, a bit of resin. You know the drill.”","IGOR: “it’s a good one. maybe the best one.”
+IGOR: “three. i counted twice.”
+MENU: “He’s getting generous. I’m logging it.”
+MINA: “Same time tomorrow, little one?”
+IGOR: “same time tomorrow.”","Complete SQ122 & wait 1 day,In Room: Butterfly Forest",Give 1 Igors Amulet,3x Igors Candy
 SQ998,3998,In Game,Hidden GEM,No,SIDE,MENU,"MENU: “Whoa! Stop right there!”
 MENU: “That machine in your inventory, it’s spinning up!”
 MENU: “I think it’s responding to an energy field in these caves!”

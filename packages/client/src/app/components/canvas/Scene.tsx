@@ -1,11 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { useLayers } from 'app/root/hooks';
 import { UIComponent } from 'app/root/types';
 import { useAccount, useSelected } from 'app/stores';
 import { backgrounds } from 'assets/images/backgrounds';
+import { rooms } from 'constants/rooms';
 import { useComponentValue } from 'engine/recs';
+import { hasCompletedQuest } from 'network/shapes/Quest';
+import { useComponentEntities } from 'network/utils/hooks';
 import { Room } from './Room';
 
 // The Scene paints the wallpaper and the room. It updates the selected room
@@ -20,8 +23,8 @@ export const Scene: UIComponent = {
     // PREPARATION
 
     const { network } = layers;
-    const { components } = network;
-    const { RoomIndex: RoomIndexComponent } = components;
+    const { world, components } = network;
+    const { IsComplete, RoomIndex: RoomIndexComponent } = components;
 
     /////////////////
     // INSTANTIATION
@@ -30,6 +33,20 @@ export const Scene: UIComponent = {
     const setRoom = useSelected((s) => s.setRoom);
     const accountEntity = useAccount((s) => s.account.entity);
     const roomIndexValue = useComponentValue(RoomIndexComponent, accountEntity);
+    const isCompleteEntities = useComponentEntities(IsComplete) || [];
+
+    // quests that gate this room's backgrounds or objects, filtered to the ones completed
+    const completedQuests = useMemo(() => {
+      const room = rooms[roomIndex];
+      if (!accountEntity || !room) return [];
+      const gated = new Set<number>();
+      if (room.questBackgrounds) gated.add(room.questBackgrounds.after);
+      room.objects.forEach(({ quest }) => {
+        if (quest?.after !== undefined) gated.add(quest.after);
+        if (quest?.before !== undefined) gated.add(quest.before);
+      });
+      return [...gated].filter((i) => hasCompletedQuest(world, components, i, accountEntity));
+    }, [roomIndex, accountEntity, isCompleteEntities]);
 
     /////////////////
     // SUBSCRIPTION
@@ -46,7 +63,7 @@ export const Scene: UIComponent = {
     return (
       <Wrapper>
         <Container>
-          <Room index={roomIndex} />
+          <Room index={roomIndex} completedQuests={completedQuests} />
           <Wallpaper src={backgrounds.long2} />
         </Container>
       </Wrapper>

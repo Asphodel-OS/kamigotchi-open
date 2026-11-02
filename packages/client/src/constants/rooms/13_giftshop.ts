@@ -1,12 +1,12 @@
 import { triggerLeaderboardModal } from 'app/triggers/triggerLeaderboardModal';
 import { triggerShopModal } from 'app/triggers/triggerShopModal';
-import { bgPlaytest } from 'assets/images/rooms/13_giftshop';
+import { bgHalloween } from 'assets/images/rooms/13_giftshop';
 import { mina } from 'assets/sound/ost';
 import { Room } from './types';
 
 export const room13: Room = {
   index: 13,
-  backgrounds: [bgPlaytest],
+  backgrounds: [bgHalloween],
   music: {
     key: 'mina',
     path: mina,

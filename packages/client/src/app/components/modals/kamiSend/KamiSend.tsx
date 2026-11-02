@@ -340,7 +340,9 @@ const GridSection = styled.div`
   flex: 1;
   min-height: 0;
   overflow-x: hidden;
-  overflow-y: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #b6b6b6 transparent;
   padding: 0.8vw;
   background: #fafafa;
 `;

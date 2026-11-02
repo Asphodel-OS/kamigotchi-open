@@ -11,21 +11,21 @@ export const Factions = ({
 }) => {
   const BarContent = [
     {
-      name: 'Reputation',
+      name: 'The Agency',
       progress: '#69a6f9',
       current: account.reputation.agency,
       icon: FactionIcons.agency,
       text: `Your relationship with the Quests Menu, and with the fundamental forces behind Kamigotchi World. `,
     },
     {
-      name: 'Loyalty',
+      name: 'The Elders',
       progress: '#e53b21',
       current: account.reputation.mina,
       icon: FactionIcons.mina,
       text: `Your affinity with Mina, and her mysterious backers....`,
     },
     {
-      name: 'Dedication',
+      name: 'The Nursery',
       progress: '#5d995c',
       current: account.reputation.nursery,
       icon: FactionIcons.nursery,

@@ -11,6 +11,7 @@ import { triggerGoalModal, triggerKamiBridgeModal, triggerTradingModal } from 'a
 import { ArrowIcons } from 'assets/images/icons/arrows';
 import { DialogueNode, dialogues } from 'constants/dialogue';
 import { ActionParam } from 'constants/dialogue/types';
+import { IGOR_TRICK_OR_TREAT_QUEST_INDEX } from 'constants/quests';
 import { EntityID, EntityIndex } from 'engine/recs';
 import { Account, NullAccount, queryAccountFromEmbedded } from 'network/shapes/Account';
 import {
@@ -183,6 +184,12 @@ export const DialogueModal: UIComponent = {
     const ongoing = useMemo(() => {
       return queryOngoing(account.id).map((entity) => getBase(entity));
     }, [account.id, ownsQuestEntities, isCompleteEntities]);
+
+    // Igor shows as ??? until he introduces himself in Trick or Treat; quests still match on his real name
+    const npcDisplayName =
+      npc.name === 'Igor' && !completed.some((q) => q.index === IGOR_TRICK_OR_TREAT_QUEST_INDEX)
+        ? '???'
+        : npc.name;
 
     useEffect(() => {
       if (!dialogueModalOpen || npc.name.length === 0) return;
@@ -403,7 +410,7 @@ export const DialogueModal: UIComponent = {
       return (
         <ModalWrapper
           id='dialogue'
-          header={<Header $color={npc.color}>{npc.name}</Header>}
+          header={<Header $color={npc.color}>{npcDisplayName}</Header>}
           canExit
           backgroundColor={'white'}
           positionOverride={{
@@ -421,7 +428,7 @@ export const DialogueModal: UIComponent = {
             hasAvailableQuests={availableQuests}
             hasOngoingQuests={ongoingQuests}
             npcColor='#000000ff'
-            npcName={npc.name}
+            npcName={npcDisplayName}
             npcImage={npc.mood || npc.img}
             dialogueText={getText(dialogueNode.text[step])}
             textKey={`${dialogueIndex}:${step}`}

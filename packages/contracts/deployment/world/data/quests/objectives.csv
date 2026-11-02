@@ -14,6 +14,7 @@
 ,Harvest for >24 hours on Trash-Strewn Graves,MIN,INC,HARVEST_TIME,26,86400
 ,Harvest for >720 minutes at the Hollow Path,MIN,INC,HARVEST_TIME,37,43200
 ,Harvest for >720 minutes at Black Pool,MIN,INC,HARVEST_TIME,59,43200
+,Harvest for >720 minutes at Butterfly Forest,MIN,INC,HARVEST_TIME,56,43200
 ,Harvest for >720 minutes at Centipedes,MIN,INC,HARVEST_TIME,62,43200
 ,Harvest for >720 minutes at Still Stream,MIN,INC,HARVEST_TIME,70,43200
 ,Harvest for >720 minutes at Shabby Deck,MIN,INC,HARVEST_TIME,71,43200
@@ -94,6 +95,7 @@
 ,Give 1 Pale Potion,MIN,INC,ITEM_BURN,11004,1
 ,Give 1 Fetid Egg,MIN,INC,ITEM_BURN,11227,1
 ,Give 1 Pom-Pom Fruit Candy,MIN,INC,ITEM_BURN,11303,1
+,Give 1 Igors Amulet,MIN,INC,ITEM_BURN,100012,1
 ,Give 10 Honeydew Scale,MIN,INC,ITEM_BURN,11312,10
 ,Give 30 Honeydew Scale,MIN,INC,ITEM_BURN,11312,30
 ,Give 5 Blue Pansy,MIN,INC,ITEM_BURN,11314,5
@@ -144,6 +146,7 @@
 ,Move to Slippery Pit,IS,BOOL,ROOM,68,
 ,Move to Shabby Deck,IS,BOOL,ROOM,71,
 ,In Room: Hatch to Nowhere,IS,BOOL,ROOM,72,
+,In Room: Butterfly Forest,IS,BOOL,ROOM,56,
 ,Move to Flood Mural,IS,BOOL,ROOM,75,
 ,Move to Abandoned Campsite,IS,BOOL,ROOM,79,
 ,Move to Reinforced Tunnel,IS,BOOL,ROOM,84,
@@ -152,6 +155,7 @@
 ,Make 1 Scavenging Roll in Torii Gate,MIN,INC,SCAV_CLAIM_NODE,3,1
 ,Make 9 Scavenging Rolls at Labs Entrance,MIN,INC,SCAV_CLAIM_NODE,6,9
 ,Make 2 Scavenging Rolls at Scrap Confluence,MIN,INC,SCAV_CLAIM_NODE,12,2
+,Make 3 Scavenging Rolls at Butterfly Forest,MIN,INC,SCAV_CLAIM_NODE,56,3
 ,Make 7 Scavenging Rolls at Temple Cave,MIN,INC,SCAV_CLAIM_NODE,15,7
 ,Make 20 Scavenging Rolls at the Techno Temple,MIN,INC,SCAV_CLAIM_NODE,16,20
 ,Make 3 Scavenging Rolls at Temple of the Wheel,MIN,INC,SCAV_CLAIM_NODE,19,3
@@ -186,6 +190,7 @@
 ,Craft 500 Pine Pollen,MIN,INC,CRAFT_ITEM,1104,500
 ,Craft 500 Pallid Root Extract,MIN,INC,CRAFT_ITEM,1121,500
 ,Craft 1 Ashlar,MIN,INC,CRAFT_ITEM,1301,1
+,Craft 1 Igors Amulet,MIN,INC,CRAFT_ITEM,100012,1
 ,Craft 1 Timber,MIN,INC,CRAFT_ITEM,1302,1
 ,Craft 1 Ingot,MIN,INC,CRAFT_ITEM,1303,1
 ,Craft 1 Pure Essence,MIN,INC,CRAFT_ITEM,6007,1
@@ -202,3 +207,4 @@
 ,Sacrifice 20 Kami,,,,,
 ,Sacrifice 3 Kami,,,,,
 ,Move to the Scrapyard Exit,IS,BOOL,ROOM,31,
+,Offer an Obol at the lake,MIN,INC,CRAFT_ITEM,21007,1

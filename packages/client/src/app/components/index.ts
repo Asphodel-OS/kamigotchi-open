@@ -27,7 +27,7 @@ import { MarketplaceModal } from './modals/marketplace';
 import { MerchantModal } from './modals/merchant';
 import { EmaBoardModal } from './modals/naming';
 import { NodeModal } from './modals/node';
-import { ObolModal } from './modals/obol';
+import { OfferingModal } from './modals/offering';
 import { PartyModal } from './modals/party';
 import { PoolModal } from './modals/pool';
 import { QuestDetailsModal } from './modals/questDetails';
@@ -191,8 +191,8 @@ export const allComponents: UIComponentWithGrid[] = [
     gridConfig: { colStart: 32, colEnd: 70, rowStart: 20, rowEnd: 78 },
   },
   {
-    uiComponent: ObolModal,
-    gridConfig: { colStart: 36, colEnd: 65, rowStart: 20, rowEnd: 80 },
+    uiComponent: OfferingModal,
+    gridConfig: { colStart: 2, colEnd: 100, rowStart: 2, rowEnd: 100 },
   },
   {
     uiComponent: TempleOfTheWheel,

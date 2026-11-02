@@ -128,5 +128,6 @@ const getRepEntityIndex = (
 
 const getReputationName = (factionIndex: number): string => {
   if (factionIndex === 1) return 'REPUTATION';
-  else return 'LOYALTY';
+  if (factionIndex === 3) return 'DEDICATION';
+  return 'LOYALTY';
 };

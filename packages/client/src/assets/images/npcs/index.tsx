@@ -14,6 +14,7 @@ import huntressNight from './huntress_night.png';
 import huntressNightSmall from './huntress_night_small.png';
 import huntressPose2 from './huntress_pose_2.png';
 import huntressSmall from './huntress_small.png';
+import igor from './igor.png';
 import lolaDaydreaming from './lola_daydreaming.png';
 import lolaDefault from './lola_default.png';
 import lolaSmiling from './lola_smiling.png';
@@ -24,6 +25,7 @@ import menuHuman1 from './menu_human_1.png';
 import menuHuman2 from './menu_human_2.png';
 import minaDefault from './mina_default.png';
 import minaDefault1 from './mina_default_1.png';
+import minaHalloween from './mina_halloween.png';
 import minaLaugh from './mina_laugh.png';
 import minaLaugh1 from './mina_laugh_1.png';
 import minaPity from './mina_pity.png';
@@ -55,6 +57,7 @@ export const NpcImages: Record<string, string> = {
   'huntress_night_small.png': huntressNightSmall,
   'huntress_pose_2.png': huntressPose2,
   'huntress_small.png': huntressSmall,
+  'igor.png': igor,
   'lola_daydreaming.png': lolaDaydreaming,
   'lola_default.png': lolaDefault,
   'lola_smiling.png': lolaSmiling,
@@ -65,6 +68,7 @@ export const NpcImages: Record<string, string> = {
   'menu_human_2.png': menuHuman2,
   'mina_default.png': minaDefault,
   'mina_default_1.png': minaDefault1,
+  'mina_halloween.png': minaHalloween,
   'mina_laugh.png': minaLaugh,
   'mina_laugh_1.png': minaLaugh1,
   'mina_pity.png': minaPity,

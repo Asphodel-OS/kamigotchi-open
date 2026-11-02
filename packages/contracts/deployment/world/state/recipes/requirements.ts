@@ -13,6 +13,18 @@ export async function addToolRequirement(api: AdminAPI, entry: any) {
   }
 }
 
+// adds a room requirement, so the recipe can only be crafted from that room
+export async function addRoomRequirement(api: AdminAPI, entry: any) {
+  const addRequirement = api.registry.recipe.add.requirement;
+  const index = Number(entry['Index']);
+
+  const roomIndex = Number(entry['Room Index'] ?? 0);
+  if (roomIndex > 0) {
+    console.log(`  adding room requirement ${roomIndex}`);
+    await addRequirement(index, 'ROOM', 'BOOL_IS', roomIndex, 0, '');
+  }
+}
+
 // level requirement
 // SKIPPED level requirement until account levels are in
 // const minLevel = Number(entry['Minimum Account Level'] ?? 1);

@@ -57,13 +57,13 @@ export interface Modals {
   kamiAdoptionAgency: boolean;
   kamiSend: boolean;
   leaderboard: boolean;
-  lootBox: boolean;
   marketplace: boolean;
   templeOfTheWheel: boolean;
   map: boolean;
   merchant: boolean;
   node: boolean;
   questDialogue: boolean;
+  offering: boolean;
   operatorFund: boolean;
   party: boolean;
   pool: boolean;
@@ -93,13 +93,13 @@ export const toggleModals = (isOn: boolean): Modals => ({
   kamiAdoptionAgency: isOn,
   kamiSend: isOn,
   leaderboard: isOn,
-  lootBox: isOn,
   marketplace: isOn,
   templeOfTheWheel: isOn,
   map: isOn,
   questDialogue: isOn,
   merchant: isOn,
   node: isOn,
+  offering: isOn,
   operatorFund: isOn,
   party: isOn,
   pool: isOn,
@@ -125,7 +125,7 @@ const BRIDGE_OPEN_CLOSE_MODALS: Array<keyof Modals> = [
   'node',
   'emaBoard',
   'tokenPortal',
-  'lootBox',
+  'offering',
   'templeOfTheWheel',
   'leaderboard',
   'operatorFund',
@@ -149,7 +149,7 @@ const MODAL_ZONES: Partial<Record<keyof Modals, ScreenZone[]>> = {
   node: ['center'],
   emaBoard: ['center'],
   tokenPortal: ['center'],
-  lootBox: ['center'],
+  offering: ['center'],
   templeOfTheWheel: ['center'],
   leaderboard: ['center'],
   operatorFund: ['center'],
@@ -248,12 +248,12 @@ export const useVisibility = create<State & Actions>((set) => {
       kamiAdoptionAgency: false,
       kamiSend: false,
       leaderboard: false,
-      lootBox: false,
       marketplace: false,
       templeOfTheWheel: false,
       map: false,
       merchant: false,
       node: false,
+      offering: false,
       operatorFund: false,
       party: false,
       pool: false,

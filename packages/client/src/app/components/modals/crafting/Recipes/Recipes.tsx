@@ -1,11 +1,10 @@
-import { calcCurrentStamina } from 'app/cache/account';
+import styled from 'styled-components';
+
 import { Item, Kami } from 'network/shapes';
 import { Account } from 'network/shapes/Account';
 import { Allo } from 'network/shapes/Allo';
 import { Recipe } from 'network/shapes/Recipe';
 import { DetailedEntity } from 'network/shapes/utils';
-import { useEffect, useState } from 'react';
-import styled from 'styled-components';
 import { RecipeCard } from './RecipeCard';
 
 export const Recipes = ({
@@ -16,7 +15,7 @@ export const Recipes = ({
   data: {
     account: Account;
     recipes: Recipe[];
-    tab: string;
+    stamina: number;
   };
   actions: {
     craft: (recipe: Recipe, amount: number) => void;
@@ -25,50 +24,48 @@ export const Recipes = ({
     displayRecipeRequirements: (recipe: Recipe) => string;
     displayItemRequirements: (item: Item) => string;
     getItemBalance: (index: number) => number;
+    hasIngredients: (recipe: Recipe) => boolean;
     meetsRequirementsRecipe: (recipe: Recipe) => boolean;
     meetsRequirements: (holder: Kami | Account, item: Item) => boolean;
     parseAllos: (allo: Allo[]) => DetailedEntity[];
     getItemByIndex: (itemIndex: number) => Item;
   };
 }) => {
-  const { account, recipes } = data;
-  const { craft } = actions;
+  const { account, recipes, stamina } = data;
+  const { hasIngredients, meetsRequirementsRecipe } = utils;
 
-  const [stamina, setStamina] = useState(0);
-  const [tick, setTick] = useState(Date.now());
+  // whether one batch of this recipe can be crafted right now
+  const canCraft = (recipe: Recipe) =>
+    meetsRequirementsRecipe(recipe) && stamina >= recipe.cost.stamina && hasIngredients(recipe);
 
-  // ticking
-  useEffect(() => {
-    const timer = () => setTick(Date.now());
-    const timerID = setInterval(timer, 5000);
-    return () => clearInterval(timerID);
-  }, []);
-
-  // update stamina on each tick
-  useEffect(() => {
-    setStamina(calcCurrentStamina(account));
-  }, [account.stamina.sync, tick]);
+  // one card per output item; its recipes become variants the player picks between
+  const groups = new Map<number, Recipe[]>();
+  for (const recipe of recipes) {
+    const key = recipe.outputs[0]?.index ?? recipe.index;
+    groups.set(key, [...(groups.get(key) ?? []), recipe]);
+  }
+  const name = (group: Recipe[]) => group[0].outputs[0]?.item?.name ?? '';
+  const sorted = [...groups.values()].sort((a, b) => {
+    const craftable = Number(b.some(canCraft)) - Number(a.some(canCraft));
+    return craftable || name(a).localeCompare(name(b));
+  });
 
   return (
-    <Container>
-      {recipes.map((recipe) => (
+    <List>
+      {sorted.map((group) => (
         <RecipeCard
-          key={recipe.index}
-          data={{ account, recipe, stamina }}
-          actions={{ craft: (amt: number) => craft(recipe, amt) }}
-          utils={utils}
+          key={group[0].index}
+          data={{ account, recipes: group, stamina }}
+          actions={actions}
+          utils={{ ...utils, canCraft }}
         />
       ))}
-    </Container>
+    </List>
   );
 };
 
-const Container = styled.div`
+const List = styled.div`
   display: flex;
-  flex-flow: row wrap;
-  margin-top: 0.6vw;
-  gap: 0.6vw;
-
-  user-select: none;
-  min-width: fit-content;
+  flex-direction: column;
+  gap: 0.45vw;
 `;

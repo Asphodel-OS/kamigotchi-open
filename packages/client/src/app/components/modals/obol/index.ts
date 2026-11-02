@@ -1,1 +1,0 @@
-export { ObolModal } from './Obol';

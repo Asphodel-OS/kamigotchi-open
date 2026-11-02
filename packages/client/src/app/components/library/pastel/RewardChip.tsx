@@ -68,6 +68,7 @@ const Tile = styled.div<{ size: 'md' | 'sm' }>`
 const Icon = styled.img<{ size: 'md' | 'sm' }>`
   width: ${({ size }) => (size === 'sm' ? 1.5 : 2)}vw;
   height: ${({ size }) => (size === 'sm' ? 1.5 : 2)}vw;
+  image-rendering: pixelated;
 `;
 
 const Badge = styled.span`
@@ -113,6 +114,7 @@ const TipIcon = styled.div`
   img {
     width: 1.8vw;
     height: 1.8vw;
+    image-rendering: pixelated;
   }
 `;
 

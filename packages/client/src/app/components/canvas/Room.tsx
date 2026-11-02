@@ -8,7 +8,7 @@ import { radiateFx } from 'app/styles/effects';
 import { triggerDialogueModal } from 'app/triggers/triggerDialogueModal';
 import { arrivalRemaster, cave } from 'assets/sound/ost';
 import { rooms } from 'constants/rooms';
-import { RoomAsset } from 'constants/rooms/types';
+import { QuestGate, RoomAsset } from 'constants/rooms/types';
 import { getCurrPhase } from 'utils/time';
 
 const RoomsBgm: Map<string, Howl> = new Map<string, Howl>();
@@ -16,7 +16,8 @@ const defaultBgm = { key: 'cave', path: cave };
 const preAuthBgm = { key: 'arrivalRemaster', path: arrivalRemaster };
 
 // painting of the room alongside any clickable objects
-export const Room = ({ index }: { index: number }) => {
+// completedQuests: the gated quest indices in this room the account has completed
+export const Room = ({ index, completedQuests }: { index: number; completedQuests: number[] }) => {
   const tradingModalOpen = useVisibility((s) => s.modals.trading);
   const setModals = useVisibility((s) => s.setModals);
   const setNode = useSelected((s) => s.setNode);
@@ -111,14 +112,25 @@ export const Room = ({ index }: { index: number }) => {
       goal: false, // room specific
       leaderboard: false, // room specific
       merchant: false, // room specific
+      offering: false, // room specific
     });
+  };
+
+  const isUnlocked = (gate?: QuestGate) => {
+    if (!gate) return true;
+    if (gate.after !== undefined && !completedQuests.includes(gate.after)) return false;
+    if (gate.before !== undefined && completedQuests.includes(gate.before)) return false;
+    return true;
   };
 
   // return the background path for now
   const getBackground = () => {
+    const questBgs = room.questBackgrounds;
+    const backgrounds =
+      questBgs && isUnlocked({ after: questBgs.after }) ? questBgs.backgrounds : room.backgrounds;
     // phases start at 1, make start at 0
-    const phase = (getCurrPhase() - 1) % room.backgrounds.length;
-    return room.backgrounds[phase];
+    const phase = (getCurrPhase() - 1) % backgrounds.length;
+    return backgrounds[phase];
   };
 
   // keyed by room and position: object names repeat (room 77 has two 'coop trigger'), and a duplicate
@@ -160,7 +172,7 @@ export const Room = ({ index }: { index: number }) => {
     <Wrapper>
       <Container>
         <Background draggable='false' src={getBackground()} />
-        {room.objects.map((object, i) => getClickbox(object, i))}
+        {room.objects.map((object, i) => isUnlocked(object.quest) && getClickbox(object, i))}
       </Container>
     </Wrapper>
   );

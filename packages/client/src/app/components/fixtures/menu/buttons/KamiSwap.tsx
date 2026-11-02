@@ -6,7 +6,6 @@ const ModalsToHide: Partial<Modals> = {
   crafting: false,
   trading: false,
   inventory: false,
-  lootBox: false,
 };
 
 export const KamiSwapMenuButton = () => {
