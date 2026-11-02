@@ -59,6 +59,21 @@ export async function reviseAuctions(api: AdminAPI, indices: number[]) {
   await initAuctions(api, indices);
 }
 
+// set the same pause window on the specified auctions. (0, 0) clears it
+export async function setPause(
+  api: AdminAPI,
+  pauseStart: number,
+  pauseEnd: number,
+  indices: number[]
+) {
+  if (indices.length == 0) return console.log('No auctions given to pause');
+  for (let i = 0; i < indices.length; i++) {
+    const itemIndex = indices[i];
+    console.log(`Setting pause window on auction ${itemIndex}: ${pauseStart} -> ${pauseEnd}`);
+    await api.auction.set.pause(itemIndex, pauseStart, pauseEnd);
+  }
+}
+
 export async function setRequirement(
   api: AdminAPI,
   auctionIndex: number,

@@ -1,4 +1,5 @@
 import { Auction } from 'network/shapes/Auction';
+import { getPriceStart } from 'network/shapes/Auction/pricing';
 
 type AuctionDetails = {
   name: string;
@@ -25,7 +26,7 @@ export const calcPrice = (auction: Auction, time: number, prevSold: number, amt 
   const decay = auction.params.decay;
   const rate = auction.params.rate;
 
-  const tDelta = (time - auction.time.start) / period;
+  const tDelta = (time - getPriceStart(auction, time)) / period;
 
   let price = value * decay ** (tDelta - prevSold / rate);
   if (amt > 1) {

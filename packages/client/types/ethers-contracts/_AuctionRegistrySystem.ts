@@ -37,6 +37,7 @@ export interface _AuctionRegistrySystemInterface extends Interface {
       | "remove"
       | "renounceOwnership"
       | "requestOwnershipHandover"
+      | "setPause"
       | "transferOwnership"
   ): FunctionFragment;
 
@@ -93,6 +94,10 @@ export interface _AuctionRegistrySystemInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "setPause",
+    values: [BigNumberish, BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "transferOwnership",
     values: [AddressLike]
   ): string;
@@ -126,6 +131,7 @@ export interface _AuctionRegistrySystemInterface extends Interface {
     functionFragment: "requestOwnershipHandover",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "setPause", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "transferOwnership",
     data: BytesLike
@@ -276,6 +282,12 @@ export interface _AuctionRegistrySystem extends BaseContract {
 
   requestOwnershipHandover: TypedContractMethod<[], [void], "payable">;
 
+  setPause: TypedContractMethod<
+    [itemIndex: BigNumberish, pauseStart: BigNumberish, pauseEnd: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
   transferOwnership: TypedContractMethod<
     [newOwner: AddressLike],
     [void],
@@ -343,6 +355,13 @@ export interface _AuctionRegistrySystem extends BaseContract {
   getFunction(
     nameOrSignature: "requestOwnershipHandover"
   ): TypedContractMethod<[], [void], "payable">;
+  getFunction(
+    nameOrSignature: "setPause"
+  ): TypedContractMethod<
+    [itemIndex: BigNumberish, pauseStart: BigNumberish, pauseEnd: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "transferOwnership"
   ): TypedContractMethod<[newOwner: AddressLike], [void], "payable">;

@@ -13,6 +13,7 @@ import { DecayComponent, ID as DecayCompID } from "components/DecayComponent.sol
 import { MaxComponent, ID as MaxCompID } from "components/MaxComponent.sol";
 import { PeriodComponent, ID as PeriodCompID } from "components/PeriodComponent.sol";
 import { RateComponent, ID as RateCompID } from "components/RateComponent.sol";
+import { TimePauseComponent, ID as TimePauseCompID } from "components/TimePauseComponent.sol";
 import { TimeStartComponent, ID as TimeStartCompID } from "components/TimeStartComponent.sol";
 import { ValueComponent, ID as ValueCompID } from "components/ValueComponent.sol";
 
@@ -44,6 +45,8 @@ struct Params {
 ///  - Decay: price decay per period (1e6)
 ///  - Rate: number of sales per period to counteract decay
 ///  - StartTs: time after which auction is enabled
+///  - [TimePause]: a pause window (eg. a chain halt) GDA pricing skips, packed as
+///    uint64 start << 64 | uint64 end. one window per auction (default none)
 ///  - (Requirement)[]
 
 library LibAuctionRegistry {
@@ -78,10 +81,18 @@ library LibAuctionRegistry {
     DecayComponent(getAddrByID(comps, DecayCompID)).remove(id);
     RateComponent(getAddrByID(comps, RateCompID)).remove(id);
     TimeStartComponent(getAddrByID(comps, TimeStartCompID)).remove(id);
+    TimePauseComponent(getAddrByID(comps, TimePauseCompID)).remove(id);
     BalanceComponent(getAddrByID(comps, BalanceCompID)).remove(id);
 
     uint256[] memory reqs = getReqs(comps, id);
     for (uint256 i; i < reqs.length; i++) LibConditional.remove(comps, reqs[i]);
+  }
+
+  /// @notice sets the auction's pause window. (0, 0) clears it; setting again replaces it
+  function setPause(IUintComp comps, uint256 id, uint64 start, uint64 end) internal {
+    TimePauseComponent comp = TimePauseComponent(getAddrByID(comps, TimePauseCompID));
+    if (start == 0 && end == 0) comp.remove(id);
+    else comp.set(id, packPause(start, end));
   }
 
   // create a requirement for the auction
@@ -121,6 +132,26 @@ library LibAuctionRegistry {
 
   /////////////////
   // UTILS
+
+  function getStartTs(IUintComp comps, uint256 id) internal view returns (uint256) {
+    return TimeStartComponent(getAddrByID(comps, TimeStartCompID)).get(id);
+  }
+
+  /// @notice the auction's pause window, (0, 0) if none
+  function getPause(IUintComp comps, uint256 id) internal view returns (uint64, uint64) {
+    return unpackPause(TimePauseComponent(getAddrByID(comps, TimePauseCompID)).safeGet(id));
+  }
+
+  /// @notice pause window layout: uint64 start << 64 | uint64 end. mirrored by the client
+  ///  (network/shapes/Auction/pricing.ts unpackPause)
+  function packPause(uint64 start, uint64 end) internal pure returns (uint256) {
+    return (uint256(start) << 64) | uint256(end);
+  }
+
+  function unpackPause(uint256 packed) internal pure returns (uint64 start, uint64 end) {
+    start = uint64(packed >> 64);
+    end = uint64(packed);
+  }
 
   function genID(uint32 index) internal pure returns (uint256) {
     return uint256(keccak256(abi.encodePacked("auction", index)));

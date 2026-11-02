@@ -84,6 +84,7 @@
     { "comp": "TimeLastAction", "name": "LastActionTime", "type": "uint256" },
     { "comp": "TimeNext", "name": "NextTime", "type": "uint256" },
     { "comp": "TimeLast", "name": "LastTime", "type": "uint256" },
+    { "comp": "TimePause", "name": "TimePause", "type": "uint256" },
     { "comp": "TimeReset", "name": "ResetTime", "type": "uint256" },
     { "comp": "TimeStart", "name": "StartTime", "type": "uint256" },
     { "comp": "Type", "name": "Type", "type": "string", "indexed": true },

@@ -335,6 +335,10 @@
     "id": "component.Time.Last",
     "encodedID": "0x342adee7430e96bca6f5d4fe57ba5155dc7271000494e77110c292d51ae887fa"
   },
+  "TimePause": {
+    "id": "component.time.pause",
+    "encodedID": "0x9ff2cdae496c6e761000b25def7fa234d4db19540d7fcf339e66ff95afdd1fc0"
+  },
   "ResetTime": {
     "id": "component.Time.Reset",
     "encodedID": "0xe9a47ac95fcb0b9bf41f159be66a677a5f0eac800ea6adafa4749c9108d191ba"

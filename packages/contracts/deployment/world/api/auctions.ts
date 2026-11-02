@@ -43,11 +43,23 @@ export function auctionAPI(generateCallData: GenerateCallData, compiledCalls: st
     compiledCalls.push(callData);
   }
 
+  // set the window the chain was halted (last block ts before, first block ts after), so
+  // GDA pricing skips it. (0, 0) clears it
+  async function setPause(itemIndex: number, pauseStart: number, pauseEnd: number) {
+    const callData = generateCallData(
+      'system.auction.registry',
+      [itemIndex, pauseStart, pauseEnd],
+      'setPause'
+    );
+    compiledCalls.push(callData);
+  }
+
   return {
     create,
     remove,
     set: {
       requirement: addRequirement,
+      pause: setPause,
     },
   };
 }

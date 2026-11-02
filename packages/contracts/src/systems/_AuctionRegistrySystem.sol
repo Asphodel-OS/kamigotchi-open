@@ -46,8 +46,7 @@ contract _AuctionRegistrySystem is System, AuthRoles {
       max,
       startTs
     );
-    LibAuctionRegistry.create(components, params); // id should be the same
-    return id;
+    return LibAuctionRegistry.create(components, params);
   }
 
   // remove an auction
@@ -55,6 +54,25 @@ contract _AuctionRegistrySystem is System, AuthRoles {
     uint256 id = LibAuctionRegistry.get(components, itemIndex);
     require(id != 0, "AuctionRegistry: auction does not exist");
     LibAuctionRegistry.remove(components, id);
+  }
+
+  // set the window the chain was halted, so GDA pricing skips it. (0, 0) clears it.
+  // pauseStart: last block timestamp before the halt. pauseEnd: first block timestamp after.
+  // one window per auction: setting again replaces it
+  function setPause(
+    uint32 itemIndex,
+    uint64 pauseStart,
+    uint64 pauseEnd
+  ) public onlyAdmin(components) {
+    uint256 id = LibAuctionRegistry.get(components, itemIndex);
+    require(id != 0, "AuctionRegistry: auction does not exist");
+    if (pauseStart != 0 || pauseEnd != 0) {
+      require(pauseStart < pauseEnd, "AuctionRegistry: pause must end after it starts");
+      require(pauseEnd <= block.timestamp, "AuctionRegistry: pause has not ended");
+      uint256 startTs = LibAuctionRegistry.getStartTs(components, id);
+      require(pauseStart >= startTs, "AuctionRegistry: pause starts before the auction");
+    }
+    LibAuctionRegistry.setPause(components, id, pauseStart, pauseEnd);
   }
 
   // add a requirement to participate in an auction

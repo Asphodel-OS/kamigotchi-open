@@ -446,6 +446,12 @@ export const getResetTime = (comps: Components, entity: EntityIndex): number => 
   return (result ?? 0) * 1;
 };
 
+// packed pause window (see Auction/pricing.ts unpackPause). optional: unset means none
+export const getTimePause = (comps: Components, entity: EntityIndex): string | undefined => {
+  const { TimePause } = comps;
+  return getComponentValue(TimePause, entity)?.value as string | undefined;
+};
+
 export const getStartTime = (comps: Components, entity: EntityIndex, debug = false): number => {
   const { StartTime } = comps;
   const result = getComponentValue(StartTime, entity)?.value;

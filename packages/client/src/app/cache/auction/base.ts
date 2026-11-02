@@ -2,7 +2,8 @@ import { EntityIndex, World } from 'engine/recs';
 
 import { Components } from 'network/';
 import { Auction, getAuction, NullAuction } from 'network/shapes/Auction';
-import { getBalance, getCurrencyIndex, getItemIndex } from 'network/shapes/utils/component';
+import { unpackPause } from 'network/shapes/Auction/pricing';
+import { getBalance, getCurrencyIndex, getItemIndex, getTimePause } from 'network/shapes/utils/component';
 import { getItemByIndex } from '../item';
 import { queryOne } from './queries';
 
@@ -34,6 +35,10 @@ export const get = (
   if (!AuctionCache.has(entity)) process(world, components, entity);
   const auction = AuctionCache.get(entity);
   if (!auction) return NullAuction;
+
+  // one component read, and an admin can set it at any time (eg. right after a chain halt):
+  // refresh on every read so the quoted price matches what a buy charges
+  auction.time.pause = unpackPause(getTimePause(components, entity));
   if (!options) return auction;
 
   const now = Date.now();

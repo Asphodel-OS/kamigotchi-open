@@ -173,6 +173,7 @@ export type { TimeEndComponent } from "./TimeEndComponent";
 export type { TimeLastActionComponent } from "./TimeLastActionComponent";
 export type { TimeLastComponent } from "./TimeLastComponent";
 export type { TimeNextComponent } from "./TimeNextComponent";
+export type { TimePauseComponent } from "./TimePauseComponent";
 export type { TimeResetComponent } from "./TimeResetComponent";
 export type { TimeStartComponent } from "./TimeStartComponent";
 export type { TokenAddressComponent } from "./TokenAddressComponent";

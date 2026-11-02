@@ -2,6 +2,7 @@ import { EntityID, EntityIndex, World } from 'engine/recs';
 
 import { Components } from 'network/components';
 import { getItemByIndex, Item } from '../Item';
+import { PauseWindow, unpackPause } from './pricing';
 import {
   getBalance,
   getCurrencyIndex,
@@ -12,6 +13,7 @@ import {
   getPeriod,
   getRate,
   getStartTime,
+  getTimePause,
   getValue,
 } from '../utils/component';
 
@@ -34,6 +36,7 @@ export interface Auction {
   };
   time: {
     start: number;
+    pause: PauseWindow; // window GDA pricing skips (eg. a chain halt)
   };
 }
 
@@ -65,6 +68,7 @@ export const get = (
     },
     time: {
       start: getStartTime(components, entity),
+      pause: unpackPause(getTimePause(components, entity)),
     },
   };
 

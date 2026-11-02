@@ -17,5 +17,6 @@ export const NullAuction: Auction = {
   },
   time: {
     start: 0,
+    pause: { start: 0, end: 0 },
   },
 };

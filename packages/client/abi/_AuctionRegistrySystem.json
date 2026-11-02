@@ -215,6 +215,29 @@
     },
     {
       "type": "function",
+      "name": "setPause",
+      "inputs": [
+        {
+          "name": "itemIndex",
+          "type": "uint32",
+          "internalType": "uint32"
+        },
+        {
+          "name": "pauseStart",
+          "type": "uint64",
+          "internalType": "uint64"
+        },
+        {
+          "name": "pauseEnd",
+          "type": "uint64",
+          "internalType": "uint64"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
       "name": "transferOwnership",
       "inputs": [
         {
@@ -310,6 +333,7 @@
     "remove(uint32)": "00d84fd8",
     "renounceOwnership()": "715018a6",
     "requestOwnershipHandover()": "25692962",
+    "setPause(uint32,uint64,uint64)": "05dea9b2",
     "transferOwnership(address)": "f2fde38b"
   }
 }

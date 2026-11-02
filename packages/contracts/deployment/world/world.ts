@@ -61,6 +61,7 @@ import {
   setRoomText,
   unsetPortalTokens,
 } from './state';
+import { setPause as setAuctionPause } from './state/auctions';
 import { disableItems, enableItems } from './state/items';
 import { setPortalLaneItems, togglePortal } from './state/portal';
 import { disableQuests, enableQuests } from './state/quests/quests';
@@ -104,6 +105,14 @@ export class WorldState {
       init: (indices?: number[]) => this.genCalls((api) => initAuctions(api, indices)),
       delete: (indices: number[]) => this.genCalls((api) => deleteAuctions(api, indices)),
       revise: (indices: number[]) => this.genCalls((api) => reviseAuctions(api, indices)),
+      // --args <pauseStart>,<pauseEnd>,<itemIndex>...
+      setPause: (args?: number[]) => {
+        if (!args || args.length < 3) {
+          throw new Error('usage: --args <pauseStart>,<pauseEnd>,<itemIndex>...');
+        }
+        const [pauseStart, pauseEnd, ...indices] = args;
+        return this.genCalls((api) => setAuctionPause(api, pauseStart, pauseEnd, indices));
+      },
     },
     auth: {
       init: () => this.genCalls(initAuth),

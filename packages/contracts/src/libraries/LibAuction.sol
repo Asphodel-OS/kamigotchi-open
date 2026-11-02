@@ -44,7 +44,7 @@ library LibAuction {
   function calcBuy(IUintComp comps, uint256 id, uint32 amt) internal view returns (uint256) {
     GDAParams memory params = GDAParams(
       ValueComponent(getAddrByID(comps, ValueCompID)).get(id),
-      TimeStartComponent(getAddrByID(comps, TimeStartCompID)).get(id),
+      getPriceStart(comps, id),
       PeriodComponent(getAddrByID(comps, PeriodCompID)).get(id).toUint256(),
       DecayComponent(getAddrByID(comps, DecayCompID)).get(id).toUint256() * 1e12,
       RateComponent(getAddrByID(comps, RateCompID)).get(id),
@@ -55,6 +55,17 @@ library LibAuction {
     int256 costWad = LibGDA.calc(params);
     require(costWad > 0, "LibAuction: negative GDA cost");
     return (uint256(costWad) + 1e18 - 1) / 1e18; // round up
+  }
+
+  /// @notice the start time GDA pricing counts elapsed time from: StartTs pushed forward by
+  ///  the part of the pause window that has passed, so time the chain was halted does not
+  ///  decay the price. elapsed(t) = t - startTs - clamp(t - pauseStart, 0, pauseEnd - pauseStart)
+  function getPriceStart(IUintComp comps, uint256 id) internal view returns (uint256) {
+    uint256 startTs = TimeStartComponent(getAddrByID(comps, TimeStartCompID)).get(id);
+    (uint64 pauseStart, uint64 pauseEnd) = LibAuctionRegistry.getPause(comps, id);
+    if (pauseEnd <= pauseStart || block.timestamp <= pauseStart) return startTs;
+    uint256 paused = block.timestamp < pauseEnd ? block.timestamp - pauseStart : pauseEnd - pauseStart;
+    return startTs + paused;
   }
 
   /////////////////

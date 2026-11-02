@@ -2,6 +2,7 @@
 
 export { NullAuction } from './constants';
 export { getAll as getAllAuctions, getByIndex as getAuctionByIndex } from './getters';
+export { getPriceStart as getAuctionPriceStart } from './pricing';
 export { query as queryAuctions } from './queries';
 export { get as getAuction } from './types';
 
