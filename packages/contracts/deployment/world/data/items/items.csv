@@ -114,7 +114,7 @@ Slightly sacred."
 ,In Game,Fortified XP Potion,11411,Potion,Epic,Kami,,"XP+50000,ITEM1006",,A deep-green potion with a grainy texture and dense mouthfeel. Fortified with rare red amber and the essences of old memories.
 ,In Game,Flash Talisman,11412,Potion,Rare,Any_Kami,BYPASS_BONUS_RESET,"ATR+10%_KK,DTR-10%_KK",,"A magical talisman that burns easily. Using this on a Kami intensifies their overall sensitivity to Types, buffing their advantages on liquidations but nerfing their advantages on defense."
 ,In Game,Mistletoe,11413,Food,Rare,Kami,BYPASS_BONUS_RESET,BOUNTY+25%,,"Sacred, at this time of year..... can be used on Kami to Bless them!"
-,To Deploy,Igors Candy,11414,Food,Rare,Kami,BYPASS_BONUS_RESET,BOUNTY+50%,,"Wrapped in wax paper with a date printed on it: 10/31/98. Give to a Kami to increase the MUSU gained from the next Harvest by 50%."
+,In Game,Igors Candy,11414,Food,Rare,Kami,BYPASS_BONUS_RESET,BOUNTY+50%,,"Wrapped in wax paper with a date printed on it: 10/31/98. Give to a Kami to increase the MUSU gained from the next Harvest by 50%."
 ,In Game,Toadstool Liquor,11501,Potion,Rare,Kami,BYPASS_BONUS_RESET,"TEMP10HEALTH,TEMP1POWER",,Liquor distilled from a mash made from mushrooms and black poppy. An underworld favorite.
 ,In Game,Sarcophagus Honey,11502,Potion,Epic,Kami,BYPASS_BONUS_RESET,TEMP30HEALTH,,Legendary medicine believed to be the stuff of rumors. A piece of flesh has been preserved inside using ancient techniques. Give this to a Kami to grant them a temporary bonus to maximum Health.
 ,In Game,Spirit Glue,19001,Potion,Uncommon,Enemy_Kami,,"NEXT_COOLDOWN+180,ITEM1003",,This glue even sticks to intangible things. Can be used to add additional Cooldown to an enemy Kami and temporarily lock it down to a Node.
@@ -127,7 +127,7 @@ Slightly sacred."
 ,In Game,Booster Pack,21004,Lootbox,Rare,Account,,DT Booster Pack,,Open this magical booster pack to receive a Spell Card. You might find something super rare!
 ,In Game,Mochibox,21005,Lootbox,Epic,Account,,DT Mochibox,,A sacred box containing exactly one Mochi.
 ,In Game,Atonement Box,21006,Lootbox,Epic,Account,,,,A box with “From: Dimidiatus” scrawled on it in an unsettling script. Something inside is making noise and desperate to get out.
-,To Deploy,Silt-Caked Box,21007,Lootbox,Uncommon,Account,NOT_TRADABLE,DT Silt-Caked Box,,"Dredged from the bottom of the basin, packed with silt from the collapsing caves. Most of what washes down here is junk. Most."
+,In Game,Silt-Caked Box,21007,Lootbox,Uncommon,Account,NOT_TRADABLE,DT Silt-Caked Box,,"Dredged from the bottom of the basin, packed with silt from the collapsing caves. Most of what washes down here is junk. Most."
 ,In Game,Ice Cream,21201,Food,Uncommon,Account,,SP+20,,"Restorative ice-cream. Food for you, personally. Restores a little bit of your stamina."
 ,In Game,Better Ice Cream,21202,Food,Uncommon,Account,,SP+40,,"A slightly larger and higher-quality ice-cream. What is this made of? Restores a medium amount of stamina."
 ,In Game,Best Ice Cream,21203,Food,Uncommon,Account,,SP+80,,"A huge, lavishly decorated ice-cream. It doesn’t seem to be melting at all… Restores a lot of stamina."
@@ -185,4 +185,4 @@ Slightly sacred."
 ,In Game,Switchbox Imp,100009,Key Item,Epic,,,,,Looks like a small wired relay box on the surface. A tiny humanoid imp lives under the faceplate and manually operates the contacts. This item can be used in crafting certain complex devices.
 ,In Game,Dowsing Rod,100010,Key Item,Epic,,,,,The crystal in the caves radiates a strange power. Mina alleges that this item can sense traces of that power.
 ,In Game,“Homecoming” Data Chip,100011,Key Item,Epic,Account,,,,A data chip found at the Temple by the Waterfall to those who held the ground when the caves began to shake. It seems to point the way home.
-,To Deploy,Igors Amulet,100012,Key Item,Uncommon,,NOT_TRADABLE,,,"A crude sigil of sticks and stone, held together with resin. An old forum post swears it summons something in the Butterfly Forest."
+,In Game,Igors Amulet,100012,Key Item,Uncommon,,NOT_TRADABLE,,,"A crude sigil of sticks and stone, held together with resin. An old forum post swears it summons something in the Butterfly Forest."
