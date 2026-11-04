@@ -16,13 +16,17 @@ import {
   parseStatTypeFromIndex,
 } from '../utils';
 
+// counters that only feed a requirement check; not an effect worth listing
+const HIDDEN_ALLO_TYPES = ['MOCHI_USED'];
+
 export const parseAllos = (
   world: World,
   components: Components,
   allos: Allo[],
   flattenDT?: boolean
 ): DetailedEntity[] => {
-  const raw = allos.map((allo) => parseAllo(world, components, allo, flattenDT));
+  const shown = allos.filter((allo) => !HIDDEN_ALLO_TYPES.includes(allo.type));
+  const raw = shown.map((allo) => parseAllo(world, components, allo, flattenDT));
   return raw.flat();
 };
 

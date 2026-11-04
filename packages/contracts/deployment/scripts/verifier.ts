@@ -27,7 +27,8 @@ export async function verifySystems() {
   }
 }
 
-verifySystems();
+// runs on direct execution only, so the verify command can import it without a second pass
+if (require.main === module) verifySystems();
 
 export async function verifyComponents() {
   const World = new WorldAddresses();

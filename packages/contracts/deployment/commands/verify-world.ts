@@ -12,6 +12,9 @@ import { UintCompABI } from '../contracts/mappings/worldABIs';
 import { readFile, generateRegID, toItemRarity } from '../world/state/utils';
 import { getProvider } from '../utils/chain';
 
+// string-valued components (type, for) expose the same has/get pair
+const StringCompABI = ['function has(uint256) view returns (bool)', 'function get(uint256) view returns (string)'];
+
 ///////////////
 // TYPES
 
@@ -416,11 +419,17 @@ async function run() {
 
     const indexContract = new ethers.Contract(indexAddr, UintCompABI, provider);
 
-    // item rarity is only written at creation, so compare it too: drift reads as STALE
+    // item rarity, type and target are only written at creation, so compare them too: drift reads as STALE
     let rarityContract: ethers.Contract | undefined;
+    let typeContract: ethers.Contract | undefined;
+    let forContract: ethers.Contract | undefined;
     if (entityType.label === 'Items') {
       const rarityAddr = await getCompAddr('component.rarity');
       if (rarityAddr !== ZERO_ADDR) rarityContract = new ethers.Contract(rarityAddr, UintCompABI, provider);
+      const typeAddr = await getCompAddr('component.type');
+      if (typeAddr !== ZERO_ADDR) typeContract = new ethers.Contract(typeAddr, StringCompABI, provider);
+      const forAddr = await getCompAddr('component.for');
+      if (forAddr !== ZERO_ADDR) forContract = new ethers.Contract(forAddr, StringCompABI, provider);
     }
 
     console.log(`\n  ${entityType.label} (${rows.length} entries)`);
@@ -447,6 +456,22 @@ async function run() {
           if (actual !== expected) {
             state = 'STALE';
             detail = `rarity ${actual} on-chain, ${expected} (${row['Rarity']}) in CSV: items setRarity`;
+          }
+        }
+        if (typeContract && onChain && state === 'CURRENT') {
+          const expectedType = String(row['Type'] ?? '').trim().toUpperCase();
+          const actualType = (await typeContract.has(entityID)) ? String(await typeContract.get(entityID)).toUpperCase() : '';
+          if (expectedType && actualType !== expectedType) {
+            state = 'STALE';
+            detail = `type ${actualType || '(none)'} on-chain, ${expectedType} in CSV: items revise`;
+          }
+        }
+        if (forContract && onChain && state === 'CURRENT') {
+          const expectedFor = String(row['For'] ?? '').trim().toUpperCase();
+          const actualFor = (await forContract.has(entityID)) ? String(await forContract.get(entityID)).toUpperCase() : '';
+          if (actualFor !== expectedFor) {
+            state = 'STALE';
+            detail = `for ${actualFor || '(none)'} on-chain, ${expectedFor || '(none)'} in CSV: items revise`;
           }
         }
         const icon = STATE_ICONS[state];

@@ -25,7 +25,12 @@ import { useSelected, useVisibility } from 'app/stores';
 import { BaseAccount, NullAccount, queryAccountFromEmbedded } from 'network/shapes/Account';
 import { parseAllos as _parseAllos, Allo } from 'network/shapes/Allo';
 import { Condition, parseConditionalText } from 'network/shapes/Conditional';
-import { getItemBalance as _getItemBalance, Item } from 'network/shapes/Item';
+import {
+  getItemBalance as _getItemBalance,
+  getMochiCap,
+  getMochiUsed,
+  Item,
+} from 'network/shapes/Item';
 import { calcKamiExpRequirement, Kami, queryKamis } from 'network/shapes/Kami';
 import { Skill } from 'network/shapes/Skill';
 import { getCompAddr } from 'network/shapes/utils';
@@ -94,6 +99,8 @@ export const KamiModal: UIComponent = {
           getEquipmentBonuses: (kami: Kami) => getEquipmentBonuses(world, components, kami.entity),
           getKamiEquipped: (kami: Kami) => getEquipped(world, components, kami.id),
           getEquipmentCapacity: (kami: Kami) => getEquipmentCapacity(world, components, kami.id),
+          getMochiCap: () => getMochiCap(world, components),
+          getMochiUsed: (kami: Kami) => getMochiUsed(world, components, kami.id),
           displayRequirements: (item: Item) =>
             item.requirements.use
               .map((req) => parseConditionalText(world, components, req))
@@ -237,6 +244,7 @@ export const KamiModal: UIComponent = {
             inventories={cleanInventories(account.inventories ?? [])}
             equipped={utils.getKamiEquipped(kami)}
             capacity={utils.getEquipmentCapacity(kami)}
+            mochi={{ used: utils.getMochiUsed(kami), cap: utils.getMochiCap() }}
             isResting={isResting(kami)}
             isOwned={account.index === owner.index}
             actions={{

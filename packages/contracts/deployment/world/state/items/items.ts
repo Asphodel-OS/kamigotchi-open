@@ -1,14 +1,12 @@
 import { AdminAPI } from '../../api';
 import { getItemImage, getSheet, readFile, toItemRarity, toRevise } from '../utils';
-import { addAllos } from './allos';
-import { addRequirements, addTypeRequirement } from './requirements';
+import { addAllos, getAlloMap } from './allos';
+import { addRequirements, getRequirementsMap } from './requirements';
 
 const IGNORE_TYPES = ['OTHER'];
-const BASIC_TYPES = ['MISC', 'MATERIAL', 'RING', 'KEY ITEM', 'NFT', 'TOOL', 'ERC20'];
-const USE_TYPES = ['FOOD', 'LOOTBOX', 'POTION', 'REVIVE', 'CONSUMABLE'];
-const EQUIP_TYPES = ['EQUIPMENT'];
 
-// initialize a single item
+// the row decides the shape: equipment by type, usable when it names a target (For), basic otherwise.
+// type is otherwise a label; use rules come from the Requirements column
 async function init(api: AdminAPI, entry: any) {
   const type = String(entry['Type']).toUpperCase();
   if (IGNORE_TYPES.includes(type)) {
@@ -16,10 +14,9 @@ async function init(api: AdminAPI, entry: any) {
     return;
   }
 
-  if (BASIC_TYPES.includes(type)) await createBasic(api, entry);
-  else if (USE_TYPES.includes(type)) await createConsumable(api, entry);
-  else if (EQUIP_TYPES.includes(type)) await createEquipment(api, entry);
-  else console.error('Item type not found: ' + type);
+  if (type === 'EQUIPMENT') await createEquipment(api, entry);
+  else if (String(entry['For'] ?? '').trim()) await createConsumable(api, entry);
+  else await createBasic(api, entry);
 }
 
 ////////////////
@@ -47,7 +44,8 @@ export async function initItems(api: AdminAPI, indices?: number[], all?: boolean
       if (!indices.includes(index)) continue;
     } else if (!validStatuses.includes(status)) continue;
 
-    // attempt item creation
+    // attempt item creation; a row that cannot be rebuilt from its sheets stops the run first
+    await verifyRowsResolve(row);
     try {
       await init(api, row);
     } catch {
@@ -91,8 +89,25 @@ export async function reviseItems(api: AdminAPI, overrideIndices?: number[]) {
     }
   }
 
+  // a revise deletes before it rebuilds: refuse before deleting anything the sheet cannot rebuild
+  for (const row of itemsCSV) {
+    if (indices.includes(Number(row['Index']))) await verifyRowsResolve(row);
+  }
+
   await deleteItems(api, indices);
   await initItems(api, indices);
+}
+
+// every effect and requirement key on the row must exist in its sheet
+async function verifyRowsResolve(row: any) {
+  const allos = await getAlloMap();
+  const reqs = await getRequirementsMap();
+  const keys = (col: string) => String(row[col] ?? '').split(',').map((k) => k.trim()).filter(Boolean);
+  const missing = [
+    ...keys('Effects').filter((k) => !allos.has(k)).map((k) => `allo ${k}`),
+    ...keys('Requirements').filter((k) => !reqs.has(k)).map((k) => `requirement ${k}`),
+  ];
+  if (missing.length) throw new Error(`item ${row['Index']} cannot be rebuilt from the sheet: ${missing.join(', ')}`);
 }
 
 // re-sync on-chain rarity from the sheet, for the given items or every item if unspecified.
@@ -157,8 +172,7 @@ async function createBasic(api: AdminAPI, entry: any) {
   await createEP.base(index, type, name, description, image, rarity);
 }
 
-// create a consumable item
-// TODO: set requirements more explicitly
+// create a usable item: For names what it can be used on
 async function createConsumable(api: AdminAPI, entry: any) {
   const createEP = api.registry.item.create;
   const index = Number(entry['Index']);
@@ -168,11 +182,10 @@ async function createConsumable(api: AdminAPI, entry: any) {
   const rarity = toItemRarity(entry['Rarity']);
 
   const image = getItemImage(name);
-  const for_ = (entry['For'] ?? 'KAMI').toUpperCase();
+  const for_ = String(entry['For']).trim().toUpperCase();
   console.log(`creating ${type} item ${name} (${index}) for ${for_}`);
 
   await createEP.consumable(index, for_, name, description, type, image, rarity);
-  await addTypeRequirement(api, entry); // hardcoded based on item types
 }
 
 // create an equipment item

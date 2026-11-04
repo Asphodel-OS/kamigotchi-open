@@ -7,6 +7,7 @@ import {
   ItemTooltip,
   TextTooltip,
 } from 'app/components/library';
+import { ItemImages } from 'assets/images/items';
 import { Allo } from 'network/shapes/Allo';
 import { Item } from 'network/shapes/Item';
 import { DetailedEntity } from 'network/shapes/utils';
@@ -39,6 +40,7 @@ export const Equipment = ({
   inventories,
   equipped = {},
   capacity = 1,
+  mochi,
   actions,
   isResting = true,
   isOwned = true,
@@ -47,6 +49,7 @@ export const Equipment = ({
   inventories: Inventory[];
   equipped?: Record<string, Inventory | null>;
   capacity?: number;
+  mochi?: { used: number; cap: number };
   actions?: EquipmentActions;
   isResting?: boolean;
   isOwned?: boolean;
@@ -169,6 +172,23 @@ export const Equipment = ({
           </SlotRow>
         </Column>
       </ColumnsContainer>
+      {mochi && (
+        <TextTooltip
+          text={[
+            `Mochi ${mochi.used}/${mochi.cap}`,
+            '',
+            `Each Mochi permanently raises one stat. A Kami can eat ${mochi.cap} in its lifetime.`,
+          ]}
+          fullWidth
+        >
+          <InventoryBar>
+            <BarImage src={ItemImages.mana_mochi} />
+            <InventoryText>
+              {mochi.used}/{mochi.cap}
+            </InventoryText>
+          </InventoryBar>
+        </TextTooltip>
+      )}
       <InventoryBar>
         <InventoryIcon>📦</InventoryIcon>
         <InventoryText>
@@ -275,9 +295,17 @@ const InventoryBar = styled.div`
   align-items: center;
   justify-content: center;
   padding: 0.5vw;
+  margin-top: 0.5vw;
   border: solid black 0.15vw;
   border-radius: 0.5vw;
   width: 100%;
+`;
+
+const BarImage = styled.img`
+  height: 2vw;
+  width: 2vw;
+  margin-right: 0.5vw;
+  image-rendering: pixelated;
 `;
 
 const InventoryIcon = styled.span`

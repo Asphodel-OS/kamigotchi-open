@@ -2,9 +2,8 @@
 pragma solidity >=0.8.28;
 
 import "tests/utils/SetupTemplate.t.sol";
-import { IEmitter } from "solecs/interfaces/IEmitter.sol";
+import { Vm } from "forge-std/Vm.sol";
 import { Emitter } from "solecs/Emitter.sol";
-import { LibTypes } from "solecs/LibTypes.sol";
 
 contract GoalsTest is SetupTemplate {
   PlayerAccount accLurker;
@@ -244,22 +243,33 @@ contract GoalsTest is SetupTemplate {
     // Fund account to be able to complete the goal in one contribution
     _fundAccount(accGold.index, 100);
 
-    // Build expected event parameters
-    uint8[] memory schema = new uint8[](3);
-    schema[0] = uint8(LibTypes.SchemaValue.UINT32);  // goalIndex
-    schema[1] = uint8(LibTypes.SchemaValue.UINT256); // goalID
-    schema[2] = uint8(LibTypes.SchemaValue.UINT256); // timestamp
-
-    // Expect the GOAL_COMPLETE event to be emitted
-    vm.expectEmit(address(emitter));
-    emit IEmitter.WorldEvent("GOAL_COMPLETE", schema, abi.encode(goalIndex, goalID, block.timestamp));
-
-    // Contribute the full amount to complete the goal
+    // Contribute the full amount to complete the goal, recording logs
+    // (component events go through the same emitter, so match by identifier)
+    vm.recordLogs();
     vm.prank(accGold.operator);
     _GoalContributeSystem.executeTyped(goalIndex, 100);
 
+    Vm.Log memory eventLog = _findWorldEvent(vm.getRecordedLogs(), "GOAL_COMPLETE");
+    assertEq(eventLog.emitter, address(emitter));
+    (uint8[] memory schema, bytes memory value) = abi.decode(eventLog.data, (uint8[], bytes));
+    assertEq(schema.length, 2);
+    (uint32 eventGoalIndex, uint256 eventTs) = abi.decode(value, (uint32, uint256));
+    assertEq(eventGoalIndex, goalIndex);
+    assertEq(eventTs, block.timestamp);
+
     // Verify goal is complete
     assertTrue(LibGoal.isComplete(components, goalID), "Goal should be complete");
+  }
+
+  function _findWorldEvent(
+    Vm.Log[] memory logs,
+    string memory identifier
+  ) internal pure returns (Vm.Log memory) {
+    bytes32 identifierHash = keccak256(bytes(identifier));
+    for (uint256 i = 0; i < logs.length; i++) {
+      if (logs[i].topics.length > 1 && logs[i].topics[1] == identifierHash) return logs[i];
+    }
+    revert("WorldEvent not found");
   }
 
   //////////////////

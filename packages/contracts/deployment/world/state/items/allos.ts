@@ -22,14 +22,14 @@ export const addAllos = async (api: AdminAPI, itemRow: any) => {
   const index = Number(itemRow['Index']);
 
   const map = await getAlloMap();
-  const keys = itemRow['Effects'].split(',');
+  const keys = String(itemRow['Effects'] ?? '').split(',').map((k: string) => k.trim());
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i];
     if (!key) continue;
 
     const allo = map.get(key);
-    if (allo) await addAllo(api, index, allo);
-    else console.log(`Error: Could not find Allo ${key} for item ${index}`);
+    if (!allo) throw new Error(`Could not find Allo ${key} for item ${index}`);
+    await addAllo(api, index, allo);
   }
 };
 

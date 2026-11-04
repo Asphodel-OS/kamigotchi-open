@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import execa from 'execa';
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
+import { verifySystems } from '../scripts/verifier';
 import { ignoreSolcErrors } from '../utils';
 
 const argv = yargs(hideBin(process.argv))

@@ -5,6 +5,7 @@ export {
   getByIndex as getItemByIndex,
   getDetailsByIndex as getItemDetailsByIndex,
 } from './getters';
+export { getMochiCap, getMochiUsed } from './mochi';
 export {
   queryByIndex as queryItemByIndex,
   queryRegistry as queryItemRegistry,

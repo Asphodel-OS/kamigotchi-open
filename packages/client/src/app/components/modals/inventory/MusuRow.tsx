@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { IconButton, TextTooltip } from 'app/components/library';
 import { useVisibility } from 'app/stores';
 import { triggerPoolModal } from 'app/triggers';
+import { ActionIcons } from 'assets/images/icons/actions';
 import { ArrowIcons } from 'assets/images/icons/arrows';
 import { LpFountainIcon } from 'assets/images/icons/menu';
 import { ItemImages } from 'assets/images/items';
@@ -22,10 +23,14 @@ export const MusuRow = ({
     mode: Mode;
     setMode: (mode: Mode) => void;
     setShuffle: (suffle: boolean) => void;
+    query: string;
+    setQuery: (query: string) => void;
   };
 }) => {
   const { musu, obols } = data;
-  const { mode, setMode, setShuffle } = state;
+  const { mode, setMode, setShuffle, query, setQuery } = state;
+  const [searching, setSearching] = useState(false);
+  const searchRef = useRef<HTMLInputElement | null>(null);
 
   const [displayMusu, setDisplayMusu] = useState<number>(musu);
   const animationRef = useRef<number | null>(null);
@@ -71,8 +76,24 @@ export const MusuRow = ({
   // toggles views and activates the shuffle animation
   const triggerModalShuffle = () => {
     setMode(mode === 'STOCK' ? 'TRANSFER' : 'STOCK');
+    closeSearch();
     setTimeout(() => setShuffle(true), 100);
     setTimeout(() => setShuffle(false), 500);
+  };
+
+  // the search field unfolds to the right of the icons; closing it clears the query
+  const toggleSearch = () => {
+    if (searching) closeSearch();
+    else {
+      setSearching(true);
+      setTimeout(() => searchRef.current?.focus(), 50);
+    }
+  };
+
+  const closeSearch = () => {
+    searchRef.current?.blur();
+    setSearching(false);
+    setQuery('');
   };
 
   // open/close the pool modal. silent: the IconButton owns the click sound
@@ -103,13 +124,29 @@ export const MusuRow = ({
             <IconButton img={LpFountainIcon} onClick={togglePoolModal} radius={0.9} />
           </TextTooltip>
         )}
+        {mode !== 'TRANSFER' && (
+          <TextTooltip text={[searching ? 'Close search' : 'Search items']} direction='row'>
+            <IconButton img={ActionIcons.search} onClick={toggleSearch} radius={0.9} />
+          </TextTooltip>
+        )}
+        <SearchField
+          ref={searchRef}
+          $open={searching && mode !== 'TRANSFER'}
+          disabled={!searching || mode === 'TRANSFER'}
+          value={query}
+          placeholder='item name'
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => e.key === 'Escape' && closeSearch()}
+        />
       </Icons>
-      <TextTooltip text={['MUSU']} direction='row' fullWidth>
-        <MusuSection>
-          <Icon src={ItemImages.musu} onClick={() => null} />
-          <Balance>{displayMusu.toLocaleString()}</Balance>
-        </MusuSection>
-      </TextTooltip>
+      <MusuSection>
+        <TextTooltip text={['MUSU']} direction='row'>
+          <Chip>
+            <Icon src={ItemImages.musu} />
+            <Balance>{displayMusu.toLocaleString()}</Balance>
+          </Chip>
+        </TextTooltip>
+      </MusuSection>
     </Container>
   );
 };
@@ -136,10 +173,40 @@ const MusuSection = styled.div`
   gap: 0.3vw;
 `;
 
+const Chip = styled.div`
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  gap: 0.3vw;
+`;
+
 const Icons = styled.div`
   display: flex;
   flex-flow: row nowrap;
+  align-items: center;
   gap: 0.3vw;
+`;
+
+const SearchField = styled.input<{ $open: boolean }>`
+  width: ${({ $open }) => ($open ? '9vw' : '0')};
+  padding: ${({ $open }) => ($open ? '0.3vw 0.45vw' : '0.3vw 0')};
+  border: solid #333 ${({ $open }) => ($open ? '0.15vw' : '0')};
+  border-radius: 0.6vw;
+  opacity: ${({ $open }) => ($open ? 1 : 0)};
+  overflow: hidden;
+  transition:
+    width 0.25s ease,
+    opacity 0.2s ease,
+    padding 0.25s ease;
+
+  font-family: Pixel;
+  font-size: 0.75vw;
+  color: black;
+  background-color: white;
+  outline: none;
+  &::placeholder {
+    color: #999;
+  }
 `;
 
 const Icon = styled.img`
@@ -152,7 +219,7 @@ const Balance = styled.div`
   border: solid #333 0.15vw;
   border-radius: 0.6vw 0 0.6vw 0.6vw;
   padding: 0.3vw;
-  width: 50%;
+  min-width: 9vw;
 
   display: flex;
   flex-flow: row nowrap;

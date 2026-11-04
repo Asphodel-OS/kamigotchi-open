@@ -30,7 +30,7 @@ export const parseConditionalUnits = (con: Condition): [string, string] => {
 
   return [tar, curr];
 };
-const HIDE_PROGRESS_TYPES = ['QUEST', 'ROOM', 'ITEM_BURN'];
+const HIDE_PROGRESS_TYPES = ['QUEST', 'ROOM', 'ITEM_BURN', 'MOCHI_USED'];
 export const parseConditionalTracking = (con: any): string => {
   const [tar, curr] = parseConditionalUnits(con);
 
@@ -75,6 +75,8 @@ export const parseConditionalText = (
   else if (con.target.type == 'PHASE') text = `During ${getPhaseName(con.target.index!)}`;
   else if (con.target.type == 'LEVEL') text = `Be ${deltaText} level ${targetVal}`;
   else if (con.target.type === 'KAMI_CAN_EAT') text = `${targetVal}`;
+  else if (con.target.type === 'MOCHI_USED')
+    text = `Under the Mochi cap (${parseMochiCap(con)} per Kami)`;
   else if (con.target.type === 'STATE') text = `Is ${deltaText} ${targetVal} `;
   else text = '???';
 
@@ -88,6 +90,9 @@ export const parseConditionalText = (
 
   return text;
 };
+
+// the cap check is CURR_MAX on mochi already eaten, so the cap itself is one more
+const parseMochiCap = (con: Condition): number => (con.target.value ?? 0) * 1 + 1;
 
 const parseDeltaText = (con: Condition): string => {
   if (con.logic.includes('MIN')) return `minimum`;

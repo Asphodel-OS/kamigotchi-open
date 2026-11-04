@@ -1,3 +1,6 @@
 Items,Name,Type,Preposition,Index,Value,Key
 VIPP,VIP_ROOM,ROOM,AT,64,,VIP_ROOM
-"Mana Mochi, Gaokerena Mochi, Sunset Apple Mochi, Kami Mochi",MOCHI_LIMIT,MOCHI_USED,MAX,0,2,MOCHI_LIMIT
+"Mana Mochi, Gaokerena Mochi, Sunset Apple Mochi, Kami Mochi",MOCHI_LIMIT,MOCHI_USED,MAX,0,1,MOCHI_LIMIT
+,KAMI_CAN_EAT,KAMI_CAN_EAT,IS,0,,KAMI_CAN_EAT
+,KAMI_DEAD,STATE,IS,3,,KAMI_DEAD
+,KAMI_RESTING,STATE,IS,1,,KAMI_RESTING

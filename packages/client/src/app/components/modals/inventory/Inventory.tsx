@@ -28,6 +28,7 @@ import { Kami } from 'network/shapes/Kami';
 import { didActionSucceed } from 'network/utils';
 import { playWonderegg } from 'utils/sounds';
 import { ItemGrid } from './items/ItemGrid';
+import { INVENTORY_TABS, TabKey } from './items/TypeTabs';
 import { MusuRow } from './MusuRow';
 import { Transfer } from './transfer/Transfer';
 import { Mode, REFRESH_INTERVAL } from './types';
@@ -101,6 +102,8 @@ export const InventoryModal: UIComponent = {
 
     const [tick, setTick] = useState(Date.now());
     const [mode, setMode] = useState<Mode>('STOCK');
+    const [tab, setTab] = useState<TabKey>('all');
+    const [query, setQuery] = useState('');
     const [shuffle, setShuffle] = useState(false);
     const [resetSend, setResetSend] = useState(false);
 
@@ -206,7 +209,9 @@ export const InventoryModal: UIComponent = {
 
     // get modal title
     const getTitle = (mode: Mode) => {
-      return mode === 'STOCK' ? 'Inventory' : 'Inventory Transfer';
+      if (mode !== 'STOCK') return 'Inventory Transfer';
+      const label = INVENTORY_TABS.find((t) => t.key === tab)?.label ?? 'All items';
+      return `Inventory · ${label}`;
     };
 
     /////////////////
@@ -223,14 +228,16 @@ export const InventoryModal: UIComponent = {
               musu: getBalance(inventories, MUSU_INDEX),
               obols: getBalance(inventories, OBOL_INDEX),
             }}
-            state={{ mode, setMode, setShuffle }}
+            state={{ mode, setMode, setShuffle, query, setQuery }}
           />
         }
         shuffle={shuffle}
-        onClose={() => setMode('STOCK')}
+        onClose={() => {
+          setMode('STOCK');
+          setQuery('');
+        }}
         canExit
         noPadding
-        truncate
       >
         {!accountEntity ? (
           <EmptyText text={['Failed to Connect Account']} size={1} />
@@ -240,7 +247,7 @@ export const InventoryModal: UIComponent = {
               key='grid'
               actions={{ useForAccount: useForAccountTx, useForKami: useForKamiTx }}
               data={{ accountEntity, account, inventories, kamis }}
-              state={{ mode }}
+              state={{ mode, tab, setTab, query, setQuery }}
               utils={utils}
             />
             <Transfer

@@ -4,6 +4,13 @@ import { getItemRarities } from 'constants/itemRarities';
 import { Allo } from 'network/shapes/Allo';
 import { DetailedEntity } from 'network/shapes/utils';
 
+// 'KEY ITEM' reads as 'Key Item'; acronym types keep their caps
+const ACRONYM_TYPES = new Set(['NFT', 'ERC20']);
+const titleCase = (s: string) =>
+  s.replace(/\b\w+/g, (w) =>
+    ACRONYM_TYPES.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+  );
+
 export const ItemTooltip = ({
   item,
   utils: { displayRequirements, parseAllos },
@@ -44,7 +51,7 @@ export const ItemTooltip = ({
     <TooltipContent
       img={image}
       title={item.is.disabled ? `${title} (disabled)` : title}
-      subtitle={{ text: 'Type', content: type }}
+      subtitle={{ text: 'Type', content: titleCase(type) }}
       description={description}
       left={{
         text: 'Requirements',

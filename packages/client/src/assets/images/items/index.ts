@@ -49,11 +49,11 @@ import energy_drink from './energy_drink.png';
 import essence_of_daffodil from './essence_of_daffodil.png';
 import essence_of_hearing from './essence_of_hearing.png';
 import essence_of_sight from './essence_of_sight.png';
-import ether_shard from './ether_shard.png';
 import essence_of_smell from './essence_of_smell.png';
 import essence_of_taste from './essence_of_taste.png';
 import essence_of_thought from './essence_of_thought.png';
 import essence_of_touch from './essence_of_touch.png';
+import ether_shard from './ether_shard.png';
 import fast_travel_potion from './fast_travel_potion.png';
 import festival_chime from './festival_chime.png';
 import fetid_egg from './fetid_egg.png';
@@ -67,6 +67,7 @@ import gaokerena_mochi from './gaokerena_mochi.png';
 import gingerbread_cookie from './gingerbread_cookie.png';
 import glass_jar from './glass_jar.png';
 import golden_apple from './golden_apple.png';
+import golden_box from './golden_box.png';
 import grace_potion from './grace_potion.png';
 import great_heart_crystal from './great_heart_crystal.png';
 import greater_xp_potion from './greater_xp_potion.png';
@@ -255,6 +256,7 @@ export const ItemImages = {
   gingerbread_cookie: gingerbread_cookie,
   glass_jar: glass_jar,
   golden_apple: golden_apple,
+  golden_box: golden_box,
   grace_potion: grace_potion,
   great_heart_crystal: great_heart_crystal,
   greater_xp_potion: greater_xp_potion,

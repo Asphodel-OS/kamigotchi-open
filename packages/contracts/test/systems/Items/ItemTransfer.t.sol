@@ -6,8 +6,8 @@ import { MUSU_INDEX, TRANSFER_FEE } from "libraries/LibInventory.sol";
 
 contract ItemTransferTest is ItemTemplate {
   function testTransferBasic() public {
-    uint32 itemA = 1;
-    uint32 itemB = 2;
+    uint32 itemA = 101;
+    uint32 itemB = 102;
     _giveItem(alice, itemA, 3);
     _fundAccount(alice.index, 100); // ensure enough MUSU for scaled batch fee
 
