@@ -4,12 +4,12 @@
 ,In Game,Gacha Ticket,10,Misc,Epic,,,,,"Redeemable for one Kami. You should take this to the vending machine…"
 ,In Game,Reroll Ticket,11,Misc,Epic,,,,,"Allows you to reroll a Kami once. You should take this to the vending machine…"
 ,In Game,Coat Check Ticket,12,Misc,Epic,,NOT_TRADABLE,,,This ticket says it can be exchanged for an exclusive Operator cosmetic item. But who will take the ticket?
-,To Deploy,Ballot,13,Misc,Uncommon,,NOT_TRADABLE,,,Proof you spoke for Yominet at the gauge. Spend it at Alaina’s Shop in the Forest Hut.
-,To Deploy,Golden Ballot,14,Misc,Epic,,NOT_TRADABLE,,,"Five epochs in a row, one voice. A gilded slip handed to those who keep showing up for Yominet."
-,To Deploy,Voter Badge I,15,Cosmetic,Uncommon,,NOT_TRADABLE,,,Five epochs in a row. Someone at the gauge is starting to recognise your face.
-,To Deploy,Voter Badge II,16,Cosmetic,Rare,,NOT_TRADABLE,,,Ten epochs in a row. You know the way to the gauge by heart now.
-,To Deploy,Voter Badge III,17,Cosmetic,Rare,,NOT_TRADABLE,,,"Twenty-six epochs in a row, a whole year. The other voters nod at you as you pass."
-,To Deploy,Voter Badge IV,18,Cosmetic,Epic,,NOT_TRADABLE,,,"Fifty-two epochs at the gauge without wavering, two whole years. The ink on this one never quite dries."
+,In Game,Ballot,13,Misc,Uncommon,,NOT_TRADABLE,,,Proof you spoke for Yominet at the gauge. Spend it at Alaina’s Shop in the Forest Hut.
+,In Game,Golden Ballot,14,Misc,Epic,,NOT_TRADABLE,,,"Five epochs in a row, one voice. A gilded slip handed to those who keep showing up for Yominet."
+,In Game,Voter Badge I,15,Cosmetic,Uncommon,,NOT_TRADABLE,,,Five epochs in a row. Someone at the gauge is starting to recognise your face.
+,In Game,Voter Badge II,16,Cosmetic,Rare,,NOT_TRADABLE,,,Ten epochs in a row. You know the way to the gauge by heart now.
+,In Game,Voter Badge III,17,Cosmetic,Rare,,NOT_TRADABLE,,,"Twenty-six epochs in a row, a whole year. The other voters nod at you as you pass."
+,In Game,Voter Badge IV,18,Cosmetic,Epic,,NOT_TRADABLE,,,"Fifty-two epochs at the gauge without wavering, two whole years. The ink on this one never quite dries."
 ,In Game,Kamigotchi World Passport (Yellow),20,NFT,Rare,,,,,Your ticket to great fortunes. In yellow.
 ,In Game,Kamigotchi World Passport (Orange),21,NFT,Rare,,,,,Your ticket to great fortunes. In orange.
 ,In Game,Kamigotchi World Passport (Pink),22,NFT,Rare,,,,,Your ticket to great fortunes. In pink.
@@ -130,11 +130,11 @@ Slightly sacred."
 ,Shelved,Giftbox,21001,Lootbox,Uncommon,Account,,DT OG,,"The lowest tier of giftbox. You can get XP candies, cheeseburgers, and even a few rare item drops from this!"
 ,In Game,Kamigotchi World Citizen Giftbox,21002,Lootbox,Rare,Account,,DT Passport,,"A gold-trimmed and colorfully painted treasure chest. The gift inside must be particularly valuable."
 ,In Game,Wonder Egg,21003,Lootbox,Rare,Account,,DT Wonder Egg,,"A cracked egg held together by blood-red wax. The contents are a surprise."
-,To Update,Booster Pack,21004,Lootbox,Rare,Account,NOT_TRADABLE,DT Booster Pack,,Open this magical booster pack to receive a Spell Card. You might find something super rare!
+,In Game,Booster Pack,21004,Lootbox,Rare,Account,NOT_TRADABLE,DT Booster Pack,,Open this magical booster pack to receive a Spell Card. You might find something super rare!
 ,In Game,Mochibox,21005,Lootbox,Epic,Account,,DT Mochibox,,A sacred box containing exactly one Mochi.
 ,In Game,Atonement Box,21006,Lootbox,Epic,Account,,,,A box with “From: Dimidiatus” scrawled on it in an unsettling script. Something inside is making noise and desperate to get out.
 ,In Game,Silt-Caked Box,21007,Lootbox,Uncommon,Account,NOT_TRADABLE,DT Silt-Caked Box,,"Dredged from the bottom of the basin, packed with silt from the collapsing caves. Most of what washes down here is junk. Most."
-,To Deploy,Golden Box,21008,Lootbox,Epic,Account,NOT_TRADABLE,"5x Booster Pack,DT Golden Box",,"A gilded chest for those who keep showing up at the gauge. Five Booster Packs inside, and something rarer beneath them."
+,In Game,Golden Box,21008,Lootbox,Epic,Account,NOT_TRADABLE,"5x Booster Pack,DT Golden Box",,"A gilded chest for those who keep showing up at the gauge. Five Booster Packs inside, and something rarer beneath them."
 ,In Game,Ice Cream,21201,Food,Uncommon,Account,,SP+20,,"Restorative ice-cream. Food for you, personally. Restores a little bit of your stamina."
 ,In Game,Better Ice Cream,21202,Food,Uncommon,Account,,SP+40,,"A slightly larger and higher-quality ice-cream. What is this made of? Restores a medium amount of stamina."
 ,In Game,Best Ice Cream,21203,Food,Uncommon,Account,,SP+80,,"A huge, lavishly decorated ice-cream. It doesn’t seem to be melting at all… Restores a lot of stamina."
