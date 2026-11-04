@@ -14,6 +14,7 @@ import { ActionParam } from 'constants/dialogue/types';
 import { IGOR_TRICK_OR_TREAT_QUEST_INDEX } from 'constants/quests';
 import { EntityID, EntityIndex } from 'engine/recs';
 import { Account, NullAccount, queryAccountFromEmbedded } from 'network/shapes/Account';
+import { hasFlag } from 'network/shapes/Flag';
 import { getItemBalance } from 'network/shapes/Item';
 import {
   filterOngoingQuests,
@@ -70,6 +71,9 @@ export const DialogueModal: UIComponent = {
           populate: (base: BaseQuest) => populateQuest(world, components, base),
           getAccount: (entity: EntityIndex) => _getAccount(world, components, entity, accRefresh),
           getAccountKamis: (entity: EntityIndex) => _getAccountKamis(world, components, entity),
+          // one newbie vendor purchase per account (NewbieVendorBuySystem)
+          hasBoughtNewbieKami: (entity: EntityIndex) =>
+            hasFlag(world, components, entity, 'NEWBIE_VENDOR_PURCHASED'),
           queryOngoing: (accountId: EntityID) => queryOngoingQuests(components, accountId),
           queryCompleted: (account: Account) => queryCompletedQuests(components, account.id),
           filterByAvailable: (
@@ -115,6 +119,7 @@ export const DialogueModal: UIComponent = {
     const [ongoingQuests, setOngoingQuests] = useState<Quest[]>([]);
     const [account, setAccount] = useState<Account>(NullAccount);
     const [hasAnyKamis, setHasAnyKamis] = useState(false);
+    const [hasBoughtNewbieKami, setHasBoughtNewbieKami] = useState(false);
     const [redirectBalances, setRedirectBalances] = useState<number[]>([]);
     const endDialogueTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const internalDialogueTransitionRef = useRef(false);
@@ -169,6 +174,7 @@ export const DialogueModal: UIComponent = {
       const account = utils.getAccount(accEntity);
       setAccount(account);
       setHasAnyKamis(utils.getAccountKamis(accEntity).length > 0);
+      setHasBoughtNewbieKami(utils.hasBoughtNewbieKami(accEntity));
     }, [dialogueModalOpen, accEntity, ownsKamiEntities]);
 
     // track the balances that redirected choices depend on (e.g. a badge claimed from the VIP
@@ -284,15 +290,15 @@ export const DialogueModal: UIComponent = {
     const shouldShowNpcSpecial = useMemo(() => {
       if (!npc.special.name) return false;
       if (npc.special.name !== 'Kami Adoption Agency') return true;
-      if (hasAnyKamis) return false;
+      if (hasAnyKamis || hasBoughtNewbieKami) return false;
       const now = Math.floor(Date.now() / 1000);
       return now - account.time.creation <= NEWBIE_VENDOR_MAX_ACCOUNT_AGE_SECONDS;
-    }, [account.time.creation, hasAnyKamis, npc.special.name]);
+    }, [account.time.creation, hasAnyKamis, hasBoughtNewbieKami, npc.special.name]);
     const userQualifiesForAdoptionAgency = useMemo(() => {
-      if (hasAnyKamis) return false;
+      if (hasAnyKamis || hasBoughtNewbieKami) return false;
       const now = Math.floor(Date.now() / 1000);
       return now - account.time.creation <= NEWBIE_VENDOR_MAX_ACCOUNT_AGE_SECONDS;
-    }, [account.time.creation, hasAnyKamis]);
+    }, [account.time.creation, hasAnyKamis, hasBoughtNewbieKami]);
 
     /////////////////
     // ACTIONS

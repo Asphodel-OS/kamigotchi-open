@@ -13,6 +13,7 @@ import { UIComponent } from 'app/root/types';
 import { triggerBridgeModal } from 'app/triggers';
 import { useNetwork, useSelected, useVisibility } from 'app/stores';
 import { queryAccountFromEmbedded } from 'network/shapes/Account';
+import { hasFlag } from 'network/shapes/Flag';
 import { getKami as _getKami } from 'network/shapes/Kami';
 import { getDisplayedKamis as _getDisplayedKamis } from 'network/shapes/NewbieVendor/queries';
 import { getSystemAddr } from 'network/shapes/utils';
@@ -41,6 +42,9 @@ export const KamiAdoptionAgency: UIComponent = {
     const getKami = (entity: EntityIndex) =>
       _getKami(world, components, entity, { stats: true, traits: true, progress: true });
     const hasAnyKamis = () => _getAccountKamis(world, components, accountEntity).length > 0;
+    // one newbie vendor purchase per account, even if that kami has since left the account
+    const hasBoughtNewbieKami = () =>
+      hasFlag(world, components, accountEntity, 'NEWBIE_VENDOR_PURCHASED');
     const isAccountWithin24Hours = () => {
       const creation = _getAccount(world, components, accountEntity)?.time?.creation;
       if (typeof creation !== 'number' || !Number.isFinite(creation)) return false;
@@ -90,6 +94,7 @@ export const KamiAdoptionAgency: UIComponent = {
       [completedAdoptionsByAddress, selectedAddress]
     );
     const userHasKami = hasAnyKamis();
+    const userHasBoughtNewbieKami = hasBoughtNewbieKami();
     const userAccountIsWithin24Hours = isAccountWithin24Hours();
     const systemAddress = newbieVendorSystemAddress;
 
@@ -137,6 +142,7 @@ export const KamiAdoptionAgency: UIComponent = {
       () =>
         hasCompletedAdoption ||
         userHasKami ||
+        userHasBoughtNewbieKami ||
         !userAccountIsWithin24Hours ||
         buyingKamiIndex !== null ||
         !systemAddress ||
@@ -151,12 +157,17 @@ export const KamiAdoptionAgency: UIComponent = {
         priceWei,
         systemAddress,
         userAccountIsWithin24Hours,
+        userHasBoughtNewbieKami,
         userHasKami,
       ]
     );
     const userQualifiesForAdoption = useMemo(
-      () => !hasCompletedAdoption && !userHasKami && userAccountIsWithin24Hours,
-      [hasCompletedAdoption, userHasKami, userAccountIsWithin24Hours]
+      () =>
+        !hasCompletedAdoption &&
+        !userHasKami &&
+        !userHasBoughtNewbieKami &&
+        userAccountIsWithin24Hours,
+      [hasCompletedAdoption, userHasKami, userHasBoughtNewbieKami, userAccountIsWithin24Hours]
     );
     const adoptionBadgeMessage = useMemo(
       () =>
