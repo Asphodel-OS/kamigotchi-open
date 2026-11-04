@@ -33,6 +33,14 @@ export function createPlayerAPI(txQueue: TxQueue) {
     return systems['system.scavenge.claim'].executeTyped(scavBarID);
   }
 
+  /////////////////
+  //   BALLOTS
+
+  // @dev mint all Ballots (and milestone rewards) owed from settled cycles
+  function claimBallots() {
+    return systems['system.ballot.claim'].executeTyped();
+  }
+
   return {
     ...externalAPI(call),
     echo: echoAPI(systems),
@@ -47,6 +55,9 @@ export function createPlayerAPI(txQueue: TxQueue) {
 
     // TODO: consider how to reorganize the below
     goal: goalsAPI(systems),
+    ballot: {
+      claim: claimBallots,
+    },
     droptable: {
       reveal: droptableReveal,
     },

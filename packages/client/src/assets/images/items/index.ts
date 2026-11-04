@@ -13,6 +13,7 @@ import ash_pearl from './ash_pearl.png';
 import ashlar from './ashlar.png';
 import astrolabe_disk from './astrolabe_disk.png';
 import atonement_box from './atonement_box.png';
+import ballot from './ballot.png';
 import berry_chalk from './berry_chalk.png';
 import best_ice_cream from './best_ice_cream.png';
 import better_ice_cream from './better_ice_cream.png';
@@ -67,6 +68,7 @@ import gaokerena_mochi from './gaokerena_mochi.png';
 import gingerbread_cookie from './gingerbread_cookie.png';
 import glass_jar from './glass_jar.png';
 import golden_apple from './golden_apple.png';
+import golden_ballot from './golden_ballot.png';
 import golden_box from './golden_box.png';
 import grace_potion from './grace_potion.png';
 import great_heart_crystal from './great_heart_crystal.png';
@@ -175,6 +177,10 @@ import vipp from './vipp.png';
 import visage_of_avarice from './visage_of_avarice.png';
 import visage_of_contempt from './visage_of_contempt.png';
 import visage_of_mischief from './visage_of_mischief.png';
+import voter_badge_i from './voter_badge_i.png';
+import voter_badge_ii from './voter_badge_ii.png';
+import voter_badge_iii from './voter_badge_iii.png';
+import voter_badge_iv from './voter_badge_iv.png';
 import wise_critter from './wise_critter.png';
 import wise_gumdrop from './wise_gumdrop.png';
 import wise_leafling from './wise_leafling.png';
@@ -202,6 +208,7 @@ export const ItemImages = {
   ash_pearl: ash_pearl,
   ashlar: ashlar,
   astrolabe_disk: astrolabe_disk,
+  ballot: ballot,
   berry_chalk: berry_chalk,
   best_ice_cream: best_ice_cream,
   better_ice_cream: better_ice_cream,
@@ -256,6 +263,7 @@ export const ItemImages = {
   gingerbread_cookie: gingerbread_cookie,
   glass_jar: glass_jar,
   golden_apple: golden_apple,
+  golden_ballot: golden_ballot,
   golden_box: golden_box,
   grace_potion: grace_potion,
   great_heart_crystal: great_heart_crystal,
@@ -364,6 +372,10 @@ export const ItemImages = {
   visage_of_avarice: visage_of_avarice,
   visage_of_contempt: visage_of_contempt,
   visage_of_mischief: visage_of_mischief,
+  voter_badge_i: voter_badge_i,
+  voter_badge_ii: voter_badge_ii,
+  voter_badge_iii: voter_badge_iii,
+  voter_badge_iv: voter_badge_iv,
   wise_critter: wise_critter,
   wise_gumdrop: wise_gumdrop,
   wise_leafling: wise_leafling,

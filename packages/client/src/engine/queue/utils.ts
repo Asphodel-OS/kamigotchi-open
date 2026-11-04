@@ -309,8 +309,10 @@ export async function sendTx(
     if (shouldResetNonce(e)) {
       throw e;
     }
-    if (isMethodUnsupportedError(e)) {
-      log.time.info('[queue] eth_sendRawTransactionSync not supported, using legacy path');
+    // unsigned means unsent: let the wallet sign and send, e.g. when the node answers the
+    // wallet's forwarded eth_signTransaction itself (anvil: "No Signer available")
+    if (isMethodUnsupportedError(e) || (!signedTx && !isDeterministicSubmissionError(e))) {
+      log.time.info('[queue] legacy path: the wallet signs and sends');
       const response = await signer.sendTransaction(txData);
       const receipt = await response.wait();
       if (!receipt) {

@@ -28,3 +28,5 @@ test/utils/TestSetupImports.t.sol
 
 temp/
 **/CLAUDE.md
+# ballots settle job cache
+.ballots-cache/

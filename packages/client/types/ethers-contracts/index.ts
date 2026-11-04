@@ -15,6 +15,8 @@ export type { AddressOwnerComponent } from "./AddressOwnerComponent";
 export type { AffinityComponent } from "./AffinityComponent";
 export type { AuctionBuySystem } from "./AuctionBuySystem";
 export type { BalanceComponent } from "./BalanceComponent";
+export type { BallotClaimSystem } from "./BallotClaimSystem";
+export type { BallotSettleSystem } from "./BallotSettleSystem";
 export type { BlacklistComponent } from "./BlacklistComponent";
 export type { BlockRevealComponent } from "./BlockRevealComponent";
 export type { BoolBareComponent } from "./BoolBareComponent";

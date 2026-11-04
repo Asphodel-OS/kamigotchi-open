@@ -93,7 +93,8 @@ export const TempleOfTheWheel: UIComponent = {
         playSacrifice();
         setSelectedKami(NullKami);
         useSelected.setState({ dialogueIndex: 20018 });
-        setModals({ dialogue: true });
+        // the sacrifice is done: the temple steps aside so dimidiatus' answer shows in full
+        setModals({ dialogue: true, templeOfTheWheel: false });
       }
       setIsDisabled(false);
     };

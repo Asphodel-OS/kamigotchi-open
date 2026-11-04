@@ -73,6 +73,7 @@ export interface Modals {
   settings: boolean;
   tokenPortal: boolean;
   trading: boolean;
+  vip: boolean;
 }
 
 export const toggleModals = (isOn: boolean): Modals => ({
@@ -109,6 +110,7 @@ export const toggleModals = (isOn: boolean): Modals => ({
   settings: isOn,
   tokenPortal: isOn,
   trading: isOn,
+  vip: isOn,
 });
 
 ////////////////
@@ -133,6 +135,7 @@ const BRIDGE_OPEN_CLOSE_MODALS: Array<keyof Modals> = [
   'dialogue',
   'kami',
   'map',
+  'vip',
 ];
 
 const MODAL_ZONES: Partial<Record<keyof Modals, ScreenZone[]>> = {
@@ -155,6 +158,7 @@ const MODAL_ZONES: Partial<Record<keyof Modals, ScreenZone[]>> = {
   operatorFund: ['center'],
   pool: ['center'],
   reveal: ['center'],
+  vip: ['center'],
 
   // Wide: left + center (col 2-67)
   trading: ['left', 'center'],
@@ -263,6 +267,7 @@ export const useVisibility = create<State & Actions>((set) => {
       settings: false,
       tokenPortal: false,
       trading: false,
+      vip: false,
     },
     validators: {
       accountRegistrar: false,

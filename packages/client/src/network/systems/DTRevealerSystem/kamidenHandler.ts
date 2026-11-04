@@ -8,7 +8,7 @@ import { getKami } from 'network/shapes/Kami';
 import { log } from 'utils/logger';
 import { NotificationSystem } from '../NotificationSystem';
 
-type RevealBase = {
+export type RevealBase = {
   HolderID: string;
   CommitID: string;
   ItemIndices: number[];
@@ -86,6 +86,24 @@ function processReveal(
   });
 }
 
+const DROPTABLE = {
+  logPrefix: 'DroptableReveal',
+  notifPrefix: 'DroptableReveal',
+  title: 'Items revealed!',
+};
+
+// one banner per droptable reveal event, whether from the feed or the reveal tx's own receipt:
+// both key it the same way, so the second to arrive is skipped
+export function notifyDroptableReveal(
+  world: World,
+  components: Components,
+  notifications: NotificationSystem,
+  reveal: RevealBase,
+  accountID: string
+): void {
+  processReveal(world, components, notifications, reveal, accountID, DROPTABLE);
+}
+
 export function setupKamidenRevealHandler(
   network: NetworkLayer,
   notifications: NotificationSystem
@@ -100,11 +118,7 @@ export function setupKamidenRevealHandler(
 
     feed.DroptableReveals.forEach((reveal: DroptableReveal) => {
       log.debug('Got reveal');
-      processReveal(world, components, notifications, reveal, accountID, {
-        logPrefix: 'DroptableReveal',
-        notifPrefix: 'DroptableReveal',
-        title: 'Items revealed!',
-      });
+      notifyDroptableReveal(world, components, notifications, reveal, accountID);
     });
 
     feed.SacrificeReveals.forEach((reveal: SacrificeReveal) => {

@@ -64,10 +64,17 @@ export const useTypewriter = (
   retrigger?: boolean | string,
   onUpdate?: () => void,
   interrupted?: boolean,
-  onComplete?: () => void
+  onComplete?: () => void,
+  onType?: (typed: string) => void,
+  pauses?: Record<string, number> // beats to hold after a character (e.g. '.': 9), like a breath
 ) => {
   const [revealCount, setRevealCount] = useState(0);
   const indexRef = useRef(0);
+  // refs, so a new callback or table doesn't restart the typing
+  const onTypeRef = useRef(onType);
+  onTypeRef.current = onType;
+  const pausesRef = useRef(pauses);
+  pausesRef.current = pauses;
   const segments = useMemo(() => segmentText(text), [text]);
 
   useEffect(() => {
@@ -89,9 +96,10 @@ export const useTypewriter = (
       return;
     }
 
-    const interval = setInterval(() => {
+    // one timeout after another, so a character can hold the next one back
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = () => {
       if (indexRef.current >= text.length) {
-        clearInterval(interval);
         onComplete?.();
         return;
       }
@@ -99,13 +107,22 @@ export const useTypewriter = (
       // speaker tags reveal in one beat, regular text char by char
       const remaining = text.substring(indexRef.current);
       const speaker = remaining.match(SPEAKER_TAG_AT_START)?.[1];
-      indexRef.current += speaker ? speaker.length : 1;
+      const typed = speaker ?? remaining[0];
+      indexRef.current += typed.length;
       setRevealCount(indexRef.current);
+      onTypeRef.current?.(typed);
 
       if (onUpdate) onUpdate();
-    }, speed);
 
-    return () => clearInterval(interval);
+      // a pause after punctuation, unless more of it follows (the dots of an ellipsis) or the
+      // line ends there (then it's done at once)
+      const next = text[indexRef.current];
+      const hold = next !== undefined && next !== typed ? (pausesRef.current?.[typed] ?? 1) : 1;
+      timer = setTimeout(tick, speed * hold);
+    };
+    timer = setTimeout(tick, speed);
+
+    return () => clearTimeout(timer);
   }, [text, speed, retrigger, onUpdate, interrupted, onComplete]);
 
   return useMemo(() => renderSegments(segments, revealCount), [segments, revealCount]);
@@ -119,6 +136,8 @@ const SingleLineTypewriter = ({
   onUpdate,
   interrupted = false,
   onComplete,
+  onType,
+  pauses,
   showContinueArrow = false,
 }: {
   text?: string;
@@ -127,9 +146,20 @@ const SingleLineTypewriter = ({
   onUpdate?: () => void;
   interrupted?: boolean;
   onComplete?: () => void;
+  onType?: (typed: string) => void; // each newly revealed piece of text (e.g. for a key sound)
+  pauses?: Record<string, number>; // beats to hold after a character, e.g. a sentence's end
   showContinueArrow?: boolean;
 }) => {
-  const displayedText = useTypewriter(text, speed, retrigger, onUpdate, interrupted, onComplete);
+  const displayedText = useTypewriter(
+    text,
+    speed,
+    retrigger,
+    onUpdate,
+    interrupted,
+    onComplete,
+    onType,
+    pauses
+  );
   return (
     <Container>
       {displayedText}
@@ -222,6 +252,8 @@ export const TypewriterComponent = ({
   onUpdate,
   interrupted = false,
   onComplete,
+  onType,
+  pauses,
   showContinueArrow = false,
   multiLine = false,
   onAllLinesComplete,
@@ -232,6 +264,8 @@ export const TypewriterComponent = ({
   onUpdate?: () => void;
   interrupted?: boolean;
   onComplete?: () => void;
+  onType?: (typed: string) => void;
+  pauses?: Record<string, number>;
   showContinueArrow?: boolean;
   multiLine?: boolean;
   onAllLinesComplete?: () => void;
@@ -256,6 +290,8 @@ export const TypewriterComponent = ({
       onUpdate={onUpdate}
       interrupted={interrupted}
       onComplete={onComplete}
+      onType={onType}
+      pauses={pauses}
       showContinueArrow={showContinueArrow}
     />
   );

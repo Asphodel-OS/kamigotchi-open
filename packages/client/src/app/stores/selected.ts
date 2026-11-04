@@ -3,10 +3,14 @@ import { create } from 'zustand';
 
 import { LeaderboardKey } from 'constants/leaderboards/leaderboards';
 
+// room-space box (0-128) of the clicked object that opened the current dialogue
+export type DialogueAnchor = { x1: number; y1: number; x2: number; y2: number };
+
 export interface State {
   accountIndex: number;
   assignerID: string;
   dialogueIndex: number;
+  dialogueAnchor: DialogueAnchor | null;
   questIndex: EntityIndex;
   questJustCompleted: EntityIndex | null;
   goalIndex: number[];
@@ -37,6 +41,7 @@ export const useSelected = create<State & Actions>((set) => {
     accountIndex: 0 as number,
     assignerID: '',
     dialogueIndex: 0 as number,
+    dialogueAnchor: null,
     goalIndex: [0] as number[],
     kamiIndex: 0 as number,
     leaderboardKey: 'default',

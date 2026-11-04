@@ -1,59 +1,75 @@
 import styled from 'styled-components';
 
-import { Pairing } from 'app/components/library';
-import { ItemImages } from 'assets/images/items';
+import { TextTooltip } from 'app/components/library';
+import { Palette } from 'app/components/library/pastel';
+import { Item } from 'network/shapes/Item';
+import { formatAmount } from '../utils';
 
+// what the player holds of each currency this merchant takes
 export const Balance = ({
-  balance,
+  currencies,
+  getBalance,
 }: {
-  balance: number;
+  currencies: Item[];
+  getBalance: (itemIndex: number) => number;
 }) => {
+  if (currencies.length === 0) return null;
 
   return (
     <Container>
-      <Title>Balance</Title>
-      <Content>
-        <Pairing icon={ItemImages.musu} text={balance.toLocaleString()} scale={0.9} />
-      </Content>
+      <Label>Balance</Label>
+      <Rows>
+        {currencies.map((currency) => (
+          <TextTooltip key={currency.index} text={[currency.name]}>
+            <Row>
+              <img src={currency.image} alt={currency.name} />
+              {formatAmount(getBalance(currency.index))}
+            </Row>
+          </TextTooltip>
+        ))}
+      </Rows>
     </Container>
   );
 };
 
 const Container = styled.div`
-  position: relative;
-  border: solid black 0.15vw;
-  border-radius: 0.4vw;
-
-  margin: 2vw 0 1.2vw 0;
-  height: 59%;
-  width: 30%;
-
+  flex: none;
+  min-width: 9vw;
+  margin-bottom: 0.9vw;
   overflow: hidden;
-
-  display: flex;
-  flex-flow: column nowrap;
-  justify-content: stretch;
-  align-items: stretch;
-
-  user-select: none;
+  background: ${Palette.paper};
+  border: solid ${Palette.ink} 0.15vw;
+  border-radius: 0.6vw;
 `;
 
-const Title = styled.div`
-  background-color: #ddd;
-  width: 100%;
-  padding: 0.8vw;
-  opacity: 0.9;
-
-  color: black;
-  font-size: 1vw;
-  z-index: 1;
+const Label = styled.div`
+  padding: 0.45vw 0.8vw;
+  background: ${Palette.soft};
+  border-bottom: solid ${Palette.line} 0.12vw;
+  font-family: Pixel;
+  font-size: 0.55vw;
+  text-transform: uppercase;
+  color: ${Palette.muted};
 `;
 
-const Content = styled.div`
-  height: 100%;
-  padding-left: 0.6vw;
+const Rows = styled.div`
   display: flex;
-  flex-flow: column nowrap;
-  align-items: flex-start;
-  justify-content: center;
+  gap: 1vw;
+  padding: 0.6vw 0.8vw;
+`;
+
+const Row = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5vw;
+  font-family: Pixel;
+  font-size: 0.85vw;
+  font-variant-numeric: tabular-nums;
+  color: ${Palette.ink};
+
+  img {
+    width: 1.4vw;
+    height: 1.4vw;
+    image-rendering: pixelated;
+  }
 `;

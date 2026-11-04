@@ -34,6 +34,8 @@ import { AccountSetOperatorSystem } from "./ethers-contracts/AccountSetOperatorS
 import { AccountSetPFPSystem } from "./ethers-contracts/AccountSetPFPSystem";
 import { AccountUseItemSystem } from "./ethers-contracts/AccountUseItemSystem";
 import { AuctionBuySystem } from "./ethers-contracts/AuctionBuySystem";
+import { BallotClaimSystem } from "./ethers-contracts/BallotClaimSystem";
+import { BallotSettleSystem } from "./ethers-contracts/BallotSettleSystem";
 import { ChatSystem } from "./ethers-contracts/ChatSystem";
 import { CraftSystem } from "./ethers-contracts/CraftSystem";
 import { DroptableRevealSystem } from "./ethers-contracts/DroptableRevealSystem";
@@ -131,6 +133,8 @@ export type SystemTypes = {
   "system.account.set.pfp": AccountSetPFPSystem;
   "system.account.use.item": AccountUseItemSystem;
   "system.auction.buy": AuctionBuySystem;
+  "system.ballot.claim": BallotClaimSystem;
+  "system.ballot.settle": BallotSettleSystem;
   "system.chat": ChatSystem;
   "system.craft": CraftSystem;
   "system.droptable.item.reveal": DroptableRevealSystem;

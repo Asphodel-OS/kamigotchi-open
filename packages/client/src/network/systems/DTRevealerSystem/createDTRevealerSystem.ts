@@ -7,6 +7,7 @@ import {
   removeComponent,
   setComponent,
 } from 'engine/recs';
+import { formatEntityID } from 'engine/utils';
 
 import { Components } from 'network/components';
 import { canRevealCommit } from 'network/shapes/Commit';
@@ -15,6 +16,8 @@ import { Observable } from 'rxjs';
 import { ActionState, ActionSystem } from '../ActionSystem';
 import { NotificationSystem } from '../NotificationSystem';
 import { notifyResult, sendKeepAliveNotif } from './functions';
+import { notifyDroptableReveal } from './kamidenHandler';
+import { parseRevealReceipt } from './receipt';
 import { CommitData, RevealType } from './types';
 
 export type DTRevealerSystem = ReturnType<typeof createDTRevealerSystem>;
@@ -137,8 +140,17 @@ export function createDTRevealerSystem(
     if (revealingCommits.size === 0) sendKeepAliveNotif(notifications, false);
   }
 
+  // banners straight from a reveal tx's receipt, so results show even when the kamiden feed
+  // misses the event (or isn't there, as on a local chain)
+  function notifyReceipt(receipt: Parameters<typeof parseRevealReceipt>[0], accountID: EntityID) {
+    const holder = formatEntityID(accountID);
+    for (const reveal of parseRevealReceipt(receipt))
+      notifyDroptableReveal(world, components, notifications, reveal, holder);
+  }
+
   return {
     add,
+    notifyReceipt,
     nameEntity: (id: EntityID, name: string) => entityNameMap.set(id, name),
     extractQueue,
     forceQueue,

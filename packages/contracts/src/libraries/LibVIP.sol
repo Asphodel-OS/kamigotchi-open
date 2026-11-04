@@ -52,6 +52,8 @@ library LibVIP {
 
     (, , bool isFinalized) = vip.stages(currStage - 1);
     if (isFinalized) return; // already finalized
+    // a stage with no score increase is never created in VipScore, so this reverts StageNotFound;
+    // recover with VipScore.finalizeStage on the last existing stage from an allow-listed address
     vipComp.finalizeStage(vipAddr, currStage - 1);
   }
 

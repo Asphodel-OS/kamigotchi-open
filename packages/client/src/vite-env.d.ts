@@ -12,4 +12,6 @@ interface ImportMetaEnv {
   readonly VITE_STATE?: string;
   // CloudFront origin for the full-state export; unset = full load over gRPC
   readonly VITE_STATE_CDN_URL?: string;
+  // Initia L1 REST endpoint for gauge views (VIP modal); defaults to mainnet
+  readonly VITE_INITIA_LCD_URL?: string;
 }

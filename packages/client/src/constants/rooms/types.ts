@@ -24,6 +24,10 @@ export interface Room {
   index: number;
   backgrounds: string[];
   questBackgrounds?: { after: number; backgrounds: string[] }; // replace backgrounds once a quest is complete
+  // layers of the npc's pose shown while they talk, keyed by the line's mood image, over moodBase
+  // (the room without them); one per phase like backgrounds, a missing phase keeps the plain room
+  moods?: Record<string, (string | undefined)[]>;
+  moodBase?: string[];
   objects: RoomAsset[];
   music?: Music;
 }

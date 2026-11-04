@@ -1,75 +1,79 @@
 import styled from 'styled-components';
 
-import { objectMinaRed } from 'assets/images/rooms/13_giftshop';
-import { Account } from 'network/shapes/Account';
+import { Palette } from 'app/components/library/pastel';
+import { Item } from 'network/shapes/Item';
 import { NPC } from 'network/shapes/Npc';
+import { getMerchantLook } from '../config';
 import { Balance } from './Balance';
 
 export const Header = ({
   merchant,
-  player,
-  balance,
+  currencies,
+  getBalance,
 }: {
   merchant: NPC;
-  player: Account;
-  balance: number;
+  currencies: Item[];
+  getBalance: (itemIndex: number) => number;
 }) => {
+  const { image, height, title, tagline } = getMerchantLook(merchant);
 
   return (
     <Container>
-      <ShopDetails>
-        <ShopImage src={objectMinaRed} />
-        <ShopDescription>
-          <Title>{`${merchant?.name}'s Shop`}</Title>
-          <SubTitle>Buy something or get out.</SubTitle>
-        </ShopDescription>
-      </ShopDetails>
-      <Balance balance={balance} />
+      {image && <Portrait src={image} alt={merchant.name} $height={height} />}
+      <Text>
+        <Title>{title}</Title>
+        {tagline && <Tagline>{tagline}</Tagline>}
+      </Text>
+      <Balance currencies={currencies} getBalance={getBalance} />
     </Container>
   );
 };
 
+// tall enough that the balance, kept at the bottom, never reaches the close button
 const Container = styled.div`
-  margin: 0 1.2vw 0 1.2vw;
-
+  min-height: 8vw;
+  margin: 0 1.2vw;
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-
+  align-items: flex-end;
+  gap: 1.2vw;
   user-select: none;
 `;
 
-const ShopDetails = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-`;
-
-const ShopImage = styled.img`
-  height: 9vw;
-  padding: 0.9vh 1.2vw 0 1.2vw;
+const Portrait = styled.img<{ $height: number }>`
+  flex: none;
+  height: ${({ $height }) => $height}vw;
+  max-width: 9vw;
+  margin-bottom: -0.15vw;
+  object-fit: contain;
+  object-position: bottom;
   image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
+  user-drag: none;
 `;
 
-const ShopDescription = styled.div`
+const Text = styled.div`
+  flex: 1;
+  min-width: 0;
+  align-self: center;
   display: flex;
-  flex-flow: column nowrap;
-  justify-content: flex-start;
-  gap: 0.75vw;
+  flex-direction: column;
+  gap: 0.6vw;
 `;
 
 const Title = styled.div`
-  color: black;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-family: Pixel;
-  font-size: 3.2vw;
+  font-size: 2.2vw;
+  line-height: 1.2;
+  color: ${Palette.ink};
 `;
 
-const SubTitle = styled.div`
-  padding-left: 0.6vw;
-  color: #999;
+const Tagline = styled.div`
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-family: Pixel;
-  font-size: 1.2vw;
+  font-size: 0.8vw;
+  color: ${Palette.muted};
 `;

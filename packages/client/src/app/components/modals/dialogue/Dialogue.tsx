@@ -14,6 +14,7 @@ import { ActionParam } from 'constants/dialogue/types';
 import { IGOR_TRICK_OR_TREAT_QUEST_INDEX } from 'constants/quests';
 import { EntityID, EntityIndex } from 'engine/recs';
 import { Account, NullAccount, queryAccountFromEmbedded } from 'network/shapes/Account';
+import { getItemBalance } from 'network/shapes/Item';
 import {
   filterOngoingQuests,
   filterQuestsByAvailable,
@@ -29,6 +30,7 @@ import { canEnterRoom } from 'network/shapes/Room';
 import { getBalance } from 'network/shapes/utils';
 import { useComponentEntities } from 'network/utils/hooks';
 import { NpcDialogue } from './NpcDialogue';
+import { REDIRECT_ITEM_INDICES, resolveDialogueRedirect } from './redirects';
 
 const NEWBIE_VENDOR_MAX_ACCOUNT_AGE_SECONDS = 24 * 60 * 60;
 
@@ -91,22 +93,29 @@ export const DialogueModal: UIComponent = {
     const dialogueModalOpen = useVisibility((s) => s.modals.dialogue);
     const setModals = useVisibility((s) => s.setModals);
     const dialogueIndex = useSelected((s) => s.dialogueIndex);
+    const dialogueAnchor = useSelected((s) => s.dialogueAnchor);
     const setDialogue = useSelected((s) => s.setDialogue);
 
     const [step, setStep] = useState(0);
     // bumps only on open transitions: remounting NpcDialogue on close would
     // visibly retype the text during the fade-out
     const [openCount, setOpenCount] = useState(0);
+    // choices picked since this conversation opened, so the npc ui can fade them
+    const [askedChoices, setAskedChoices] = useState<Set<string>>(new Set());
     const [prevOpen, setPrevOpen] = useState(dialogueModalOpen);
     if (prevOpen !== dialogueModalOpen) {
       setPrevOpen(dialogueModalOpen);
-      if (dialogueModalOpen) setOpenCount((c) => c + 1);
+      if (dialogueModalOpen) {
+        setOpenCount((c) => c + 1);
+        setAskedChoices(new Set());
+      }
     }
     const [dialogueHistory, setDialogueHistory] = useState<number[]>([]);
     const [availableQuests, setAvailableQuests] = useState<Quest[]>([]);
     const [ongoingQuests, setOngoingQuests] = useState<Quest[]>([]);
     const [account, setAccount] = useState<Account>(NullAccount);
     const [hasAnyKamis, setHasAnyKamis] = useState(false);
+    const [redirectBalances, setRedirectBalances] = useState<number[]>([]);
     const endDialogueTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const internalDialogueTransitionRef = useRef(false);
     const dialogueNode = useMemo<DialogueNode>(
@@ -161,6 +170,20 @@ export const DialogueModal: UIComponent = {
       setAccount(account);
       setHasAnyKamis(utils.getAccountKamis(accEntity).length > 0);
     }, [dialogueModalOpen, accEntity, ownsKamiEntities]);
+
+    // track the balances that redirected choices depend on (e.g. a badge claimed from the VIP
+    // modal while the dialogue is open), so those choices appear and retarget live
+    useEffect(() => {
+      if (!dialogueModalOpen || !account.id) return;
+      const read = () =>
+        REDIRECT_ITEM_INDICES.map((index) => getItemBalance(world, components, account.id, index));
+      setRedirectBalances(read());
+      const sub = components.Value.update$.subscribe(() => {
+        const next = read();
+        setRedirectBalances((prev) => (next.every((v, i) => v === prev[i]) ? prev : next));
+      });
+      return () => sub.unsubscribe();
+    }, [dialogueModalOpen, account.id]);
 
     useEffect(() => {
       if (npc.name.length > 0 && dialogueModalOpen) {
@@ -320,25 +343,23 @@ export const DialogueModal: UIComponent = {
     /////////////////
     // DISPLAY
 
+    const canGoBack = step > 0 || dialogueHistory.length > 0;
+    const goBack = () => {
+      if (step > 0) {
+        setStep(step - 1);
+        return;
+      }
+      const previousDialogue = dialogueHistory[dialogueHistory.length - 1];
+      if (previousDialogue === undefined) return;
+      setDialogueHistory((prev) => prev.slice(0, -1));
+      transitionDialogue(previousDialogue);
+    };
+
     const BackButton = () => {
-      const disabled = step === 0 && dialogueHistory.length === 0;
+      const disabled = !canGoBack;
       return (
         <div style={{ visibility: disabled ? 'hidden' : 'visible' }}>
-          <IconButton
-            scale={1.8}
-            img={ArrowIcons.left}
-            disabled={disabled}
-            onClick={() => {
-              if (step > 0) {
-                setStep(step - 1);
-                return;
-              }
-              const previousDialogue = dialogueHistory[dialogueHistory.length - 1];
-              if (previousDialogue === undefined) return;
-              setDialogueHistory((prev) => prev.slice(0, -1));
-              transitionDialogue(previousDialogue);
-            }}
-          />
+          <IconButton scale={1.8} img={ArrowIcons.left} disabled={disabled} onClick={goBack} />
         </div>
       );
     };
@@ -366,10 +387,23 @@ export const DialogueModal: UIComponent = {
             visibility: disabled ? 'hidden' : 'visible',
           }}
         >
-          <IconButton scale={1.8} img={ArrowIcons.right} disabled={disabled} onClick={advanceDialogue} />
+          <IconButton
+            scale={1.8}
+            img={ArrowIcons.right}
+            disabled={disabled}
+            onClick={advanceDialogue}
+          />
         </div>
       );
     };
+    // whether this step shows action buttons; MiddleButton renders an empty placeholder otherwise,
+    // which the npc bubble would show as a blank row
+    const hasStepAction = (() => {
+      if (!dialogueNode.action) return false;
+      if ('label' in dialogueNode.action) return step === dialogueLength - 1;
+      return dialogueNode.action[step] !== undefined;
+    })();
+
     const MiddleButton = () => {
       if (!dialogueNode.action) return <div />;
 
@@ -408,49 +442,46 @@ export const DialogueModal: UIComponent = {
 
     if (npc.name.length > 0) {
       return (
-        <ModalWrapper
-          id='dialogue'
-          header={<Header $color={npc.color}>{npcDisplayName}</Header>}
-          canExit
-          backgroundColor={'white'}
-          positionOverride={{
-            colStart: 66,
-            colEnd: 99,
-            rowStart: 7,
-            rowEnd: 84,
-            position: 'fixed',
-          }}
-          noScroll
-          truncate
-        >
-          <NpcDialogue
-            key={openCount} /* remount per open so text retypes fresh */
-            hasAvailableQuests={availableQuests}
-            hasOngoingQuests={ongoingQuests}
-            npcColor='#000000ff'
-            npcName={npcDisplayName}
-            npcImage={npc.mood || npc.img}
-            dialogueText={getText(dialogueNode.text[step])}
-            textKey={`${dialogueIndex}:${step}`}
-            twoColumnText={dialogueIndex === 20018}
-            onDialogueComplete={handleNpcDialogueComplete}
-            onTextAdvance={canAdvance ? advanceDialogue : undefined}
-            dialogueOptions={dialogueOptions.map(([label, nextIndex]) => ({
-              label,
-              onClick: () => {
-                setDialogueHistory((prev) => [...prev, dialogueIndex]);
-                setStep(0);
-                transitionDialogue(nextIndex);
+        // npc dialogue draws its own speech cloud, in the room
+        <NpcDialogue
+          key={openCount} /* remount per open so text retypes fresh */
+          hasAvailableQuests={availableQuests}
+          hasOngoingQuests={ongoingQuests}
+          npcColor='#000000ff'
+          accent={npc.color}
+          npcName={npcDisplayName}
+          npcKey={npc.name}
+          dialogueText={getText(dialogueNode.text[step])}
+          textKey={`${dialogueIndex}:${step}`}
+          twoColumnText={dialogueIndex === 20018}
+          onDialogueComplete={handleNpcDialogueComplete}
+          onTextAdvance={canAdvance ? advanceDialogue : undefined}
+          dialogueOptions={dialogueOptions.flatMap(([label, nextIndex]) => {
+            const target = resolveDialogueRedirect(nextIndex, {
+              getBalance: (itemIndex) =>
+                redirectBalances[REDIRECT_ITEM_INDICES.indexOf(itemIndex)] ?? 0,
+            });
+            if (target === null) return [];
+            const askedKey = `${dialogueIndex}:${nextIndex}`;
+            return [
+              {
+                label,
+                asked: askedChoices.has(askedKey),
+                onClick: () => {
+                  setAskedChoices((prev) => new Set(prev).add(askedKey));
+                  setDialogueHistory((prev) => [...prev, dialogueIndex]);
+                  setStep(0);
+                  transitionDialogue(target);
+                },
               },
-            }))}
-            dialogueButtons={{
-              BackButton: BackButton,
-              NextButton: NextButton,
-              MiddleButton: MiddleButton,
-            }}
-            special={shouldShowNpcSpecial ? npc.special : undefined}
-          />
-        </ModalWrapper>
+            ];
+          })}
+          onBack={canGoBack ? goBack : undefined}
+          action={hasStepAction ? MiddleButton() : undefined}
+          special={shouldShowNpcSpecial ? npc.special : undefined}
+          anchor={dialogueAnchor}
+          open={dialogueModalOpen}
+        />
       );
     }
     return (
@@ -496,11 +527,4 @@ const ButtonRow = styled.div`
   display: flex;
   flex-flow: row nowrap;
   justify-content: space-between;
-`;
-
-const Header = styled.div<{ $color: string }>`
-  padding: 1vw;
-  font-size: 1.4vw;
-  color: ${(props) => props.$color};
-  border-color: white;
 `;

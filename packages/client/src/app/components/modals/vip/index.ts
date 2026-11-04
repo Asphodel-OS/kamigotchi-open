@@ -1,0 +1,1 @@
+export { VipModal } from './Vip';

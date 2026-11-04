@@ -5,7 +5,13 @@
 *.sol @jiracheron @kanyaveral @Cooops
 
 # By Domain
-pnpm-lock.yaml @Asphodel-OS/Kamigotchi
+pnpm-lock.yaml @hubur @Cooops @kanyaveral
 
 .github/workflows/ @hubur @Cooops @kanyaveral
 .github/scripts/ @hubur @Cooops @kanyaveral
+.github/CODEOWNERS @hubur @Cooops @kanyaveral
+
+# The ballots settle job runs with the reporter key: its code and dependencies
+packages/contracts/deployment/commands/ballotSettle.ts @hubur @Cooops @kanyaveral
+packages/contracts/deployment/utils/ @hubur @Cooops @kanyaveral
+packages/contracts/package.json @hubur @Cooops @kanyaveral

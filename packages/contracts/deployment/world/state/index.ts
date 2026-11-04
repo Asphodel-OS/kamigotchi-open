@@ -101,6 +101,7 @@ export async function initAllProd(api: AdminAPI) {
 export { deleteAuctions, initAuctions, reviseAuctions } from './auctions';
 export { initAuth } from './auth';
 export {
+  initBallotConfigs,
   initConfigs,
   initHarvestConfigs,
   initLiquidationConfigs,

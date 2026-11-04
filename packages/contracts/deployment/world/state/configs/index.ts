@@ -1,4 +1,5 @@
 export {
+  initBallots as initBallotConfigs,
   initConfigs,
   initHarvest as initHarvestConfigs,
   initLiquidation as initLiquidationConfigs,

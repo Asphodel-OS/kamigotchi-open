@@ -38,6 +38,7 @@ import { AnimationStudio } from './modals/studio/AnimationStudio';
 import { TempleOfTheWheel } from './modals/templeOfTheWheel';
 import { TokenPortalModal } from './modals/tokenPortal';
 import { TradingModal } from './modals/trading';
+import { VipModal } from './modals/vip';
 import {
   AccountRegistrar,
   GasHarasser,
@@ -205,6 +206,10 @@ export const allComponents: UIComponentWithGrid[] = [
   {
     uiComponent: RevealModal,
     gridConfig: { colStart: 30, colEnd: 70, rowStart: 30, rowEnd: 75 },
+  },
+  {
+    uiComponent: VipModal,
+    gridConfig: { colStart: 33, colEnd: 67, rowStart: 15, rowEnd: 85 },
   },
   {
     uiComponent: TokenPortalModal,

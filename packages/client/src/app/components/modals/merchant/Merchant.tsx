@@ -5,21 +5,21 @@ import { getAccount as _getAccount } from 'app/cache/account';
 import { getInventoryBalance } from 'app/cache/inventory';
 import { cleanNPCListings, getNPCByIndex, NPC, NullNPC, refreshNPCListings } from 'app/cache/npc';
 import { ModalWrapper } from 'app/components/library';
-import { UIComponent } from 'app/root/types';
+import { Palette } from 'app/components/library/pastel';
 import { useLayers } from 'app/root/hooks';
+import { UIComponent } from 'app/root/types';
 import { useSelected, useVisibility } from 'app/stores';
-import { MUSU_INDEX } from 'constants/items';
 import { Account, NullAccount, queryAccountFromEmbedded } from 'network/shapes/Account';
-import { Allo, parseAllos as _parseAllos } from 'network/shapes/Allo';
+import { parseAllos as _parseAllos, Allo } from 'network/shapes/Allo';
 import { parseConditionalText } from 'network/shapes/Conditional';
-import { Inventory } from 'network/shapes/Inventory';
 import { Item } from 'network/shapes/Item';
 import { Listing } from 'network/shapes/Listing';
 import { DetailedEntity } from 'network/shapes/utils';
 import { Cart } from './cart';
 import { Catalog } from './catalog';
 import { Header } from './header';
-import { CartItem } from './types';
+import { CartItem, ItemUtils } from './types';
+import { getCurrencies } from './utils';
 
 // merchant window with listings. assumes at most 1 merchant per room
 export const MerchantModal: UIComponent = {
@@ -29,20 +29,19 @@ export const MerchantModal: UIComponent = {
 
     const {
       data: { accountEntity },
-      utils: {
-        getAccount,
-        getNPC,
-        cleanListings,
-        refreshListings,
-        getMusuBalance,
-        parseAllos,
-        displayItemRequirements,
-      },
+      utils: { getAccount, getNPC, cleanListings, refreshListings, itemUtils },
       network: { actions, api },
     } = (() => {
       const { network } = layers;
       const { components, world } = network;
       const accountEntity = queryAccountFromEmbedded(network);
+      const itemUtils: ItemUtils = {
+        parseAllos: (allo: Allo[]): DetailedEntity[] => _parseAllos(world, components, allo),
+        displayRequirements: (item: Item) =>
+          item?.requirements?.use
+            ?.map((req) => parseConditionalText(world, components, req))
+            .join('\n') || 'None',
+      };
 
       return {
         data: { accountEntity },
@@ -53,13 +52,7 @@ export const MerchantModal: UIComponent = {
           cleanListings: (listings: Listing[], account: Account) =>
             cleanNPCListings(world, components, listings, account),
           refreshListings: (npc: NPC) => refreshNPCListings(components, npc),
-          getMusuBalance: (inventories: Inventory[]) =>
-            getInventoryBalance(inventories, MUSU_INDEX),
-          parseAllos: (allo: Allo[]): DetailedEntity[] => _parseAllos(world, components, allo),
-          displayItemRequirements: (item: Item) =>
-            item?.requirements?.use
-              ?.map((req) => parseConditionalText(world, components, req))
-              .join('\n') || 'None',
+          itemUtils,
         },
         network,
       };
@@ -72,7 +65,6 @@ export const MerchantModal: UIComponent = {
     const [listings, setListings] = useState<Listing[]>([]);
     const [cart, setCart] = useState<CartItem[]>([]);
     const [lastTick, setLastTick] = useState(Date.now());
-    const [musuBalance, setMusuBalance] = useState<number>(0);
 
     // ticking
     useEffect(() => {
@@ -81,29 +73,32 @@ export const MerchantModal: UIComponent = {
       return () => clearInterval(timerID);
     }, []);
 
-    // update the listings on each tick
+    // refresh balances and listing prices on each tick
     useEffect(() => {
       if (!merchantModalOpen) return;
       if (!merchant || npcIndex != merchant.index) return;
-      setMusuBalance(getMusuBalance(account.inventories ?? []));
+      setAccount(getAccount());
       refreshListings(merchant);
     }, [lastTick]);
 
-    // update the account whenever the entity cahnges
+    // update the account whenever the entity changes
     useEffect(() => {
-      const account = getAccount();
-      setAccount(account);
+      setAccount(getAccount());
     }, [accountEntity]);
 
-    // updates from selected Merchant updates
+    // load the selected merchant, with an empty cart
     useEffect(() => {
       if (!merchantModalOpen || npcIndex == merchant.index) return;
       const newMerchant = getNPC(npcIndex) ?? NullNPC;
       setMerchant(newMerchant);
       setListings(cleanListings(newMerchant.listings, account));
+      setCart([]);
     }, [merchantModalOpen, npcIndex, account]);
 
-    // buy from a listing
+    const getBalance = (itemIndex: number) =>
+      getInventoryBalance(account.inventories ?? [], itemIndex);
+
+    // buy the whole cart in one tx; each listing charges its own currency
     const buy = (cart: CartItem[]) => {
       const indices = cart.map((c) => c.listing.item.index);
       const amts = cart.map((c) => c.quantity);
@@ -123,19 +118,16 @@ export const MerchantModal: UIComponent = {
 
     return (
       <ModalWrapper id='merchant' canExit overlay>
-        <Header merchant={merchant} player={account} balance={musuBalance} />
+        <Header merchant={merchant} currencies={getCurrencies(listings)} getBalance={getBalance} />
         <Body>
           <Catalog
-            account={account}
             listings={listings}
             cart={cart}
             setCart={setCart}
-            utils={{
-              parseAllos,
-              displayRequirements: displayItemRequirements,
-            }}
+            getBalance={getBalance}
+            utils={itemUtils}
           />
-          <Cart account={account} cart={cart} setCart={setCart} buy={buy} />
+          <Cart cart={cart} setCart={setCart} getBalance={getBalance} buy={buy} utils={itemUtils} />
         </Body>
       </ModalWrapper>
     );
@@ -143,16 +135,13 @@ export const MerchantModal: UIComponent = {
 };
 
 const Body = styled.div`
-  border: solid black 0.15vw;
-  border-radius: 0.45vw;
   margin: 0 1.2vw 1.2vw 1.2vw;
   min-height: 70%;
-  user-select: none;
-  overflow: hidden;
-
   display: flex;
-  flex-flow: row nowrap;
-  justify-content: stretch;
   align-items: stretch;
-  align-content: stretch;
+  overflow: hidden;
+  background: ${Palette.paper};
+  border: solid ${Palette.ink} 0.15vw;
+  border-radius: 0.6vw;
+  user-select: none;
 `;

@@ -629,12 +629,9 @@ export const PoolModal: UIComponent = {
     return (
       <ModalWrapper
         id='pool'
-        header={<ModalHeader title='Item Pools' icon={LpFountainIcon} />}
-        canExit
-        showScrollBar
-      >
-        <Container>
-          <Tabs>
+        header={[
+          <ModalHeader key='header' title='Item Pools' icon={LpFountainIcon} />,
+          <Tabs key='views'>
             <TabButton
               $color={TAB_BLUE}
               $active={view === 'world'}
@@ -652,7 +649,12 @@ export const PoolModal: UIComponent = {
             >
               My Positions
             </TabButton>
-          </Tabs>
+          </Tabs>,
+        ]}
+        canExit
+        showScrollBar
+      >
+        <Container>
           {view === 'positions' ? (
             <Positions positions={positions} onManage={managePosition} />
           ) : (
@@ -676,7 +678,7 @@ export const PoolModal: UIComponent = {
                   </PriceRow>
                 </PriceBanner>
               )}
-              <Tabs>
+              <PoolTabs>
                 <TabButton
                   $color={TAB_BLUE}
                   $active={tab === 'swap'}
@@ -702,7 +704,7 @@ export const PoolModal: UIComponent = {
                 >
                   Chart
                 </TabButton>
-              </Tabs>
+              </PoolTabs>
               {tab === 'swap' && renderSwap()}
               {tab === 'liquidity' && renderLiquidity()}
               {tab === 'chart' && renderChart()}
@@ -793,24 +795,31 @@ const Container = styled.div`
   gap: 1vh;
 `;
 
+// tab rows run edge to edge, as in quests: the view row sits in the header, the pool row
+// breaks out of the body's padding
 const Tabs = styled.div`
-  border: solid 0.15vw black;
-  border-radius: 0.3vw 0.3vw 0 0;
   width: 100%;
+  border-top: solid black 0.15vw;
   background-color: white;
   display: flex;
   flex-flow: row nowrap;
+`;
+
+const PoolTabs = styled(Tabs)`
+  width: auto;
+  margin: 0 -0.6vw;
+  border-bottom: solid black 0.15vw;
 `;
 
 // pastel active-fill tabs, same design as the Token Portal's
 const TabButton = styled.button<{ $color: string; $active: boolean }>`
   border: none;
   border-right: solid black 0.15vw;
-  padding: 0.5vw;
+  padding: 0.45vw;
   flex: 1 1 0;
   color: black;
   font-family: Pixel;
-  font-size: 0.9vw;
+  font-size: 0.75vw;
   text-align: center;
   cursor: pointer;
   background-color: ${({ $active, $color }) => ($active ? $color : 'white')};

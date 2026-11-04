@@ -20,6 +20,7 @@ import {
   initAllTesting,
   initAuctions,
   initAuth,
+  initBallotConfigs,
   initConfigs,
   initFactions,
   initGachaPool,
@@ -120,6 +121,7 @@ export class WorldState {
     configs: {
       init: () => this.genCalls(initConfigs),
       initTesting: () => this.genCalls(initTestingConfigs),
+      initBallots: () => this.genCalls(initBallotConfigs),
       initHarvest: () => this.genCalls(initHarvestConfigs),
       initLiquidation: () => this.genCalls(initLiquidationConfigs),
       initMint: () => this.genCalls(initMintConfigs),

@@ -41,7 +41,9 @@ export const parseArgs = (args: any[]) => {
       // if string, and not array or starts with 0x: convert to a string literal.
       // plain literals reject non-ASCII (e.g. nbsp, curly quotes), so those use unicode"..."
       const prefix = /[^\x00-\x7F]/.test(arg) ? 'unicode' : '';
-      return `${prefix}\\"${arg}\\"`;
+      // line breaks (multi-paragraph descriptions) become escapes, valid in both json and solidity
+      const escaped = arg.replace(/\r/g, '\\\\r').replace(/\n/g, '\\\\n');
+      return `${prefix}\\"${escaped}\\"`;
     } else return arg;
   });
 };

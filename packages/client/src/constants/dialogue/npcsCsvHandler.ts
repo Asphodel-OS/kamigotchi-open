@@ -1,4 +1,8 @@
-import { triggerKamiAdoptionAgencyModal, triggerTempleOfTheWheelModal } from 'app/triggers';
+import {
+  triggerKamiAdoptionAgencyModal,
+  triggerShopModal,
+  triggerTempleOfTheWheelModal,
+} from 'app/triggers';
 import { NpcImages } from 'assets/images/npcs';
 import dialoguesCsv from './data/npcDialogues.csv';
 import npcsCsv from './data/npcs.csv';
@@ -29,6 +33,16 @@ const ritualMap: Record<string, { name: string; onclick: () => void }> = {
   'Kami Adoption Agency': {
     name: 'Kami Adoption Agency',
     onclick: () => triggerKamiAdoptionAgencyModal(),
+  },
+  // Mina's gift shop, the same one her cash register opens: npc 1 owns its listings
+  'Shop 1': {
+    name: 'Gift Shop',
+    onclick: () => triggerShopModal(1),
+  },
+  // Alaina's ballot shop: npc 10 owns the ballot listings
+  'Gifts of the Fire': {
+    name: 'Gifts of the Fire',
+    onclick: () => triggerShopModal(10),
   },
 };
 

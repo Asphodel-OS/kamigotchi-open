@@ -72,6 +72,28 @@ contract ItemAccountTest is ItemTemplate {
     assertEq(_IndexRoomComponent.get(alice.id), room);
   }
 
+  function testItemAccDisabled() public {
+    uint32 itemIndex = 1;
+    vm.startPrank(deployer);
+    __ItemRegistrySystem.createConsumable(
+      abi.encode(itemIndex, "ACCOUNT", "name", "description", "TELEPORT", "media")
+    );
+    __ItemRegistrySystem.addAlloBasic(abi.encode(itemIndex, "USE", "ROOM", 11, 0));
+    __ItemRegistrySystem.disable(itemIndex);
+    vm.stopPrank();
+    _giveItem(alice, itemIndex, 1);
+
+    vm.prank(alice.operator);
+    vm.expectRevert("item is disabled");
+    _AccountUseItemSystem.executeTyped(itemIndex, 1);
+
+    vm.prank(deployer);
+    __ItemRegistrySystem.enable(itemIndex);
+    vm.prank(alice.operator);
+    _AccountUseItemSystem.executeTyped(itemIndex, 1);
+    assertEq(_IndexRoomComponent.get(alice.id), 11);
+  }
+
   /////////////////
   // UTILS
 

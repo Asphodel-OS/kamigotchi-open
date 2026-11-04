@@ -78,7 +78,8 @@ async function addDroptable(api: any, itemIndex: number, entry: any) {
     console.log(`  adding droptable allo to ${itemIndex}`);
     const indices = stringToNumberArray(dtRow['Indices']);
     const tiers = stringToNumberArray(dtRow['Tiers']);
-    await api.droptable(itemIndex, 'USE', indices, tiers, 1);
+    const rolls = Number(entry['Value']) || 1;
+    await api.droptable(itemIndex, 'USE', indices, tiers, rolls);
   } else console.log(`  Could not find droptable ${dtKey} row for ${itemIndex}`);
 }
 

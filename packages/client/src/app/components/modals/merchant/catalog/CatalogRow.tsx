@@ -1,176 +1,152 @@
 import styled from 'styled-components';
 
 import { calcListingBuyPrice } from 'app/cache/npc';
-import { Overlay, Pairing, TextTooltip } from 'app/components/library';
-import { clickFx, hoverFx } from 'app/styles/effects';
-import { MenuIcons } from 'assets/images/icons/menu';
+import { ItemTooltip, TextTooltip } from 'app/components/library';
+import { getTierColors, Palette } from 'app/components/library/pastel';
 import { PricingIcons } from 'assets/images/icons/pricing';
-import { Account } from 'network/shapes/Account';
-import { Allo } from 'network/shapes/Allo';
-import { Item } from 'network/shapes/Item';
 import { Listing } from 'network/shapes/Listing';
-import { DetailedEntity, getItemImage } from 'network/shapes/utils';
 import { playClick } from 'utils/sounds';
-import { CartItem } from '../types';
+import { CurrencyTooltip } from '../CurrencyTooltip';
+import { Main, Name, Price, Tile } from '../styles';
+import { ItemUtils } from '../types';
+import { formatAmount } from '../utils';
 
-// TODO: support multiple buys
+const Gold = getTierColors('gold');
+
 export const CatalogRow = ({
-  account,
-  cart,
   listing,
+  owned,
+  currencyBalance,
+  inCart,
   toggle,
   utils,
 }: {
-  account: Account;
-  cart: CartItem[];
   listing: Listing;
+  owned: number;
+  currencyBalance: number;
+  inCart: boolean;
   toggle: () => void;
-  utils: {
-    parseAllos: (allo: Allo[]) => DetailedEntity[];
-    displayRequirements: (item: Item) => string;
-  };
+  utils: ItemUtils;
 }) => {
-  const { item, payItem, buy } = listing;
+  const { item, payItem } = listing;
+  const price = calcListingBuyPrice(listing, 1);
+  const dynamic = listing.buy?.type === 'GDA';
+
+  const getPricingTooltip = () => {
+    const pricing = listing.buy;
+    if (pricing?.type === 'GDA') return ['Dynamic price', 'It moves over time.'];
+    if (pricing?.type === 'FIXED') return ['Fixed price', 'It never changes.'];
+    return ['The pricing of this listing is unknown'];
+  };
 
   const handleClick = () => {
     playClick();
     toggle();
   };
 
-  /////////////////
-  // INTERPRETATION
-
-  const getPricingIcon = (listing: Listing) => {
-    const key = listing.buy?.type.toLowerCase() ?? '';
-    return PricingIcons[key as keyof typeof PricingIcons];
-  };
-
-  const getPricingTooltip = () => {
-    if (!listing.buy) return ['the pricing calculation on this listing is unknown'];
-    const pricing = listing.buy;
-    const tooltip: string[] = [];
-
-    const type = pricing.type;
-    if (type === 'GDA') {
-      const rate = pricing.rate;
-      const period = pricing.period! / 3600;
-      return [
-        `This listing is priced Dynamically`,
-        `targeting ${rate} sales every ${period.toFixed(0)} hours`,
-      ];
-    } else if (type === 'FIXED') {
-      return [`This listing is priced Statically`, `at ${listing.value} MUSU`];
-    }
-
-    if (buy?.type) tooltip.push(buy.type);
-    if (buy?.period) tooltip.push(`Duration: ${buy.period}`);
-    return tooltip;
-  };
-
-  const getItemTooltip = () => {
-    const tooltip: (string | JSX.Element)[] = [];
-    if (item.description) tooltip.push(item.description);
-
-    const requirementsText = utils.displayRequirements(item);
-    tooltip.push(`Requirements: ${requirementsText}`);
-
-    const effectsList =
-      item.effects?.use?.length > 0
-        ? utils.parseAllos(item.effects.use).map((entry) => entry?.description ?? '').join('\n')
-        : 'None';
-    tooltip.push(`Effects: ${effectsList}`);
-
-    return tooltip;
-  };
-
-  const getInventoryQuantity = () => {
-    if (!account.inventories) return 0;
-    const inv = account.inventories?.find((inv) => {
-      if (!inv || !inv.item) return false;
-      return inv.item.index === item.index;
-    });
-    return inv?.balance ?? 0;
-  };
-
-  const isInCart = () => {
-    return cart.some((c) => c.listing.item.index === item.index);
-  };
-
-  /////////////////
-  // RENDER
-
   return (
-    <Container
-      key={item.index}
-      onClick={() => handleClick()}
-      isInCart={isInCart()}
-      effectScale={0.02}
-    >
-      <TextTooltip text={getItemTooltip()}>
-        <Image src={listing.item.image} isInCart={isInCart()} />
+    <Row $inCart={inCart} onClick={handleClick}>
+      <TextTooltip
+        text={[<ItemTooltip key={item.index} item={item} utils={utils} />]}
+        maxWidth={25}
+      >
+        <Tile $size={3.4}>
+          <img src={item.image} alt={item.name} />
+        </Tile>
       </TextTooltip>
-      <Details>
-        <Pairing
-          icon={getPricingIcon(listing)}
-          text={item.name}
-          scale={0.9}
-          tooltip={getPricingTooltip()}
-        />
-        <Pairing
-          icon={getItemImage(payItem.name)}
-          text={calcListingBuyPrice(listing, 1).toLocaleString()}
-          scale={0.9}
-        />
-      </Details>
-      <Overlay bottom={0.3} right={0.6} orientation='row'>
-        <Pairing
-          icon={MenuIcons.inventory}
-          text={getInventoryQuantity().toLocaleString()}
-          scale={0.75}
-          reverse
-        />
-      </Overlay>
-    </Container>
+      <Main>
+        <Name>{item.name}</Name>
+        <Line>
+          <CurrencyTooltip currency={payItem} cost={price} balance={currencyBalance}>
+            <Price $short={price > currencyBalance}>
+              <img src={payItem.image} alt={payItem.name} />
+              {formatAmount(price)}
+            </Price>
+          </CurrencyTooltip>
+          <TextTooltip text={getPricingTooltip()}>
+            <Pricing>
+              <img
+                src={dynamic ? PricingIcons.gda : PricingIcons.fixed}
+                alt={dynamic ? 'dynamic' : 'fixed'}
+              />
+              {dynamic ? 'Dynamic' : 'Fixed'}
+            </Pricing>
+          </TextTooltip>
+        </Line>
+      </Main>
+      <Side>
+        <Owned>Owned {formatAmount(owned)}</Owned>
+        <Toggle $inCart={inCart}>{inCart ? 'In cart' : 'Add'}</Toggle>
+      </Side>
+    </Row>
   );
 };
 
-const Container = styled.div<{
-  isInCart: boolean;
-  effectScale: number;
-}>`
-  position: relative;
-  border: 0.15vw solid black;
-  border-radius: 0.4vw;
-  background-color: ${({ isInCart }) => (isInCart ? '#bbb' : '#fff')};
-
+const Row = styled.div<{ $inCart: boolean }>`
   display: flex;
-  flex-direction: row nowrap;
   align-items: center;
-
+  gap: 0.7vw;
+  padding: 0.5vw 0.7vw;
+  background: ${({ $inCart }) => ($inCart ? Gold.bg : Palette.paper)};
+  border: solid ${({ $inCart }) => ($inCart ? Gold.edge : Palette.ink)} 0.12vw;
+  border-radius: 0.6vw;
   cursor: pointer;
+  user-select: none;
+  transition: background 0.1s ease;
+
   &:hover {
-    animation: ${({ effectScale }) => hoverFx(effectScale)} 0.2s;
-    transform: scale(${({ effectScale }) => 1 + effectScale});
-  }
-  &:active {
-    animation: ${({ effectScale }) => clickFx(effectScale)} 0.3s;
+    background: ${({ $inCart }) => ($inCart ? Gold.bg : Palette.soft)};
   }
 `;
 
-const Image = styled.img<{ isInCart: boolean }>`
-  border-right: 0.15vw solid black;
-  border-radius: 0.25vw 0 0 0.25vw;
-  width: 4.5vw;
-  padding: 0.45vw;
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-`;
-
-const Details = styled.div`
+const Line = styled.div`
   display: flex;
-  flex-flow: column nowrap;
-  justify-content: space-around;
-  align-items: flex-start;
-  height: 100%;
-  padding: 0.5vw;
+  align-items: center;
+  gap: 0.35vw;
+`;
+
+const Pricing = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25vw;
+  height: 1.4vw;
+  padding: 0 0.4vw 0 0.25vw;
+  font-family: Pixel;
+  font-size: 0.55vw;
+  color: ${Palette.muted};
+  background: ${Palette.soft};
+  border: solid ${Palette.line} 0.1vw;
+  border-radius: 99vw;
+
+  img {
+    width: 0.9vw;
+    height: 0.9vw;
+  }
+`;
+
+const Side = styled.div`
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4vw;
+`;
+
+const Owned = styled.span`
+  font-family: Pixel;
+  font-size: 0.55vw;
+  color: ${Palette.muted};
+  font-variant-numeric: tabular-nums;
+`;
+
+const Toggle = styled.span<{ $inCart: boolean }>`
+  min-width: 3.4vw;
+  padding: 0.3vw 0.5vw;
+  text-align: center;
+  font-family: Pixel;
+  font-size: 0.6vw;
+  color: ${Palette.ink};
+  background: ${({ $inCart }) => ($inCart ? Palette.paper : Palette.button.bg)};
+  border: solid ${({ $inCart }) => ($inCart ? Gold.edge : Palette.ink)} 0.1vw;
+  border-radius: 0.4vw;
 `;

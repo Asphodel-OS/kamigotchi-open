@@ -1,0 +1,92 @@
+# Settles closed Initia VIP gauge cycles/epochs into Ballots on Yominet.
+# Runs daily and re-checks the last 6 closed cycles/epochs, so late account registrations get paid;
+# settled voters are skipped by simulation, so quiet days cost no gas. One cycle/epoch by hand:
+#   pnpm ballots:settle:prod --cycle <n> --send
+# Needs: environment ballots-reporter (main only) with secret BALLOT_REPORTER_KEY, repo secret
+# BALLOTS_ALERT_WEBHOOK.
+name: Ballots Settle
+
+on:
+  schedule:
+    - cron: '15 8 * * *' # cycles/epochs close Thursdays 07:30 UTC, every 2 weeks
+  # by hand from main: a dry run still loads the key and checks it against BALLOT_REPORTER on chain
+  workflow_dispatch:
+    inputs:
+      send:
+        description: 'Send settles (off: dry run)'
+        type: boolean
+        default: false
+
+concurrency: ballots-settle # never two runs at once (a double settle only reverts, but wastes gas)
+
+permissions:
+  contents: read
+
+jobs:
+  settle:
+    # main is mirrored to kamigotchi-open, which has no reporter key. BALLOTS_LIVE (a repo
+    # variable) stays unset until the world is deployed, so the job doesn't fail daily before then;
+    # a run by hand works without it, to test the setup first
+    if: github.repository == 'Asphodel-OS/kamigotchi' && (vars.BALLOTS_LIVE == 'true' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    # the key lives in this environment, which only main may use
+    environment: ballots-reporter
+    timeout-minutes: 20
+    env:
+      RPC: https://jsonrpc-yominet-1.anvil.asia-southeast.initia.xyz
+      WORLD: '0x2729174c265dbBd8416C6449E0E813E88f43D0E7'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@eae0cfeb286e66ffb5155f1a79b90583a127a68b # v2.4.1
+        with:
+          version: 10.13.1
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install contracts deps
+        run: pnpm install --frozen-lockfile --filter contracts...
+
+      # closed cycles/epochs never change on L1: their checked votes carry over between runs
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: packages/contracts/.ballots-cache
+          key: ballots-l1-${{ github.run_id }}
+          restore-keys: ballots-l1-
+
+      - name: Settle
+        id: settle
+        working-directory: packages/contracts
+        env:
+          # only this step sees the key, not dependency install scripts
+          BALLOT_REPORTER_KEY: ${{ secrets.BALLOT_REPORTER_KEY }}
+          # the schedule always sends; a run by hand sends only when asked
+          SEND: ${{ github.event_name == 'schedule' || inputs.send }}
+        run: pnpm ballots:settle:prod $([ "$SEND" = true ] && echo --send)
+
+      # once per epoch (and for late registrations): if these stop, the job stopped. posted even when
+      # the run fails later, since the next run skips what was already settled
+      - name: Post settled count
+        if: always() && steps.settle.outputs.sent != '' && steps.settle.outputs.sent != '0'
+        env:
+          WEBHOOK: ${{ secrets.BALLOTS_ALERT_WEBHOOK }}
+          SENT: ${{ steps.settle.outputs.sent }}
+        run: |
+          [ -n "$WEBHOOK" ] || exit 0
+          curl -sS --fail-with-body -H 'content-type: application/json' \
+            -d "{\"content\": \"Ballots settled $SENT voters\"}" "$WEBHOOK"
+
+      - name: Alert on failure
+        if: failure()
+        env:
+          WEBHOOK: ${{ secrets.BALLOTS_ALERT_WEBHOOK }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          [ -n "$WEBHOOK" ] || exit 0
+          curl -sS -H 'content-type: application/json' \
+            -d "{\"content\": \"Ballots settle failed: $RUN_URL\"}" "$WEBHOOK"

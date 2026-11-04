@@ -127,6 +127,14 @@
     "id": "system.chat",
    "encodedID": "0xffdfac0bc976271e09b737f3d3556b33aa4d1735c8ac989aad33087f45ca916c"
   },
+  "BallotClaimSystem": {
+    "id": "system.ballot.claim",
+   "encodedID": "0xd808be820f3d07824c1388dbeac79e35a3a8c2803174312f8f4ffc9f357b2071"
+  },
+  "BallotSettleSystem": {
+    "id": "system.ballot.settle",
+   "encodedID": "0xbbe34dfcb5042c689078327babe3dcdea4fd4422ad28bb4fd3f6a03670d883fd"
+  },
   "CraftSystem": {
     "id": "system.craft",
    "encodedID": "0x91c8ca5f3d3d3a29a32ee18a732d1a758b78b1a39fd4442a9e86c11882a3ddf3"

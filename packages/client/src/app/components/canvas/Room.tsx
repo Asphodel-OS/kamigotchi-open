@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useLocalStorage } from 'usehooks-ts';
 
+import { ROOM_OVERLAY_ID } from 'app/components/modals/dialogue/bubble';
 import { useAccount, useNetwork, useSelected, useVisibility } from 'app/stores';
 import { radiateFx } from 'app/styles/effects';
 import { triggerDialogueModal } from 'app/triggers/triggerDialogueModal';
 import { arrivalRemaster, cave } from 'assets/sound/ost';
+import { dialogues } from 'constants/dialogue';
 import { rooms } from 'constants/rooms';
 import { QuestGate, RoomAsset } from 'constants/rooms/types';
 import { getCurrPhase } from 'utils/time';
@@ -21,6 +23,8 @@ export const Room = ({ index, completedQuests }: { index: number; completedQuest
   const tradingModalOpen = useVisibility((s) => s.modals.trading);
   const setModals = useVisibility((s) => s.setModals);
   const setNode = useSelected((s) => s.setNode);
+  const dialogueOpen = useVisibility((s) => s.modals.dialogue);
+  const dialogueIndex = useSelected((s) => s.dialogueIndex);
   const authenticated = useNetwork((s) => s.validations.authenticated);
   const accountExists = useAccount((s) => s.validations.accountExists);
   const [room, setRoom] = useState(rooms[0]);
@@ -123,15 +127,20 @@ export const Room = ({ index, completedQuests }: { index: number; completedQuest
     return true;
   };
 
-  // return the background path for now
-  const getBackground = () => {
-    const questBgs = room.questBackgrounds;
-    const backgrounds =
-      questBgs && isUnlocked({ after: questBgs.after }) ? questBgs.backgrounds : room.backgrounds;
-    // phases start at 1, make start at 0
-    const phase = (getCurrPhase() - 1) % backgrounds.length;
-    return backgrounds[phase];
-  };
+  // phases start at 1, make start at 0
+  const phase = (getCurrPhase() - 1) % room.backgrounds.length;
+  const questBgs = room.questBackgrounds;
+  const backgrounds =
+    questBgs && isUnlocked({ after: questBgs.after }) ? questBgs.backgrounds : room.backgrounds;
+  const background = backgrounds[(getCurrPhase() - 1) % backgrounds.length];
+
+  // while an npc here is talking, the background for the current line's mood, if it has one
+  const moodBackgrounds = Object.values(room.moods ?? {})
+    .map((bgs) => bgs[phase])
+    .filter((src): src is string => !!src);
+  const mood = dialogueOpen ? dialogues[dialogueIndex]?.npc?.mood : undefined;
+  const moodBackground = mood ? room.moods?.[mood]?.[phase] : undefined;
+  const moodBase = room.moodBase?.[phase];
 
   // keyed by room and position: object names repeat (room 77 has two 'coop trigger'), and a duplicate
   // key leaves a stale clickbox mounted in the next rooms
@@ -146,7 +155,7 @@ export const Room = ({ index, completedQuests }: { index: number; completedQuest
     const y2 = coords.y2 * scale;
 
     let onClick = (() => {}) as React.MouseEventHandler<HTMLDivElement>;
-    if (object.dialogue) onClick = () => triggerDialogueModal(object.dialogue!);
+    if (object.dialogue) onClick = () => triggerDialogueModal(object.dialogue!, coords);
     else if (object.onClick) onClick = object.onClick;
 
     return object.name !== 'trading' ? (
@@ -171,8 +180,17 @@ export const Room = ({ index, completedQuests }: { index: number; completedQuest
   return (
     <Wrapper>
       <Container>
-        <Background draggable='false' src={getBackground()} />
+        <Background draggable='false' src={background} />
+        {/* every mood stays mounted (and decoded) over the room; swapping one img's src would
+        blank the room while the new gif loads. under the pose goes the room without the npc */}
+        {moodBase && moodBackgrounds.length > 0 && (
+          <MoodBackground draggable='false' src={moodBase} $shown={!!moodBackground} />
+        )}
+        {moodBackgrounds.map((src) => (
+          <MoodBackground key={src} draggable='false' src={src} $shown={src === moodBackground} />
+        ))}
         {room.objects.map((object, i) => isUnlocked(object.quest) && getClickbox(object, i))}
+        <Overlay id={ROOM_OVERLAY_ID} />
       </Container>
     </Wrapper>
   );
@@ -192,6 +210,15 @@ const Container = styled.div`
   height: 100%;
 `;
 
+// a size container, so what's drawn in it (the npc cloud) can be sized by the room (cqh), not the
+// screen
+const Overlay = styled.div`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  container-type: size;
+`;
+
 const Background = styled.img`
   width: 100%;
   height: 100%;
@@ -199,6 +226,12 @@ const Background = styled.img`
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
+`;
+
+const MoodBackground = styled(Background)<{ $shown: boolean }>`
+  position: absolute;
+  inset: 0;
+  visibility: ${({ $shown }) => ($shown ? 'visible' : 'hidden')};
 `;
 
 interface Coordinates {

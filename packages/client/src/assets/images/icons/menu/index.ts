@@ -1,6 +1,6 @@
 import ChatIcon from './chat.png';
-import ExclamIcon from './exclam.png';
 import ClockIcon from './clock.png';
+import ExclamIcon from './exclam.png';
 import HelpIcon from './help.png';
 import InventoryIcon from './inventory.png';
 import KamiIcon from './kami.png';
@@ -9,12 +9,15 @@ import KamiWikiIcon from './kamiwiki.png';
 import ExternalIcon from './link_to_external_apps.png';
 import LpFountainIcon from './lp_fountain.png';
 import MapIcon from './map.png';
+import MarketplaceIcon from './marketplace.png';
 import MoreIcon from './more.png';
 import ObolShopIcon from './obolshop_3.png';
 import OperatorIcon from './operator.png';
-import MarketplaceIcon from './marketplace.png';
+import QuestAvailableIcon from './quest_available.png';
+import QuestOngoingIcon from './quest_ongoing.png';
 import QuestsIcon from './quests.png';
 import ResetIcon from './reset.png';
+import RitualIcon from './ritual.png';
 import SettingsIcon from './settings.png';
 import SocialIcon from './social.png';
 import SudoIcon from './sudo.png';
@@ -23,8 +26,8 @@ import Whispo from './whispo.png';
 
 export {
   ChatIcon,
-  ExclamIcon,
   ClockIcon,
+  ExclamIcon,
   ExternalIcon,
   HelpIcon,
   InventoryIcon,
@@ -37,8 +40,11 @@ export {
   MoreIcon,
   ObolShopIcon,
   OperatorIcon,
+  QuestAvailableIcon,
+  QuestOngoingIcon,
   QuestsIcon,
   ResetIcon,
+  RitualIcon,
   SettingsIcon,
   SocialIcon,
   SudoIcon,

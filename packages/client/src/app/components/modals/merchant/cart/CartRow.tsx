@@ -1,137 +1,129 @@
 import styled from 'styled-components';
 
 import { calcListingBuyPrice } from 'app/cache/npc';
-import { Stepper, TextTooltip } from 'app/components/library';
+import { ItemTooltip, TextTooltip } from 'app/components/library';
+import { Palette } from 'app/components/library/pastel';
 import { Listing } from 'network/shapes/Listing';
-import { getItemImage } from 'network/shapes/utils';
 import { playClick } from 'utils/sounds';
+import { CurrencyTooltip } from '../CurrencyTooltip';
+import { Main, Name, Price, Step, Tile } from '../styles';
+import { ItemUtils } from '../types';
+import { CART_MAX, CART_MIN, clampQuantity, formatAmount } from '../utils';
 
-// TODO: support multiple buys
 export const CartRow = ({
   listing,
+  currencyBalance,
   quantity,
   setQuantity,
   remove,
+  utils,
 }: {
   listing: Listing;
+  currencyBalance: number;
   quantity: number;
   setQuantity: (quantity: number) => void;
   remove: () => void;
+  utils: ItemUtils;
 }) => {
-  const max = 100;
-  const min = 1;
+  const { item, payItem } = listing;
+  const cost = calcListingBuyPrice(listing, quantity);
 
-  const handleRemove = () => {
+  const step = (delta: number) => {
     playClick();
-    remove();
+    setQuantity(clampQuantity(quantity + delta));
   };
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const quantityStr = event.target.value.replaceAll('[^\\d.]', '');
-    const rawQuantity = parseInt(quantityStr || '0');
-    const quantity = Math.max(min, Math.min(max, rawQuantity));
-    setQuantity(quantity);
+  const handleInput = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = event.target.value.replace(/\D/g, '');
+    setQuantity(clampQuantity(parseInt(digits || '0')));
   };
 
   return (
-    <Container key={listing.item.index}>
-      <ExitButton onClick={handleRemove}> x </ExitButton>
-      <TextTooltip text={[listing.item.description ?? '']}>
-        <Image src={listing.item.image} />
+    <Row>
+      <Remove onClick={remove}>x</Remove>
+      <TextTooltip
+        text={[<ItemTooltip key={item.index} item={item} utils={utils} />]}
+        maxWidth={25}
+      >
+        <Tile $size={2.6}>
+          <img src={item.image} alt={item.name} />
+        </Tile>
       </TextTooltip>
-      <Quantity type='string' value={quantity.toString()} onChange={(e) => handleChange(e)} />
-      <Stepper value={quantity} set={setQuantity} scale={3} min={min} max={max} />
-      <TotalPrice>
-        <Icon src={getItemImage(listing.payItem.name)} />
-        <Text>{calcListingBuyPrice(listing, quantity).toLocaleString()}</Text>
-      </TotalPrice>
-    </Container>
+      <Main>
+        <Name>{item.name}</Name>
+        <Controls>
+          <Step disabled={quantity <= CART_MIN} onClick={() => step(-1)}>
+            −
+          </Step>
+          <Quantity value={quantity} onChange={handleInput} inputMode='numeric' />
+          <Step disabled={quantity >= CART_MAX} onClick={() => step(1)}>
+            +
+          </Step>
+        </Controls>
+      </Main>
+      <CurrencyTooltip currency={payItem} cost={cost} balance={currencyBalance}>
+        <Price $short={cost > currencyBalance}>
+          <img src={payItem.image} alt={payItem.name} />
+          {formatAmount(cost)}
+        </Price>
+      </CurrencyTooltip>
+    </Row>
   );
 };
 
-const Container = styled.div`
+const Row = styled.div`
   position: relative;
-  border: 0.15vw solid black;
-  border-radius: 0.4vw;
-  width: 90%;
-
   display: flex;
-  flex-direction: row nowrap;
   align-items: center;
-`;
-
-// circular exit button on the top right of the Container
-const ExitButton = styled.div`
-  position: absolute;
-  border: 0.15vw solid black;
+  gap: 0.5vw;
+  padding: 0.45vw 0.6vw;
+  background: ${Palette.paper};
+  border: solid ${Palette.ink} 0.12vw;
   border-radius: 0.6vw;
-  background-color: #fff;
-  cursor: pointer;
-
-  width: 1.2vw;
-  height: 1.2vw;
-  top: -0.4vw;
-  right: -0.4vw;
-
-  color: black;
-  font-family: Pixel;
-  font-size: 0.9vw;
-  text-align: center;
-
-  &:hover {
-    background-color: #ddd;
-  }
-  &:active {
-    background-color: #bbb;
-  }
 `;
 
-const Image = styled.img`
-  width: 3vw;
-  padding: 0.3vw;
-  font-family: Pixel;
-  image-rendering: pixelated;
+const Controls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.2vw;
 `;
 
 const Quantity = styled.input`
-  border: none;
-  background-color: #eee;
-  border-right: 0.15vw solid black;
-  border-left: 0.15vw solid black;
-  width: 4.5vw;
-  height: 100%;
-  padding: 0.3vw;
-  margin: 0w;
-  cursor: text;
-
-  color: black;
-  font-family: Pixel;
-  font-size: 1.2vw;
+  width: 2.4vw;
+  height: 1.4vw;
+  padding: 0;
   text-align: center;
-`;
-
-const TotalPrice = styled.div`
-  height: 100%;
-  padding: 0 0.6vw;
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: space-between;
-  align-items: center;
-  flex-grow: 1;
-`;
-
-const Icon = styled.img`
-  width: 1.5vw;
-  height: 1.5vw;
-  margin-right: 0.3vw;
-`;
-
-const Text = styled.div`
-  color: black;
   font-family: Pixel;
-  font-size: 0.9vw;
+  font-size: 0.65vw;
+  font-variant-numeric: tabular-nums;
+  color: ${Palette.ink};
+  background: ${Palette.soft};
+  border: solid ${Palette.line} 0.1vw;
+  border-radius: 0.35vw;
+  outline: none;
 
-  display: flex;
-  flex-flow: row nowrap;
-  align-items: center;
+  &:focus {
+    border-color: ${Palette.ink};
+  }
+`;
+
+const Remove = styled.button`
+  position: absolute;
+  top: -0.45vw;
+  right: -0.45vw;
+  width: 1.1vw;
+  height: 1.1vw;
+  padding: 0;
+  font-family: Pixel;
+  font-size: 0.55vw;
+  line-height: 1;
+  color: ${Palette.ink};
+  background: ${Palette.paper};
+  border: solid ${Palette.ink} 0.1vw;
+  border-radius: 99vw;
+  cursor: pointer;
+
+  &:hover {
+    background: ${Palette.warn.bg};
+  }
 `;

@@ -2,13 +2,20 @@ import { AdminAPI } from '../api';
 import { generateRegID, getSheet, readFile } from './utils';
 
 // TODO: trigger more verbose console logs (e.g. item/npc names) and only on a verbose flag
-export async function initListings(api: AdminAPI, indices?: number[], all?: boolean, npcIndices?: number[]) {
+export async function initListings(
+  api: AdminAPI,
+  indices?: number[],
+  all?: boolean,
+  npcIndices?: number[]
+) {
   const listingCSV = await getSheet('listings', 'listings');
   if (!listingCSV) return console.log('No listings/listings.csv found');
   const pricingCSV = await getSheet('listings', 'pricing');
   if (!pricingCSV) return console.log('No listings/pricing.csv found');
   const requirementCSV = await getSheet('listings', 'requirements');
   if (!requirementCSV) return console.log('No listings/requirements.csv found');
+  const itemsCSV = await getSheet('items', 'items');
+  if (!itemsCSV) return console.log('No items/items.csv found');
   if (indices && indices.length == 0) return console.log('No listings given to initialize');
   console.log('\n==INITIALIZING LISTINGS==');
 
@@ -31,6 +38,13 @@ export async function initListings(api: AdminAPI, indices?: number[], all?: bool
 
     const status = String(row['Status']);
     if (!validStatuses.includes(status)) continue;
+
+    // selling to a shop skips NOT_TRADABLE, so a sell price would turn a soulbound item into currency
+    const item = itemsCSV.find((r: any) => Number(r['Index']) === itemIndex);
+    if (row['Sell Price'] && String(item?.['Flags'] ?? '').includes('NOT_TRADABLE'))
+      throw new Error(
+        `listing ${row['Name']}: item ${itemIndex} is NOT_TRADABLE, drop its sell price`
+      );
 
     // Initial creation
     const targetValue = Number(row['Value']);
@@ -124,7 +138,11 @@ export async function deleteListings(api: AdminAPI, indices: number[], npcIndice
 
 // indices = item index
 // WARNING: this will reset GDA prices
-export async function reviseListings(api: AdminAPI, overrideIndices?: number[], npcIndices?: number[]) {
+export async function reviseListings(
+  api: AdminAPI,
+  overrideIndices?: number[],
+  npcIndices?: number[]
+) {
   let indices: number[] = [];
   if (overrideIndices) indices = overrideIndices;
   else {

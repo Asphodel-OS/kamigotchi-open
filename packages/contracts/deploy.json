@@ -282,6 +282,14 @@
       "writeAccess": ["TimeLast", "Value"]
     },
     {
+      "name": "BallotClaimSystem",
+      "writeAccess": ["EntityType", "IndexItem", "IDOwnsInventory", "TimeLast", "Value"]
+    },
+    {
+      "name": "BallotSettleSystem",
+      "writeAccess": ["Value"]
+    },
+    {
       "name": "CraftSystem",
       "writeAccess": [
         "EntityType",

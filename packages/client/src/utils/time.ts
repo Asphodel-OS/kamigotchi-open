@@ -25,6 +25,15 @@ export const formatCountdown = (secs: number) => {
   return `${pad(h)}:${pad(m)}:${pad(s)}`;
 };
 
+// short countdown for long timers, minute precision: "3d 4h", "2h 5m", "7m"
+export const formatCountdownShort = (secs: number) => {
+  if (secs <= 0) return '0m';
+  const d = Math.floor(secs / SECONDS_PER_DAY);
+  const h = Math.floor((secs % SECONDS_PER_DAY) / SECONDS_PER_HOUR);
+  const m = Math.floor((secs % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE);
+  return d ? `${d}d ${h}h` : h ? `${h}h ${m}m` : `${m}m`;
+};
+
 // parse an epoch time into a date string
 export const getDateString = (epochTime?: number, precision = 3): string => {
   const time = epochTime ? epochTime * 10 ** (3 - precision) : Date.now();

@@ -1,12 +1,14 @@
 import { useSelected, useVisibility } from 'app/stores';
+import { DialogueAnchor } from 'app/stores/selected';
 import { playClick } from 'utils/sounds';
 
-export const triggerDialogueModal = (index: number) => {
+// anchor: the clicked room object, so npc speech can sit beside it
+export const triggerDialogueModal = (index: number, anchor?: DialogueAnchor) => {
   const { modals } = useVisibility.getState();
   const { dialogueIndex } = useSelected.getState();
   playClick();
 
-  useSelected.setState({ dialogueIndex: index });
+  useSelected.setState({ dialogueIndex: index, dialogueAnchor: anchor ?? null });
   if (!modals.dialogue) {
     useVisibility.setState({
       modals: {

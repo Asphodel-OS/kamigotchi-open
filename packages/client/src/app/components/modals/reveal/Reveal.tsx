@@ -107,7 +107,11 @@ export const RevealModal: UIComponent = {
         droptable: {
           action: 'Droptable reveal',
           description: 'Inspecting item contents',
-          execute: () => api.player.droptable.reveal(commits),
+          execute: async () => {
+            const tx = await api.player.droptable.reveal(commits);
+            DTRevealer.notifyReceipt((tx as any)?.receipt, getAccountFromEmbedded(network).id);
+            return tx;
+          },
         },
         sacrifice: {
           action: 'Sacrifice reveal',

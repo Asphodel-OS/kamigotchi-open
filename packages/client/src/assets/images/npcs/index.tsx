@@ -1,5 +1,10 @@
 // Auto-generated NPC image exports
 
+import alaina from './alaina.png';
+import alainaClaspingHands from './alaina_clasping_hands.png';
+import alainaHappy from './alaina_happy.png';
+import alainaLostInThought from './alaina_lost_in_thought.png';
+import alainaShop from './alaina_shop.png';
 import artieDefault1 from './artie_default_1.png';
 import artieScary1 from './artie_scary_1.png';
 import artieShocked1 from './artie_shocked_1.png';
@@ -43,6 +48,11 @@ import robtransparent3 from './robtransparent3.png';
 import vend from './vend.png';
 
 export const NpcImages: Record<string, string> = {
+  'alaina.png': alaina,
+  'alaina_clasping_hands.png': alainaClaspingHands,
+  'alaina_happy.png': alainaHappy,
+  'alaina_lost_in_thought.png': alainaLostInThought,
+  'alaina_shop.png': alainaShop,
   'artie_default_1.png': artieDefault1,
   'artie_scary_1.png': artieScary1,
   'artie_shocked_1.png': artieShocked1,

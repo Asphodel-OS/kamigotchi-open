@@ -24,6 +24,7 @@ export function IconListButton({
   scale,
   scaleOrientation,
   searchable,
+  maxHeight = 33,
   topContent,
   icon,
   filter,
@@ -34,6 +35,7 @@ export function IconListButton({
 }: {
   options: Option[];
   searchable?: boolean;
+  maxHeight?: number; // vh of the open list before it scrolls
   topContent?: ReactNode;
   filter?: string;
 
@@ -102,7 +104,7 @@ export function IconListButton({
   };
 
   return (
-    <Popover content={OptionsMap()} maxHeight={33} fullWidth={fullWidth} disabled={disabled}>
+    <Popover content={OptionsMap()} maxHeight={maxHeight} fullWidth={fullWidth} disabled={disabled}>
       <TextTooltip {...tooltip} text={tooltip?.text ?? ['']}>
         <IconButton
           img={img}

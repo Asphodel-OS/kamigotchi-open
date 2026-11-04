@@ -10,4 +10,9 @@ const hut: DialogueNode = {
   },
 };
 
-export default [hut];
+const frog: DialogueNode = {
+  index: 642,
+  text: ["A frog has claimed the warmest spot by the fire. It doesn't look like it plans to move."],
+};
+
+export default [hut, frog];

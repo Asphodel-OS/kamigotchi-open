@@ -32,6 +32,19 @@ export async function initLocalConfigs(api: AdminAPI) {
   await api.config.set.array('KAMI_HARV_FERTILITY', [0, 0, 100, 0, 0, 0, 1000, 3]);
   await api.config.set.array('KAMI_HARV_INTENSITY', [1, 0, 2, 0, 0, 0, 0, 0]); // 960x testnet rate
   await api.config.set.array('KAMI_REST_METABOLISM', [0, 0, 100, 0, 0, 0, 1000, 3]);
+
+  // ballots: local cycle/epoch 1 starts at deploy
+  await initBallots(api);
+  await api.config.set.array('BALLOT_CYCLE', [
+    Math.floor(Date.now() / 1000),
+    1209600,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+  ]);
 }
 
 export async function initTestingConfigs(api: AdminAPI) {
@@ -190,6 +203,38 @@ async function initVIP(api: AdminAPI) {
   // starts on April 24, 2025 8:00:00 AM UTC
   // each stage is 2 weeks
   await api.config.set.array('VIP_STAGE', [1745481600, 1209600, 0, 0, 0, 0, 0, 0]);
+}
+
+// scoped (`configs initBallots`), not part of initConfigs. BALLOT_REPORTER is the wallet that
+// runs deployment/commands/ballotSettle.ts; left unset, settle reverts (fail closed)
+export async function initBallots(api: AdminAPI) {
+  await api.config.set.address(
+    'BALLOT_REPORTER',
+    process.env.BALLOT_REPORTER || '0x0000000000000000000000000000000000000000'
+  );
+  await api.config.set.array('BALLOT_RATES', [
+    10000, // pool: Ballots per cycle/epoch, split across voters by weight
+    13, // grace refill (cycles/epochs)
+    1, // floor: minimum Ballots per voter, cut once the pool is spent
+    5, // a Golden Ballot every 5 cycles/epochs of streak
+    7500, // streak share (bps): votes with at least 75% on Yominet build the streak
+    100, // streak power: and at least 100 INIT on Yominet
+    0, // golden power (INIT): off; raise it if golden ballots are farmed by many small wallets
+    0, // golden cap per cycle/epoch: off; a ceiling for the same case
+  ]);
+  await api.config.set.array('BALLOT_TIERS', [
+    5000, // band caps in INIT of Yominet voting power: up to 5k,
+    50000, // up to 50k,
+    150000, // up to 150k, then the rest
+    30, // INIT per Ballot in each band, before the pool split: 1 per 30 for the first 5k,
+    60, // 1 per 60,
+    90, // 1 per 90,
+    120, // 1 per 120 (about 2x the pool today, so the pool always splits; 4:1 caps split gains)
+    10, // the floor applies from 10 INIT
+  ]);
+  // [start, length, base]: L1 gauge cycle/epoch `base` starts at `start` (40: 2026-10-22 08:00 UTC),
+  // 2 weeks each; base is also the first that can settle. At deploy, move both to the launch one
+  await api.config.set.array('BALLOT_CYCLE', [1792656000, 1209600, 40, 0, 0, 0, 0, 0]);
 }
 
 async function initNewbieVendor(api: AdminAPI) {

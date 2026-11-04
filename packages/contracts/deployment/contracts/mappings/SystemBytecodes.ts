@@ -34,6 +34,8 @@ import AccountSetOperatorSystem from "../../../out/AccountSetOperatorSystem.sol/
 import AccountSetPFPSystem from "../../../out/AccountSetPFPSystem.sol/AccountSetPFPSystem.json";
 import AccountUseItemSystem from "../../../out/AccountUseItemSystem.sol/AccountUseItemSystem.json";
 import AuctionBuySystem from "../../../out/AuctionBuySystem.sol/AuctionBuySystem.json";
+import BallotClaimSystem from "../../../out/BallotClaimSystem.sol/BallotClaimSystem.json";
+import BallotSettleSystem from "../../../out/BallotSettleSystem.sol/BallotSettleSystem.json";
 import ChatSystem from "../../../out/ChatSystem.sol/ChatSystem.json";
 import CraftSystem from "../../../out/CraftSystem.sol/CraftSystem.json";
 import DroptableRevealSystem from "../../../out/DroptableRevealSystem.sol/DroptableRevealSystem.json";
@@ -131,6 +133,8 @@ export const SystemBytecodes = {
   "system.account.set.pfp": AccountSetPFPSystem,
   "system.account.use.item": AccountUseItemSystem,
   "system.auction.buy": AuctionBuySystem,
+  "system.ballot.claim": BallotClaimSystem,
+  "system.ballot.settle": BallotSettleSystem,
   "system.chat": ChatSystem,
   "system.craft": CraftSystem,
   "system.droptable.item.reveal": DroptableRevealSystem,

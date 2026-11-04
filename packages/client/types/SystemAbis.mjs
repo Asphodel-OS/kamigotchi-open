@@ -34,6 +34,8 @@ import AccountSetOperatorSystem from "../abi/AccountSetOperatorSystem.json";
 import AccountSetPFPSystem from "../abi/AccountSetPFPSystem.json";
 import AccountUseItemSystem from "../abi/AccountUseItemSystem.json";
 import AuctionBuySystem from "../abi/AuctionBuySystem.json";
+import BallotClaimSystem from "../abi/BallotClaimSystem.json";
+import BallotSettleSystem from "../abi/BallotSettleSystem.json";
 import ChatSystem from "../abi/ChatSystem.json";
 import CraftSystem from "../abi/CraftSystem.json";
 import DroptableRevealSystem from "../abi/DroptableRevealSystem.json";
@@ -131,6 +133,8 @@ export const SystemAbis = {
   "system.account.set.pfp": AccountSetPFPSystem.abi,
   "system.account.use.item": AccountUseItemSystem.abi,
   "system.auction.buy": AuctionBuySystem.abi,
+  "system.ballot.claim": BallotClaimSystem.abi,
+  "system.ballot.settle": BallotSettleSystem.abi,
   "system.chat": ChatSystem.abi,
   "system.craft": CraftSystem.abi,
   "system.droptable.item.reveal": DroptableRevealSystem.abi,
