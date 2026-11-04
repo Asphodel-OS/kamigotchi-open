@@ -146,7 +146,7 @@ export const Room = ({ index, completedQuests }: { index: number; completedQuest
   // key leaves a stale clickbox mounted in the next rooms
   const getClickbox = (object: RoomAsset, i: number) => {
     const key = `${room.index}-${i}`;
-    let coords = object.coordinates;
+    const coords = object.coordinates;
     if (!coords) return;
     const scale = 100 / 128;
     const x1 = coords.x1 * scale;
@@ -154,7 +154,7 @@ export const Room = ({ index, completedQuests }: { index: number; completedQuest
     const x2 = coords.x2 * scale;
     const y2 = coords.y2 * scale;
 
-    let onClick = (() => {}) as React.MouseEventHandler<HTMLDivElement>;
+    let onClick: React.MouseEventHandler<HTMLDivElement> = () => undefined;
     if (object.dialogue) onClick = () => triggerDialogueModal(object.dialogue!, coords);
     else if (object.onClick) onClick = object.onClick;
 
@@ -254,7 +254,7 @@ const Clickbox = styled.div<Coordinates>`
   opacity: 0.2;
 
   &:hover {
-    animation: ${({}) => radiateFx} 1.5s linear infinite;
+    animation: ${radiateFx} 1.5s linear infinite;
     background: radial-gradient(
       closest-side,
       rgba(255, 255, 255, 1) 0%,

@@ -1,5 +1,6 @@
 import {
   ReactNode,
+  RefObject,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -33,11 +34,13 @@ import {
 } from './bubble';
 import {
   getOpening,
+  getQuestList,
   getRitualColours,
   getSkin,
   NpcSkin,
   PixelSprite,
   pixelUrl,
+  QuestListLook,
   skinVars,
 } from './skins';
 import { CLOUD_NUDGE } from './speakers';
@@ -48,6 +51,7 @@ const TYPE_SPEED = 32;
 const TYPE_PAUSES: Record<string, number> = { '.': 9, '?': 9, '!': 9, ',': 5 };
 // the quest tabs stand out past the cloud's right edge by u(13), in room units
 const TABS_OUT = (((13 * 400) / 1080) * ROOM_SIZE) / 100;
+const MIN_FIT = 0.6; // the least a narrow screen shrinks the cloud to (see `fit`)
 
 // the open modals other than the dialogue, as one string so the store selector stays comparable
 const otherOpenModals = (modals: Modals) =>
@@ -100,7 +104,7 @@ export const NpcDialogue = ({
   // a character with their own look (skins.tsx) brings their own colours and decorations
   // re-render when the window changes size, so the cloud is placed and measured again (the name's
   // picture and the cloud's height are measured in pixels)
-  useWindowSize();
+  const windowSize = useWindowSize(); /* re-measured on resize */
   const skin = getSkin(npcKey);
   const accent = skin?.colours.accent ?? npcAccent;
   const opening = getOpening(npcKey);
@@ -212,10 +216,20 @@ export const NpcDialogue = ({
   const nudge = CLOUD_NUDGE[npcKey.trim().toLowerCase()] ?? 0;
   const nudged =
     anchor && nudge ? { ...anchor, x1: anchor.x1 + nudge, x2: anchor.x2 + nudge } : anchor;
-  const placement = placeBubble(nudged, screenXToRoom(0.99) - TABS_OUT, {
-    minLeft: screenXToRoom(0.01),
-    width: BUBBLE_WIDTH * (twoColumnText ? 1.6 : 1),
-  });
+  // the cloud is sized by the room's height, the rest of the ui by the screen's width: the same
+  // on a 16:9 screen, but on a narrower one (a phone held upright: the room is a square as tall
+  // as the screen, so wider than it) the cloud would come out far bigger than everything else,
+  // and wider than the screen. there it keeps its shape and shrinks as a whole: laid out at full
+  // size and scaled down by `fit`: towards the size a 16:9 screen of that width would give it
+  // (its text then matches the other components'), but never below MIN_FIT, so it stays
+  // readable on a phone; and within the screen's width in any case
+  const maxRight = screenXToRoom(0.99) - TABS_OUT;
+  const minLeft = screenXToRoom(0.01);
+  const fullWidth = BUBBLE_WIDTH * (twoColumnText ? 1.6 : 1);
+  const widthFit = (maxRight - minLeft) / fullWidth;
+  const aspectFit = windowSize.width / (windowSize.height || 1) / (16 / 9);
+  const fit = Math.max(0.1, Math.min(1, widthFit, Math.max(aspectFit, MIN_FIT)));
+  const placement = placeBubble(nudged, maxRight, { minLeft, width: fullWidth * fit });
   const roomOverlay = document.getElementById(ROOM_OVERLAY_ID);
 
   // measure the cloud (in room units) so a tall one can be kept on screen. the typewriter lays
@@ -267,14 +281,91 @@ export const NpcDialogue = ({
 
   const hasChoices = dialogueOptions.length > 0;
 
-  // the quest lists open inside the cloud, between the choices and the footer
+  // the quest lists drop from under the header over the line, or (a skin's questList) come out under
+  // the cloud. one under the cloud keeps the last list it showed while it goes back in, so it
+  // doesn't empty as it goes
   const [list, setList] = useState<ListKind>();
   const toggleList = (kind: ListKind) => {
     playClick();
     setList((prev) => (prev === kind ? undefined : kind));
   };
   if (!open && list) setList(undefined);
-  const listQuests = list === 'available' ? hasAvailableQuests : hasOngoingQuests;
+  const underLook = getQuestList(npcKey, skin);
+  const underClipRef = useRef<HTMLDivElement>(null);
+  const [shownList, setShownList] = useState<ListKind>();
+  if (list && list !== shownList) setShownList(list);
+  // a list shows at most UNDER_ROWS quests, then scrolls (mina's receipt runs on to UNDER_MAX).
+  // measured when the list or its quests change (and on resize), not on every render: it reads
+  // layout
+  useLayoutEffect(() => {
+    const el = underClipRef.current;
+    const inner = el?.firstElementChild as HTMLElement | null;
+    if (!el || !inner || underLook?.look === 'receipt') return;
+    const next = inner.querySelectorAll('button')[UNDER_ROWS];
+    if (!next) {
+      el.style.maxHeight = 'none';
+      return;
+    }
+    const style = getComputedStyle(inner);
+    const cut = next.offsetTop - parseFloat(style.rowGap || '0') + parseFloat(style.paddingBottom);
+    el.style.maxHeight = `${cut}px`;
+  }, [
+    shownList,
+    underLook,
+    hasAvailableQuests,
+    hasOngoingQuests,
+    windowSize.width,
+    windowSize.height,
+  ]);
+  // the sheet's css variables: the look's colours, its scrollbar's colour, a sign's planks and
+  // rope, a map's X and compass rose (built once per look, not every render)
+  const scrollColour = skin?.colours.scroll ?? accent;
+  const underStyle = useMemo(
+    () =>
+      underLook &&
+      ({
+        ...underVars(underLook),
+        '--ql-scroll': scrollColour,
+        ...(underLook.look === 'sign' && {
+          '--ql-plank': `url(${underLook.plank.src})`,
+          '--ql-rope-art': `url(${underLook.rope.src})`,
+          '--ql-title-plank': `url(${underLook.titlePlank.src})`,
+        }),
+        ...(underLook.look === 'map' && {
+          '--ql-x-art': pixelUrl({
+            rows: MAP_X,
+            colours: { o: underLook.colours.line, x: underLook.colours.mark },
+          }),
+          '--ql-compass-art': pixelUrl({
+            rows: MAP_COMPASS,
+            colours: { c: underLook.colours.compass, o: underLook.colours.line },
+          }),
+        }),
+      } as React.CSSProperties),
+    [underLook, scrollColour]
+  );
+  // a contract numbers each quest as a clause
+  const contract = underLook?.look === 'contract';
+  const questItems = (kind: ListKind) => (
+    <>
+      <QuestTitle>{kind === 'available' ? 'Available Quests' : 'Ongoing Quests'}</QuestTitle>
+      {(kind === 'available' ? hasAvailableQuests : hasOngoingQuests).map((quest, i) => (
+        <QuestButton
+          $accent={accent}
+          key={i}
+          style={{ '--i': i } as React.CSSProperties}
+          onClick={() => {
+            playClick();
+            setList(undefined);
+            triggerQuestDetailsModal(quest.entity);
+          }}
+        >
+          {contract && <Clause>&sect; {toRoman(i + 1)}</Clause>}
+          {quest.name}
+        </QuestButton>
+      ))}
+    </>
+  );
 
   /////////////////
   // KEYBOARD
@@ -357,11 +448,15 @@ export const NpcDialogue = ({
   /////////////////
   // CLOUDS
 
+  // the placement is of the cloud as seen (scaled); its box is laid out at full size, so where
+  // the scale's origin isn't its top left (a tail on the right, or a tail down from a bottom-pinned
+  // cloud), the box is set off so the seen part lands where placed
   const cloudStyle = (p: BubblePlacement, height: number) =>
     ({
-      left: roomPct(p.left),
-      top: roomPct(fitBubble(p, height)),
-      width: roomPct(p.width),
+      left: roomPct(p.left + (p.tail === 'right' ? p.width - p.width / fit : 0)),
+      top: roomPct(fitBubble(p, height * fit) + (p.tail === 'down' ? height * fit - height : 0)),
+      width: roomPct(p.width / fit),
+      ...(fit < 1 && { scale: `${fit}` }),
       '--accent': accent,
       ...skinVars(skin),
       // a skin drops the default cloud's stitch round the inside of the frame
@@ -544,8 +639,8 @@ export const NpcDialogue = ({
           </Head>
 
           {/* keyed per line so an exclamation shakes once as the line starts */}
-          {/* greyed out while a quest list is open over it */}
-          <Body key={resetKey} $shake={exclaims} $dimmed={!!list}>
+          {/* greyed out while a quest list is open over it (one under the cloud leaves it be) */}
+          <Body key={resetKey} $shake={exclaims} $dimmed={!!list && !underLook}>
             {mainText}
             {hasChoices && (
               <Choices>
@@ -573,23 +668,42 @@ export const NpcDialogue = ({
       {!skin && <CornerFlowers />}
       {skin && <SkinDecor skin={skin} />}
       {/* quest lists drop down from the header's bottom edge, over the line and choices */}
-      {list && (
-        <QuestList>
-          <QuestTitle>{list === 'available' ? 'Available Quests' : 'Ongoing Quests'}</QuestTitle>
-          {listQuests.map((quest, i) => (
-            <QuestButton
-              $accent={accent}
-              key={i}
-              onClick={() => {
-                playClick();
-                setList(undefined);
-                triggerQuestDetailsModal(quest.entity);
-              }}
-            >
-              {quest.name}
-            </QuestButton>
-          ))}
-        </QuestList>
+      {!underLook && list && <QuestList>{questItems(list)}</QuestList>}
+      {/* or a skin's comes out from under the frame's bottom edge */}
+      {underLook && shownList && (
+        <UnderSlot $tag={tag} $deep={underLook.look === 'contract'}>
+          <UnderSheet $look={underLook.look} $open={!!list} style={underStyle}>
+            {underLook.look === 'bottles' ? (
+              <BottleBox
+                key={shownList}
+                look={underLook}
+                places={fit < 1 ? BOTTLE_PLACES_NARROW : BOTTLE_PLACES}
+                title={shownList === 'available' ? 'Available Quests' : 'Ongoing Quests'}
+                quests={shownList === 'available' ? hasAvailableQuests : hasOngoingQuests}
+                onPick={(quest) => {
+                  playClick();
+                  setList(undefined);
+                  triggerQuestDetailsModal(quest.entity);
+                }}
+              />
+            ) : (
+              <UnderPaper $look={underLook.look}>
+                <UnderClip ref={underClipRef}>
+                  <UnderScroll>{questItems(shownList)}</UnderScroll>
+                </UnderClip>
+                <ScrollBar target={underClipRef} watch={shownList} />
+              </UnderPaper>
+            )}
+            {underLook.look === 'contract' && (
+              <>
+                <Seal $open={!!list}>
+                  <img src={underLook.seal.src} alt='' draggable={false} />
+                </Seal>
+                <ScrollRod />
+              </>
+            )}
+          </UnderSheet>
+        </UnderSlot>
       )}
     </Cloud>
   );
@@ -934,6 +1048,10 @@ type Tail = 'left' | 'right' | 'down' | 'none';
 const Cloud = styled.div<{ $open: boolean; $tail: Tail }>`
   position: absolute; /* inside the room overlay: above the art, under the ui modals */
   isolation: isolate; /* its own layer group, so the second outline (z -1) stays above the room art */
+  /* phones inflate small text on their own (font boosting), which breaks the cloud's shape: its
+  text is sized by the room like everything else in it, and the player zooms in to read */
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
   transform-origin: ${({ $tail }) =>
     $tail === 'down' ? 'left bottom' : `${$tail === 'right' ? 'right' : 'left'} top`};
   animation: ${pop} 0.28s cubic-bezier(0.2, 0.8, 0.2, 1.2);
@@ -1861,7 +1979,8 @@ const QuestIcon = styled.button<{ $accent: string; $active?: boolean }>`
   &:disabled {
     cursor: default;
     background: ${PANEL.row};
-    /* the tinted icon (its img sits inside, so this greys both once) */
+    /* the tinted icon: the kept picture, or the blended one while it's made */
+    & > img,
     & > span {
       filter: grayscale(1);
       opacity: 0.4;
@@ -1878,23 +1997,74 @@ const QuestImg = styled.img`
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
-  /* white x colour = colour, black x colour = black */
-  mix-blend-mode: multiply;
 `;
 
-// paints the npc's colour under the icon, cut to the icon's own shape, and multiplies the icon
-// over it: its white fill takes the colour, its black line art stays black
+// the icon in the npc's colour: its white fill takes the colour, its black line art stays black
+// (white x colour = colour, black x colour = black). tinted once on a canvas per icon and colour,
+// and kept: a picture costs nothing after, where a live blend mode had to be composited on every
+// frame the cloud moved
+const tints = new Map<string, string | Promise<string>>();
+const tintIcon = (src: string, accent: string) => {
+  const key = `${src}|${accent}`;
+  const have = tints.get(key);
+  if (have) return have;
+  const tinting = new Promise<string>((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const g = canvas.getContext('2d');
+      if (!g) return resolve(src);
+      g.drawImage(img, 0, 0);
+      g.globalCompositeOperation = 'multiply';
+      g.fillStyle = accent;
+      g.fillRect(0, 0, canvas.width, canvas.height);
+      g.globalCompositeOperation = 'destination-in'; /* cut back to the icon's own shape */
+      g.drawImage(img, 0, 0);
+      const url = canvas.toDataURL();
+      tints.set(key, url);
+      resolve(url);
+    };
+    img.onerror = () => resolve(src);
+    img.src = src;
+  });
+  tints.set(key, tinting);
+  return tinting;
+};
+const useTintedIcon = (src: string, accent: string) => {
+  const have = tints.get(`${src}|${accent}`);
+  const [url, setUrl] = useState(typeof have === 'string' ? have : undefined);
+  useEffect(() => {
+    let live = true;
+    Promise.resolve(tintIcon(src, accent)).then((tinted) => live && setUrl(tinted));
+    return () => {
+      live = false;
+    };
+  }, [src, accent]);
+  return url;
+};
+
+// until the tint is ready (the first open only), the colour is painted under the icon, cut to
+// its shape, and the icon multiplied over it
 const IconTint = styled.span<{ $accent: string; $src: string }>`
   display: block;
   background: ${({ $accent }) => $accent};
   mask: url(${({ $src }) => $src}) center / 100% 100% no-repeat;
+  & img {
+    mix-blend-mode: multiply;
+  }
 `;
 
-const TintedIcon = ({ src, alt, accent }: { src: string; alt: string; accent: string }) => (
-  <IconTint $accent={accent} $src={src}>
-    <QuestImg src={src} alt={alt} />
-  </IconTint>
-);
+const TintedIcon = ({ src, alt, accent }: { src: string; alt: string; accent: string }) => {
+  const tinted = useTintedIcon(src, accent);
+  if (tinted) return <QuestImg src={tinted} alt={alt} />;
+  return (
+    <IconTint $accent={accent} $src={src}>
+      <QuestImg src={src} alt={alt} />
+    </IconTint>
+  );
+};
 
 const QuestCount = styled.span<{ $accent: string; $empty: boolean }>`
   position: absolute;
@@ -1929,9 +2099,1111 @@ const QuestList = styled.div`
 
 const QuestTitle = styled.div`
   font-size: 1.0667cqh;
-  color: ${accentMix(70, 'black')};
+  color: var(--ql-title, ${accentMix(70, 'black')}); /* a sign brings its own */
   letter-spacing: 0.0889cqh;
   text-transform: uppercase;
+`;
+
+// a skin's quest list under the cloud (its questList): it comes out from behind the frame's bottom
+// edge, the part still inside hidden. under the frame (z -1 in the cloud's layer group), in from
+// its sides, clear of a tag's cut end
+const UNDER_DEEP = u(12); // how much further up under the frame a contract starts
+const UnderSlot = styled.div<{ $tag?: boolean; $deep?: boolean }>`
+  position: absolute;
+  z-index: -1;
+  /* a contract starts well up behind the frame, so it reads as coming out of the cloud itself */
+  top: calc(100% - ${B} - ${({ $deep }) => ($deep ? UNDER_DEEP : '0px')});
+  left: ${({ $tag }) => ($tag ? `calc(${TAG_CUT} * ${B} + ${u(2)})` : u(4.5))};
+  right: ${u(4.5)};
+  /* only its top is cut: what hasn't come out from under the frame yet stays hidden */
+  clip-path: inset(0 -50% -200% -50%);
+  pointer-events: none;
+`;
+
+// a look's colours, as the css variables its styles read (--ql-row-line from rowLine)
+const underVars = (look: QuestListLook) =>
+  Object.fromEntries(
+    Object.entries('colours' in look ? look.colours : {}).map(([key, colour]) => [
+      `--ql-${key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`,
+      colour,
+    ])
+  ) as React.CSSProperties;
+
+// a receipt's torn edge: pixel teeth six outline widths across, stepping two deep, run on past the
+// right side (the cut ignores what lies outside the box)
+const RECEIPT_TEETH = 40;
+const tornEdge = (b: string) => {
+  const at = (x: number, depth: number) => `calc(${x} * ${b}) calc(100% - ${depth} * ${b})`;
+  const teeth = [...Array(RECEIPT_TEETH)].flatMap((_, k) => {
+    const x = k * 6;
+    return [
+      at(x, 2),
+      at(x + 1, 2),
+      at(x + 1, 1),
+      at(x + 2, 1),
+      at(x + 2, 0),
+      at(x + 4, 0),
+      at(x + 4, 1),
+      at(x + 5, 1),
+      at(x + 5, 2),
+    ];
+  });
+  return `polygon(0 0, ${teeth.join(', ')}, calc(${RECEIPT_TEETH * 6} * ${b}) 0)`;
+};
+
+// a running stitch of `colour` along the left, right and bottom sides of what it's drawn on
+const stitchSides = (colour: string) => css`
+  --across: repeating-linear-gradient(90deg, ${colour} 0 ${B}, transparent ${B} calc(2 * ${B}));
+  --down: repeating-linear-gradient(180deg, ${colour} 0 ${B}, transparent ${B} calc(2 * ${B}));
+  background:
+    var(--across) bottom / 100% ${u(0.5)} no-repeat,
+    var(--down) left / ${u(0.5)} 100% no-repeat,
+    var(--down) right / ${u(0.5)} 100% no-repeat;
+`;
+
+const UNDER_OUT = 0.45; // seconds it takes to come out (or go back in)
+const SIGN_DROP = u(5); // how far below the frame a sign hangs, on its ropes
+const SIGN_PX = B; // a pixel of the sign's art: 3 screen pixels in a 1080px room, like the name sign
+// a contract's gold rod
+const ROD = `calc(4 * ${B})`; // its height, outline and all
+const ROD_OVER = u(3); // how far a rod reaches past the paper's sides
+
+// a sign swings to rest once it has dropped
+const swing = keyframes`
+  0% { rotate: -4deg; }
+  25% { rotate: 3deg; }
+  50% { rotate: -1.5deg; }
+  75% { rotate: 0.75deg; }
+  100% { rotate: 0deg; }
+`;
+
+// coming out: an animation, not a transition, so it also plays the first time, when the list
+// mounts already open (a transition would have nothing to start from)
+const comeOut = keyframes`
+  from {
+    transform: translateY(var(--under-from));
+  }
+  to {
+    transform: none;
+  }
+`;
+
+// the browser's scrollbar, gutter and all, hidden: a list draws its own (ScrollBar)
+const hideScrollbar = css`
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+`;
+
+// a list's own scrollbar: a thin bar in the npc's colour (--ql-scroll) down the right of the box
+// its scroller fills, no track behind it, shown only when there's more to scroll to. `watch`
+// re-measures when the list changes
+const ScrollBar = ({ target, watch }: { target: RefObject<HTMLDivElement>; watch?: unknown }) => {
+  const thumb = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const el = target.current;
+    const bar = thumb.current;
+    if (!el || !bar) return;
+    // the thumb is moved by hand, so a scroll never re-renders anything
+    const update = () => {
+      const { scrollTop, scrollHeight, clientHeight } = el;
+      if (scrollHeight > clientHeight + 1) {
+        bar.style.top = `${(scrollTop / scrollHeight) * 100}%`;
+        bar.style.height = `${(clientHeight / scrollHeight) * 100}%`;
+        bar.style.display = '';
+      } else {
+        bar.style.display = 'none';
+      }
+    };
+    update();
+    el.addEventListener('scroll', update, { passive: true });
+    const resize = new ResizeObserver(update);
+    resize.observe(el);
+    return () => {
+      el.removeEventListener('scroll', update);
+      resize.disconnect();
+    };
+  }, [target, watch]);
+  return <ScrollThumb ref={thumb} style={{ display: 'none' }} />;
+};
+const ScrollThumb = styled.span`
+  position: absolute;
+  z-index: 4;
+  right: var(--ql-scroll-right, ${u(1.25)});
+  width: ${u(1.5)};
+  background: var(--ql-scroll);
+  /* a list can outline it, to stand out on busy art */
+  box-shadow: 0 0 0 var(--ql-scroll-outline, 0) var(--ql-line, transparent);
+  pointer-events: none;
+`;
+
+// a cabinet of bottles (questList 'bottles'), drawn from the shelf in her room: its top board and
+// its shadow under it, its title, then one shelf of four small bottles in view at a time (so the
+// tags hanging below them, out past the cabinet, never meet the next row's), the wheel stepping a
+// whole shelf at a time. each
+// bottle stands on its shelf's board, held up by a bracket at either end, and its tag hangs from
+// its neck on a string
+const BOTTLE_PLACES = 4;
+const BOTTLE_PLACES_NARROW = 2; // on a screen the cloud had to shrink for (a phone): wider tags
+// a pixel of the cabinet's art: the room's own pixel (its art is 128 across the room's height), so
+// the cabinet is as chunky as the shelf in her room
+const SHELF_PX = 'calc(100cqh / 128)';
+const px = (n: number) => `calc(${n} * ${SHELF_PX})`;
+const BOARD_TOP = u(13.75); // where a shelf's board runs, just under its bottles' feet
+const SHELF_ROW = BOARD_TOP; // the shelf ends at the bottles' feet: they stand on the base board
+const BottleBox = ({
+  look,
+  places,
+  title,
+  quests,
+  onPick,
+}: {
+  look: Extract<QuestListLook, { look: 'bottles' }>;
+  places: number; // bottles per shelf
+  title: string;
+  quests: Quest[];
+  onPick: (quest: Quest) => void;
+}) => {
+  const shelf = look.shelf;
+  const rows = [...Array(Math.max(1, Math.ceil(quests.length / places)))].map((_, r) =>
+    quests.slice(r * places, (r + 1) * places)
+  );
+  // one shelf in view, its tags free to hang out below the cabinet: the wheel steps from shelf to
+  // shelf (a native scroll would clip them), a short rest between steps so one flick is one shelf
+  const [shown, setShown] = useState(0);
+  const row = Math.min(shown, rows.length - 1);
+  const lastStep = useRef(0);
+  const step = (by: number) => {
+    const next = Math.max(0, Math.min(rows.length - 1, row + by));
+    if (next === row) return;
+    playClick();
+    setShown(next);
+  };
+  const onWheel = (e: React.WheelEvent) => {
+    if (rows.length < 2 || Math.abs(e.deltaY) < 4) return;
+    const now = performance.now();
+    if (now - lastStep.current < SHELF_STEP_REST) return;
+    lastStep.current = now;
+    step(Math.sign(e.deltaY));
+  };
+  // the bar on the right post can be dragged (or the post clicked) to the shelf wanted: by finger
+  // too, so the later shelves are reachable without a wheel
+  const rowRef = useRef(row);
+  rowRef.current = row;
+  const trackRef = useRef<HTMLSpanElement>(null);
+  const dragTo = (e: React.PointerEvent) => {
+    const el = trackRef.current;
+    if (!el) return;
+    const { top, height } = el.getBoundingClientRect();
+    const next = Math.max(
+      0,
+      Math.min(rows.length - 1, Math.floor(((e.clientY - top) / height) * rows.length))
+    );
+    if (next === rowRef.current) return;
+    rowRef.current = next;
+    playClick();
+    setShown(next);
+  };
+  // the shelf itself drags too: a swipe up or down on the bottles or their tags (a finger, on a
+  // phone) steps a shelf each SHELF_SWIPE of travel, in the way the bottles move. a swipe that
+  // ends on a tag isn't a tap on it
+  const swipe = useRef<{ y: number; moved: boolean }>();
+  const onSwipeStart = (e: React.PointerEvent) => {
+    if (rows.length < 2 || e.button !== 0) return;
+    swipe.current = { y: e.clientY, moved: false };
+  };
+  const onSwipeMove = (e: React.PointerEvent) => {
+    const drag = swipe.current;
+    if (!drag || !e.buttons) return;
+    const dy = e.clientY - drag.y;
+    if (Math.abs(dy) < SHELF_SWIPE) return;
+    drag.y = e.clientY;
+    drag.moved = true;
+    step(dy < 0 ? 1 : -1);
+  };
+  const onSwipeEnd = () => {
+    const drag = swipe.current;
+    if (drag?.moved) setTimeout(() => (swipe.current = undefined), 0); /* after the click */
+    else swipe.current = undefined;
+  };
+  const onSwipeClick = (e: React.MouseEvent) => {
+    if (!swipe.current?.moved) return;
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  // the arrow keys step too (not while a field has focus)
+  const stepRef = useRef(step);
+  stepRef.current = step;
+  useEffect(() => {
+    if (rows.length < 2) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+      const el = document.activeElement as HTMLElement | null;
+      const tag = el?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el?.isContentEditable)
+        return;
+      e.preventDefault();
+      stepRef.current(e.key === 'ArrowUp' ? -1 : 1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [rows.length]);
+  // each piece's art as --shelf-<piece> (--shelf-base-end from baseEnd), built once per look
+  const art = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(shelf).map(([key, sprite]) => [
+          `--shelf-${key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`,
+          `url(${sprite.src})`,
+        ])
+      ) as React.CSSProperties,
+    [shelf]
+  );
+  return (
+    <BoxFrame style={art}>
+      <BoxBack>
+        <BoxTop />
+        <BoxTitle>
+          <span>{title}</span>
+        </BoxTitle>
+        <ShelfView
+          onWheel={onWheel}
+          onPointerDown={onSwipeStart}
+          onPointerMove={onSwipeMove}
+          onPointerUp={onSwipeEnd}
+          onPointerCancel={onSwipeEnd}
+          onClickCapture={onSwipeClick}
+        >
+          <ShelfRow key={row}>
+            <Shelf style={{ '--places': places } as React.CSSProperties}>
+              {rows[row].map((quest, k) => {
+                const i = row * places + k;
+                return (
+                  <BottlePlace key={i} style={{ '--i': k } as React.CSSProperties}>
+                    <Bottle>
+                      <img
+                        src={look.bottles[quest.index % look.bottles.length].src}
+                        alt=''
+                        draggable={false}
+                      />
+                    </Bottle>
+                    <TagString />
+                    <BottleTag type='button' onClick={() => onPick(quest)}>
+                      {quest.name}
+                      <small>no. {i + 1}</small>
+                    </BottleTag>
+                  </BottlePlace>
+                );
+              })}
+            </Shelf>
+          </ShelfRow>
+        </ShelfView>
+        {/* more shelves: the wheel and the arrow keys step between them, and the bar on the
+        right post, showing which is out, can be dragged (or the post clicked) to one */}
+        {rows.length > 1 && (
+          <ShelfTrack
+            ref={trackRef}
+            onPointerDown={(e) => {
+              e.currentTarget.setPointerCapture(e.pointerId);
+              dragTo(e);
+            }}
+            onPointerMove={(e) => {
+              if (e.buttons) dragTo(e);
+            }}
+          >
+            <ScrollThumb
+              style={{ top: `${(row / rows.length) * 100}%`, height: `${100 / rows.length}%` }}
+            />
+          </ShelfTrack>
+        )}
+      </BoxBack>
+      <BoxBase />
+      <BoxFeet />
+    </BoxFrame>
+  );
+};
+
+const BoxFrame = styled.div`
+  image-rendering: pixelated;
+  /* its scrollbar: cream, outlined, down the right post */
+  --ql-scroll: var(--ql-paper);
+  --ql-scroll-outline: ${u(0.5)};
+  --ql-scroll-right: ${u(1.25)};
+`;
+// the right post as the bar's track: the whole post takes the press, for an easy grab
+const ShelfTrack = styled.span`
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: ${px(5)};
+  cursor: pointer;
+  touch-action: none;
+`;
+// the cabinet's inside, a wooden post down either side
+const BoxBack = styled.div`
+  position: relative;
+  background: var(--shelf-wall) left top / ${px(21)} ${px(10)} repeat;
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    bottom: 0;
+    width: ${px(5)};
+    background: var(--shelf-post) left top / 100% ${px(8)} repeat-y;
+    pointer-events: none;
+  }
+  &::before {
+    left: 0;
+  }
+  &::after {
+    right: 0;
+    scale: -1 1;
+  }
+`;
+// the base board it stands on, reaching past the posts, its ends stepped
+const BoxBase = styled.div`
+  position: relative;
+  height: ${px(5)};
+  margin: 0 calc(-1 * ${px(1)});
+  padding: 0 ${px(3)};
+  background: var(--shelf-base) left top / ${px(24)} 100% repeat-x content-box;
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: ${px(3)};
+    height: 100%;
+    background: var(--shelf-base-end) center / 100% 100%;
+  }
+  &::before {
+    left: 0;
+  }
+  &::after {
+    right: 0;
+    scale: -1 1;
+  }
+`;
+// a foot under each post, the scalloped apron hanging between them
+const BoxFeet = styled.div`
+  position: relative;
+  height: ${px(5)};
+  padding: 0 ${px(5)};
+  background: var(--shelf-apron) left top / ${px(9)} ${px(4)} round no-repeat content-box;
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: ${px(5)};
+    height: 100%;
+    background: var(--shelf-foot) center / 100% 100%;
+  }
+  &::before {
+    left: 0;
+  }
+  &::after {
+    right: 0;
+    scale: -1 1;
+  }
+`;
+// the cabinet's top board, its shadow under it
+const BoxTop = styled.div`
+  height: ${px(5)};
+  background: var(--shelf-top) left top / ${px(24)} 100% repeat-x;
+  image-rendering: pixelated;
+`;
+// the title on a cream plaque nailed to the middle of the top board, outlined, its corners
+// stepped like the frame's, a nail at either end
+const BoxTitle = styled.div`
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  top: calc(${px(5)} / 2);
+  translate: -50% -50%;
+  padding: ${B};
+  background: var(--ql-line);
+  clip-path: ${stepped(B)};
+  white-space: nowrap;
+  & span {
+    display: block;
+    position: relative;
+    padding: ${u(1.5)} ${u(6.5)};
+    background: var(--ql-paper);
+    clip-path: ${stepped(B)};
+    font-size: 1.0667cqh;
+    letter-spacing: 0.0889cqh;
+    text-transform: uppercase;
+    color: var(--ql-line);
+  }
+  & span::before,
+  & span::after {
+    content: '';
+    position: absolute;
+    top: calc(50% - ${B} / 2);
+    width: ${B};
+    height: ${B};
+    background: var(--ql-line);
+  }
+  & span::before {
+    left: ${u(2.5)};
+  }
+  & span::after {
+    right: ${u(2.5)};
+  }
+`;
+const SHELF_STEP_REST = 250; // ms between one wheel step and the next
+const SHELF_SWIPE = 28; // screen pixels of drag that move one shelf
+// the one shelf in view (its scrollbar runs the whole height of the cabinet's right post)
+const ShelfView = styled.div`
+  position: relative;
+  touch-action: none; /* a finger's drag steps the shelves, never scrolls the page */
+`;
+// one shelf: its bottles, standing on the base board below it (their tags hang on past it)
+const ShelfRow = styled.div`
+  position: relative;
+  height: ${SHELF_ROW};
+`;
+const Shelf = styled.div`
+  display: grid;
+  grid-template-columns: repeat(var(--places), 1fr);
+  column-gap: ${u(3)};
+  padding: 0 calc(${px(5)} + ${u(2)}); /* clear of the posts */
+`;
+const BottlePlace = styled.div`
+  position: relative;
+  display: grid;
+  justify-items: center;
+  padding-top: ${u(2.25)};
+`;
+// a potion drawn at 2 screen pixels per pixel (in a 1080px room), standing on the board
+const Bottle = styled.span`
+  position: relative;
+  z-index: 1;
+  & img {
+    display: block;
+    width: ${u(13)}; /* its 26px picture at 2 screen pixels per pixel */
+    height: ${u(13)};
+    image-rendering: pixelated;
+  }
+`;
+const TagString = styled.span`
+  position: absolute;
+  z-index: 3;
+  top: ${u(5.25)}; /* from the potion's neck */
+  left: calc(50% - ${u(0.25)});
+  width: ${u(0.5)};
+  height: ${u(15.75)};
+  background: var(--ql-string);
+  pointer-events: none;
+`;
+// a paper tag with its corners cut and a hole for the string
+const BottleTag = styled.button`
+  position: absolute;
+  z-index: 3;
+  top: ${u(21)};
+  left: calc(-1 * ${u(0.75)});
+  right: calc(-1 * ${u(0.75)});
+  transform-origin: 50% calc(-1 * ${u(13.5)});
+  min-height: ${u(17.25)};
+  padding: ${u(4.125)} ${u(1.125)} ${u(2.25)};
+  font-size: 1.1111cqh;
+  line-height: 1.5278cqh;
+  text-align: center;
+  color: ${PANEL.text};
+  background: var(--ql-paper);
+  border: solid ${PANEL.line} ${u(0.75)};
+  border-radius: ${u(0.75)};
+  clip-path: polygon(
+    ${u(3.375)} 0,
+    calc(100% - ${u(3.375)}) 0,
+    100% ${u(3.375)},
+    100% 100%,
+    0 100%,
+    0 ${u(3.375)}
+  );
+  /* wraps only between words, never inside one */
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+  cursor: pointer;
+  &::before {
+    content: '';
+    position: absolute;
+    top: ${u(1.5)};
+    left: calc(50% - ${u(1.125)});
+    width: ${u(2.25)};
+    height: ${u(2.25)};
+    border-radius: 50%;
+    background: ${PANEL.line};
+  }
+  & small {
+    display: block;
+    margin-top: ${u(1.125)};
+    font-size: 0.8333cqh;
+    color: var(--ql-number);
+  }
+  &:hover {
+    background: color-mix(in srgb, var(--ql-paper) 60%, white);
+  }
+`;
+
+// the bottles drop into the box one after another once it's out, and their tags swing to rest
+const BOTTLE_STEP = 0.14; // seconds between one bottle and the next
+const bottleDrop = keyframes`
+  0% { translate: 0 calc(-1 * ${u(18)}); opacity: 0; }
+  15% { opacity: 1; }
+  70% { translate: 0 ${u(0.75)}; }
+  85% { translate: 0 calc(-1 * ${u(0.5)}); }
+  100% { translate: 0 0; opacity: 1; }
+`;
+const tagSwing = keyframes`
+  0% { rotate: -9deg; }
+  30% { rotate: 6deg; }
+  55% { rotate: -3deg; }
+  80% { rotate: 1.5deg; }
+  100% { rotate: 0deg; }
+`;
+const bottlesIn = css`
+  & ${Bottle}, & ${TagString} {
+    animation: ${bottleDrop} 0.35s steps(6) both;
+    animation-delay: calc(${UNDER_OUT}s + var(--i) * ${BOTTLE_STEP}s);
+  }
+  & ${BottleTag} {
+    animation:
+      ${bottleDrop} 0.35s steps(6) both,
+      ${tagSwing} 0.8s steps(8) both;
+    animation-delay:
+      calc(${UNDER_OUT}s + var(--i) * ${BOTTLE_STEP}s),
+      calc(${UNDER_OUT + 0.35}s + var(--i) * ${BOTTLE_STEP}s);
+  }
+`;
+
+// a map's X (o outline, x mark) and compass rose (c rose, o its middle), and where the X sits on
+// a quest's row
+const MAP_X = ['oo...oo', 'oxo.oxo', '.oxoxo.', '..oxo..', '.oxoxo.', 'oxo.oxo', 'oo...oo'];
+const MAP_COMPASS = [
+  '....c....',
+  '....c....',
+  '...ccc...',
+  '..c.c.c..',
+  'ccccocccc',
+  '..c.c.c..',
+  '...ccc...',
+  '....c....',
+  '....c....',
+];
+const MAP_X_LEFT = u(2);
+const MAP_X_TOP = u(1.25);
+const MAP_GUTTER = u(9);
+
+// once a map is out, its trail draws itself from stop to stop, each X landing as it's reached
+const MAP_STEP = 0.27; // seconds from one stop to the next
+const trailDraw = keyframes`
+  from { clip-path: inset(0 0 100% 0); }
+  to { clip-path: inset(0); }
+`;
+const xLand = keyframes`
+  0% { scale: 1.8; opacity: 0; }
+  100% { scale: 1; opacity: 1; }
+`;
+const mapIn = css`
+  & button::after {
+    animation: ${trailDraw} ${MAP_STEP}s steps(4) both;
+    animation-delay: calc(${UNDER_OUT}s + var(--i) * ${MAP_STEP}s);
+  }
+  & button::before {
+    animation: ${xLand} 0.25s steps(4) both;
+    animation-delay: calc(${UNDER_OUT + 0.08}s + var(--i) * ${MAP_STEP}s);
+  }
+`;
+
+const UnderSheet = styled.div<{ $look: QuestListLook['look']; $open: boolean }>`
+  position: relative;
+  /* tucked away under the frame (a sign also hides its ropes) */
+  --under-from: ${({ $look }) =>
+    $look === 'sign' ? `calc(-100% - ${SIGN_DROP} - ${B})` : '-100%'};
+  transform: ${({ $open }) => ($open ? 'none' : 'translateY(var(--under-from))')};
+  visibility: ${({ $open }) => ($open ? 'visible' : 'hidden')};
+  pointer-events: ${({ $open }) => ($open ? 'auto' : 'none')};
+  /* going back in slides; coming out plays comeOut (and a sign then swings to rest) */
+  transition:
+    transform ${UNDER_OUT}s steps(9),
+    visibility 0s ${({ $open }) => ($open ? '0s' : `${UNDER_OUT}s`)};
+  ${({ $open, $look }) => $open && $look === 'bottles' && bottlesIn}
+  ${({ $open, $look }) => $open && $look === 'map' && mapIn}
+  ${({ $open, $look }) =>
+    $open &&
+    ($look === 'sign'
+      ? css`
+          animation:
+            ${comeOut} ${UNDER_OUT}s steps(9),
+            ${swing} 0.9s steps(8) ${UNDER_OUT}s;
+        `
+      : css`
+          animation: ${comeOut} ${UNDER_OUT}s steps(9);
+        `)}
+
+  /* a receipt: the outline round the paper, cut to its torn edge */
+  ${({ $look }) =>
+    $look === 'receipt' &&
+    css`
+      padding: 0 ${B} ${B};
+      background: ${PANEL.line};
+      clip-path: ${tornEdge(B)};
+    `}
+
+  /* a notice: its leather edge down the sides and along the bottom, outlined, and the roll it
+  unrolls to, a little wider than it */
+  ${({ $look }) =>
+    $look === 'notice' &&
+    css`
+      padding: 0 calc(2 * ${B}) calc(2 * ${B});
+      background: var(--ql-leather);
+      border: solid ${PANEL.line} ${B};
+      border-top: none;
+      margin-bottom: ${u(2)};
+      &::after {
+        content: '';
+        position: absolute;
+        left: calc(-1 * ${u(3)});
+        right: calc(-1 * ${u(3)});
+        bottom: calc(-1 * ${u(2.5)});
+        height: ${u(4)};
+        background: var(--ql-leather);
+        border: solid ${PANEL.line} ${B};
+        border-radius: ${u(2)};
+      }
+    `}
+
+  /* a contract: its rod hanging just below it, the seal off the rod */
+  ${({ $look }) =>
+    $look === 'contract' &&
+    css`
+      margin-bottom: calc(${SEAL} / 2);
+    `}
+
+  /* a map: outlined down its sides and along the bottom */
+  ${({ $look }) =>
+    $look === 'map' &&
+    css`
+      border: solid var(--ql-line) ${B};
+      border-top: none;
+    `}
+
+  /* a sign: planks with a little grain between them, outlined, hung on two ropes from the frame */
+  ${({ $look }) =>
+    $look === 'sign' &&
+    css`
+      margin-top: ${SIGN_DROP};
+      transform-origin: top center;
+      /* the name sign's own planks, one under another, whole planks across */
+      background: var(--ql-plank) left top / calc(46 * ${SIGN_PX}) calc(9 * ${SIGN_PX}) round repeat;
+      image-rendering: pixelated;
+      border: solid var(--ql-outline) ${SIGN_PX};
+      border-radius: ${SIGN_PX};
+      &::before,
+      &::after {
+        content: '';
+        position: absolute;
+        top: calc(-1 * (${SIGN_DROP} + ${B}));
+        width: calc(2 * ${SIGN_PX});
+        height: calc(${SIGN_DROP} + ${B});
+        background: var(--ql-rope-art) left top / 100% calc(7 * ${SIGN_PX}) repeat-y;
+        image-rendering: pixelated;
+      }
+      &::before {
+        left: 18%;
+      }
+      &::after {
+        right: 18%;
+      }
+    `}
+`;
+
+const UNDER_MAX = '26cqh';
+const UNDER_ROWS = 5;
+
+// the box the list scrolls in: a set height, so opening it never moves the cloud. the list
+// inside keeps its own padding and backgrounds, which scroll with it as content (cheaper than
+// a background fixed to the box and repainted on every scroll)
+const UnderClip = styled.div`
+  position: relative; /* over a notice's stitch */
+  max-height: ${UNDER_MAX};
+  overflow-y: auto;
+  ${hideScrollbar}
+`;
+const UnderScroll = styled.div`
+  display: flex;
+  flex-flow: column nowrap;
+  gap: ${u(2)};
+  /* room at the bottom for a receipt's torn edge */
+  padding: ${u(3)} ${u(4)} ${u(5)};
+`;
+
+// a contract's clause number, a little dimmer than its words
+const Clause = styled.span`
+  flex-shrink: 0;
+  color: var(--ql-numeral);
+`;
+
+const toRoman = (n: number) =>
+  [
+    [10, 'X'],
+    [9, 'IX'],
+    [5, 'V'],
+    [4, 'IV'],
+    [1, 'I'],
+  ].reduce(
+    (out, [value, numeral]) => {
+      while (out.n >= (value as number)) {
+        out.s += numeral;
+        out.n -= value as number;
+      }
+      return out;
+    },
+    { s: '', n }
+  ).s;
+
+// a contract's seal: a disc of wax just above its bottom rod, the npc's mark pressed into it. it stamps
+// down once the contract is out, every time it opens
+const stamp = keyframes`
+  0% { scale: 2.2; opacity: 0; }
+  60% { scale: 0.9; opacity: 1; }
+  100% { scale: 1; opacity: 1; }
+`;
+const SEAL = u(15); // its 30px picture at two screen pixels per pixel, in a 1080px room
+const Seal = styled.span<{ $open: boolean }>`
+  position: absolute;
+  left: calc(50% - ${SEAL} / 2);
+  z-index: 2;
+  /* fixed onto the middle of the bottom rod */
+  bottom: calc(${B} - ${ROD} / 2 - ${SEAL} / 2);
+  width: ${SEAL};
+  height: ${SEAL};
+  pointer-events: none;
+  & img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+  }
+  ${({ $open }) =>
+    $open &&
+    css`
+      animation: ${stamp} 0.35s steps(5) ${UNDER_OUT + 0.1}s both;
+    `}
+`;
+
+// a contract's gold rod along its bottom edge, so it unrolls down as the rod drops. it overhangs
+// the paper, a knob at either end
+const ScrollRod = styled.span`
+  position: absolute;
+  z-index: 1;
+  left: calc(-1 * ${ROD_OVER});
+  right: calc(-1 * ${ROD_OVER});
+  bottom: calc(-1 * (${ROD} - ${B}));
+  height: ${ROD};
+  box-sizing: border-box;
+  border: solid var(--ql-rod-line) ${B};
+  border-radius: ${B};
+  background: linear-gradient(
+    var(--ql-rod-light) 0 ${B},
+    var(--ql-rod) ${B} calc(2 * ${B}),
+    var(--ql-rod-shade) calc(2 * ${B})
+  );
+  pointer-events: none;
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: calc(-2 * ${B});
+    width: calc(2 * ${B});
+    height: calc(4 * ${B});
+    background: var(--ql-rod);
+    border: solid var(--ql-rod-line) ${B};
+    border-radius: ${B};
+  }
+  &::before {
+    left: calc(-4 * ${B});
+  }
+  &::after {
+    right: calc(-4 * ${B});
+  }
+`;
+
+const UnderPaper = styled.div<{ $look: QuestListLook['look'] }>`
+  position: relative;
+
+  /* a receipt's paper, faintly ruled like a till roll */
+  ${({ $look }) =>
+    $look === 'receipt' &&
+    css`
+      background:
+        repeating-linear-gradient(
+          180deg,
+          transparent 0 ${u(5.5)},
+          color-mix(in srgb, ${PANEL.line} 6%, transparent) ${u(5.5)} ${u(5.75)}
+        ),
+        ${PANEL.fill};
+      clip-path: ${tornEdge(B)};
+      /* its title printed as a band across the receipt, in her red with cream letters, a dashed
+      tear line under it */
+      & ${QuestTitle} {
+        margin: 0 calc(-1 * ${u(4)});
+        padding: ${u(1.25)} ${u(4)};
+        text-align: center;
+        font-size: 1.4222cqh;
+        letter-spacing: 0.2667cqh;
+        color: ${PANEL.fill};
+        background: var(--ql-title, ${accentMix(85, 'black')});
+        border-bottom: dashed ${u(0.5)} ${PANEL.fill};
+      }
+    `}
+
+  /* a notice's parchment, its stitch running just inside the leather */
+  ${({ $look }) =>
+    $look === 'notice' &&
+    css`
+      background: ${PANEL.fill};
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0 ${u(1)} ${u(1)};
+        pointer-events: none;
+        ${stitchSides('var(--ql-stitch)')}
+      }
+      /* its title lettered like a notice's heading: in her ink, a diamond either side, a
+      double line ruled under it */
+      & ${QuestTitle} {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: ${u(2.5)};
+        padding-bottom: ${u(1.5)};
+        font-size: 1.4222cqh;
+        letter-spacing: 0.3556cqh;
+        color: var(--ql-title, ${accentMix(90, 'black')});
+        border-bottom: double ${u(1.25)} color-mix(in srgb, var(--ql-leather) 75%, transparent);
+      }
+      & ${QuestTitle}::before, & ${QuestTitle}::after {
+        content: '';
+        width: ${u(2)};
+        height: ${u(2)};
+        background: var(--ql-leather);
+        rotate: 45deg;
+      }
+    `}
+
+  /* a contract's black paper, gold down its sides and along the bottom with a fainter plaque line
+  just inside, both running on up under the frame (no line across the top, so it reads as part of
+  the cloud), its clauses lettered in gold */
+  ${({ $look }) =>
+    $look === 'contract' &&
+    css`
+      --ql-title: var(--ql-ink);
+      background: var(--ql-paper);
+      border: solid var(--ql-plaque) ${B};
+      border-top: none;
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0 ${u(1)} ${u(1)};
+        border: solid color-mix(in srgb, var(--ql-plaque) 55%, transparent) ${u(0.5)};
+        border-top: none;
+        pointer-events: none;
+      }
+      & ${UnderScroll} {
+        padding-top: calc(${u(3)} + ${UNDER_DEEP}); /* clear of the frame it starts behind */
+        padding-bottom: ${u(9)}; /* room for the seal */
+      }
+      /* its title in larger white letters, like the clause numbers, a gold rule running out
+      either side */
+      & ${QuestTitle} {
+        display: flex;
+        align-items: center;
+        gap: ${u(3)};
+        text-align: center;
+        color: var(--ql-numeral);
+        font-size: 1.4222cqh;
+        letter-spacing: 0.2667cqh;
+        white-space: nowrap;
+      }
+      & ${QuestTitle}::before, & ${QuestTitle}::after {
+        content: '';
+        flex: 1;
+        height: ${u(0.5)};
+        background: var(--ql-plaque);
+      }
+      & button {
+        display: flex;
+        align-items: baseline;
+        gap: ${u(2.5)};
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        color: var(--ql-ink);
+      }
+      & button:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--ql-ink) 14%, transparent);
+      }
+    `}
+
+  /* a map's old paper, browned at its edge and stained, a compass rose in its corner; each quest a
+  stop on the trail, its X on the trail and its name beside it */
+  ${({ $look }) =>
+    $look === 'map' &&
+    css`
+      --ql-title: var(--ql-ink);
+      background:
+        radial-gradient(
+          circle at 82% 70%,
+          color-mix(in srgb, var(--ql-edge) 30%, transparent) 0 ${u(6)},
+          transparent ${u(6)}
+        ),
+        radial-gradient(
+          circle at 12% 18%,
+          color-mix(in srgb, var(--ql-edge) 22%, transparent) 0 ${u(4)},
+          transparent ${u(4)}
+        ),
+        var(--ql-paper);
+      box-shadow:
+        inset 0 0 0 ${B} color-mix(in srgb, var(--ql-edge) 70%, transparent),
+        inset 0 0 0 calc(2 * ${B}) color-mix(in srgb, var(--ql-edge) 35%, transparent);
+      &::after {
+        content: '';
+        position: absolute;
+        top: ${u(2)};
+        right: ${u(2.5)};
+        width: calc(9 * ${B});
+        height: calc(9 * ${B});
+        background: var(--ql-compass-art) center / 100% 100%;
+        image-rendering: pixelated;
+        pointer-events: none;
+      }
+      /* its title centred, in from the edges enough to clear the compass rose */
+      & ${QuestTitle} {
+        margin: 0 calc(9 * ${B} + ${u(2)});
+        text-align: center;
+        font-size: 1.4222cqh;
+        letter-spacing: 0.2667cqh;
+      }
+      & button {
+        position: relative;
+        padding-left: ${MAP_GUTTER};
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        color: var(--ql-ink);
+      }
+      & button:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--ql-edge) 30%, transparent);
+        color: var(--ql-mark);
+      }
+      /* the X */
+      & button::before {
+        content: '';
+        position: absolute;
+        z-index: 1;
+        left: ${MAP_X_LEFT};
+        top: ${MAP_X_TOP};
+        width: calc(7 * ${B});
+        height: calc(7 * ${B});
+        background: var(--ql-x-art) center / 100% 100%;
+        image-rendering: pixelated;
+      }
+      /* the trail, from this stop on to the next: from the first X, up to the last */
+      & button::after {
+        content: '';
+        position: absolute;
+        left: calc(${MAP_X_LEFT} + 3 * ${B});
+        width: ${B};
+        top: 0;
+        bottom: calc(-1 * ${u(2)});
+        background: repeating-linear-gradient(
+          180deg,
+          var(--ql-trail) 0 calc(2 * ${B}),
+          transparent calc(2 * ${B}) calc(4 * ${B})
+        );
+        pointer-events: none;
+      }
+      & button:first-of-type::after {
+        top: calc(${MAP_X_TOP} + 3.5 * ${B});
+      }
+      & button:last-of-type::after {
+        bottom: auto;
+        height: calc(${MAP_X_TOP} + 3.5 * ${B});
+      }
+      & button:only-of-type::after {
+        display: none;
+      }
+    `}
+
+  /* a sign's quests on boards of their own colours */
+  ${({ $look }) =>
+    $look === 'sign' &&
+    css`
+      /* the title and each quest on a plank of its own, lined up with the planks' seams */
+      & ${UnderScroll} {
+        gap: 0;
+        padding: 0 ${u(3)};
+        /* the planks scroll with the quests on them, lined up under the title's taller plank */
+        background: var(--ql-plank) left 0 top calc(12 * ${SIGN_PX}) / calc(46 * ${SIGN_PX})
+          calc(9 * ${SIGN_PX}) round repeat;
+        image-rendering: pixelated;
+      }
+      /* a whole plank at a time */
+      & ${UnderClip} {
+        scroll-snap-type: y mandatory;
+        scroll-padding-top: calc(12 * ${SIGN_PX}); /* rows snap in under the title's plank */
+      }
+      & button {
+        scroll-snap-align: start;
+      }
+      & ${QuestTitle}, & button {
+        display: flex;
+        align-items: center;
+        height: calc(9 * ${SIGN_PX});
+        padding: 0 ${u(2)} ${SIGN_PX};
+        text-shadow: ${SIGN_PX} ${SIGN_PX} 0 var(--ql-outline);
+      }
+      /* the title on a plank of its own that stays put, a line of the outline under it */
+      & ${QuestTitle} {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        height: calc(12 * ${SIGN_PX}); /* a taller plank: room above and below */
+        background: var(--ql-title-plank) left top / calc(46 * ${SIGN_PX}) 100% round no-repeat;
+        margin: 0 calc(-1 * ${u(3)});
+        padding: 0 calc(${u(3)} + ${u(5)}) ${SIGN_PX};
+        box-shadow: 0 ${SIGN_PX} 0 var(--ql-outline);
+        justify-content: center;
+        font-size: 1.4222cqh;
+        letter-spacing: 0.1778cqh;
+        /* outlined all round, so it reads on the wood */
+        text-shadow:
+          ${SIGN_PX} 0 0 var(--ql-outline),
+          calc(-1 * ${SIGN_PX}) 0 0 var(--ql-outline),
+          0 ${SIGN_PX} 0 var(--ql-outline),
+          0 calc(-1 * ${SIGN_PX}) 0 var(--ql-outline),
+          ${SIGN_PX} ${SIGN_PX} 0 var(--ql-outline);
+      }
+      & button {
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        color: var(--ql-text);
+      }
+      & button:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--ql-hover) 70%, transparent);
+        color: var(--ql-text);
+      }
+    `}
 `;
 
 /////////////////

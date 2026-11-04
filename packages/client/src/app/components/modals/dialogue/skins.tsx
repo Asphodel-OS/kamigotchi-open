@@ -1,12 +1,31 @@
 import { CSSProperties } from 'react';
 
+import potionBlue from 'assets/images/dialogue/alaina_potion_blue.png';
+import potionGreen from 'assets/images/dialogue/alaina_potion_green.png';
+import potionOrange from 'assets/images/dialogue/alaina_potion_orange.png';
+import potionPink from 'assets/images/dialogue/alaina_potion_pink.png';
+import potionPurple from 'assets/images/dialogue/alaina_potion_purple.png';
+import potionRed from 'assets/images/dialogue/alaina_potion_red.png';
+import potionTeal from 'assets/images/dialogue/alaina_potion_teal.png';
+import potionYellow from 'assets/images/dialogue/alaina_potion_yellow.png';
+import shelfApron from 'assets/images/dialogue/alaina_shelf_apron.png';
+import shelfBase from 'assets/images/dialogue/alaina_shelf_base.png';
+import shelfBaseEnd from 'assets/images/dialogue/alaina_shelf_base_end.png';
+import shelfFoot from 'assets/images/dialogue/alaina_shelf_foot.png';
+import shelfPost from 'assets/images/dialogue/alaina_shelf_post.png';
+import shelfTop from 'assets/images/dialogue/alaina_shelf_top.png';
+import shelfWall from 'assets/images/dialogue/alaina_shelf_wall.png';
 import byakuya from 'assets/images/dialogue/byakuya.png';
+import dimidiatusSeal from 'assets/images/dialogue/dimidiatus_seal.png';
 import igorButterfly from 'assets/images/dialogue/igor_butterfly.png';
 import igorButterflySide from 'assets/images/dialogue/igor_butterfly_side.png';
 import igorApple from 'assets/images/dialogue/igor_candy_apple.png';
 import igorShroom from 'assets/images/dialogue/igor_candy_shroom.png';
 import igorWrapTilt from 'assets/images/dialogue/igor_candy_wrap_tilt.png';
 import igorSign from 'assets/images/dialogue/igor_sign.png';
+import igorSignPlank from 'assets/images/dialogue/igor_sign_plank.png';
+import igorSignRope from 'assets/images/dialogue/igor_sign_rope.png';
+import igorSignTitle from 'assets/images/dialogue/igor_sign_title.png';
 import minaReceipt from 'assets/images/dialogue/mina_receipt.png';
 import robPadlock from 'assets/images/dialogue/rob_padlock.png';
 import pomPomCandy from 'assets/images/items/pom_pom_fruit_candy.png';
@@ -21,6 +40,7 @@ type PixelArt = { rows: string[]; colours: Record<string, string> };
 export type NpcSkin = {
   colours: {
     accent: string; // hovers, badges, tab icons, choice marks
+    scroll?: string; // the quest list's scrollbar, if not the accent
     name: string;
     line: string; // outlines
     fill: string; // the panel
@@ -85,6 +105,18 @@ export type NpcSkin = {
 
   mark: string; // clip-path of the mark before each choice
 
+  // how the quest list comes out of the cloud: under the frame, the conversation staying in view
+  // above it. 'receipt' a till receipt printing out, with a torn edge; 'notice' a parchment notice
+  // edged in `leather` with a `stitch`, unrolling down to a leather roll; 'sign' a wooden sign of
+  // `wood` planks parted by `grain`, dropping on two `rope`s and swinging to rest, its quests on
+  // `row` boards (`rowLine` edges, `text`, `hover` fill) under a `title` in its own colour;
+  // 'contract' a black document lettered in `ink`, inside a `plaque` line, each quest one of its
+  // clauses numbered in `numeral`, stamped with its `seal` once it's out; 'bottles' a wooden
+  // box of small `bottles`, each with a paper tag on its neck carrying a quest's name (see
+  // getQuestList: npcs without a skin can have one too).
+  // unset: it drops from under the header over the line
+  questList?: QuestListLook;
+
   // the ritual's tab: `ornament` either side of its name (unset: the name's own; null: none);
   // `brackets` one in its top-right corner and one upside down under its name; `plaque` a line
   // inside its edge and round its medal; `ring` a band round the medal; `colours` its own
@@ -110,6 +142,81 @@ export type RitualColours = {
   thick?: boolean; // the name's letters a little heavier, to read on a mid-tone fill
 };
 
+export type QuestListLook =
+  | { look: 'receipt' }
+  | { look: 'notice'; colours: { leather: string; stitch: string } }
+  | {
+      look: 'sign';
+      // one plank of the sign (repeated down it, a quest on each) and a piece of its rope, cut from
+      // the npc's own name sign; drawn at 3 screen pixels per pixel like the sign
+      plank: Sprite;
+      rope: Sprite;
+      titlePlank: Sprite; // a taller plank of the same wood, for the list's title
+      colours: {
+        outline: string;
+        wood: string;
+        grain: string;
+        rope: string;
+        row: string;
+        rowLine: string;
+        text: string;
+        hover: string;
+        title: string;
+      };
+    }
+  | {
+      look: 'bottles';
+      colours: {
+        line: string; // the cabinet's outline, and the title's shadow
+        paper: string; // the tags, and the cabinet's title
+        string: string;
+        number: string; // the jar number on each tag
+      };
+      // the cabinet's art, from the shelf in her room: its top board and the shadow under it,
+      // and the wall behind
+      // and the cabinet round it: a post down each side, a base board under it (its stepped end
+      // drawn for the left), a foot under each end and the scalloped apron between them. left-hand
+      // pieces are mirrored for the right
+      shelf: {
+        top: Sprite;
+        wall: Sprite;
+        post: Sprite;
+        base: Sprite;
+        baseEnd: Sprite;
+        foot: Sprite;
+        apron: Sprite;
+      };
+      bottles: Sprite[]; // a quest's is picked by its index, so it keeps its colour
+    }
+  | {
+      look: 'map';
+      colours: {
+        paper: string;
+        line: string; // its outline
+        edge: string; // the old paper browning in from its edge, and its stains
+        trail: string; // the dotted trail from quest to quest
+        mark: string; // each quest's X
+        ink: string; // the quest names
+        compass: string;
+      };
+    }
+  | {
+      look: 'contract';
+      // unrolled down by a gold rod: rod, rodLight and rodShade, outlined in rodLine
+      colours: {
+        paper: string;
+        ink: string;
+        numeral: string;
+        plaque: string;
+        wax: string;
+        rod: string;
+        rodLight: string;
+        rodShade: string;
+        rodLine: string;
+      };
+      seal: Sprite;
+    };
+
 // a finished sprite and its size in native pixels; drawn at 2 screen pixels per pixel (at 1920 wide)
 type Sprite = { src: string; width: number; height: number };
 
@@ -130,6 +237,7 @@ const MINA: NpcSkin = {
     tray: '#f3e6df',
     light: '#ffffff',
     second: '#f4d06f', // butter yellow, like lemon candy, beside her pink shop tab
+    scroll: '#f4d06f',
   },
   // a torn-off till receipt sticking up out of the frame (items, a red total, a barcode) with her
   // name as its last line
@@ -146,6 +254,7 @@ const MINA: NpcSkin = {
   tearLine: '#e2cfc4',
   onTop: { src: byakuya, width: 49, height: 14, behindName: true },
   mark: DIAMOND,
+  questList: { look: 'receipt' },
   // her shop's tab: candy pink with white lettering and a pale pink stitch, the game's pom pom
   // fruit candy either side of its name (it's mainly a confectionery), and a white coin with
   // its icon and stitch in butter yellow, like the strip behind the cloud
@@ -207,6 +316,9 @@ const ZEVANA: NpcSkin = {
     brackets: { rows: ['ccccc', 'c....', 'c....', 'c....'], colours: { c: '#f4e8d4' } },
   },
   mark: DIAMOND,
+  // her quests on a hunter's notice: the parchment edged in the leather of her corner patch, with
+  // its gold stitch
+  questList: { look: 'notice', colours: { leather: '#5a3a1e', stitch: '#e8c87a' } },
 };
 
 // rob: the treasure room he was locked in for a thousand years. old gold paper with his purple,
@@ -249,6 +361,19 @@ const ROB: NpcSkin = {
   nameIndent: 10, // the padlock reaches well left of his name: clear of the corner bracket
   mark: DIAMOND,
   textDrop: 3,
+  // a treasure map: a dotted trail down it, each quest a red X along the way
+  questList: {
+    look: 'map',
+    colours: {
+      paper: '#ead7a4',
+      line: '#3a2410',
+      edge: '#b8925a',
+      trail: '#a0522d',
+      mark: '#c0392b',
+      ink: '#33210e',
+      compass: '#8a5a1a',
+    },
+  },
 };
 
 // the Wheel as a big background picture `n` pixels across: a studded rim, `spokes` spokes and a
@@ -364,6 +489,7 @@ const dimidiatusScenery = (): NonNullable<NpcSkin['scenery']> => {
 const DIMIDIATUS: NpcSkin = {
   colours: {
     accent: '#ffecb7',
+    scroll: '#c9a43c', // the gold of his contract
     name: '#ffecb7',
     namePlate: '#0e0e0e', // the panel's own black
     namePlateLine: '#a89e7a', // a thin muted-gold outline: a temple plaque
@@ -378,6 +504,23 @@ const DIMIDIATUS: NpcSkin = {
   },
   shape: 'bevel',
   scenery: dimidiatusScenery(),
+  // his quests are the terms of his contract: a black scroll unrolled down by a gold rod,
+  // lettered in the gold of its seal, a small Wheel pressed into the seal
+  questList: {
+    look: 'contract',
+    colours: {
+      paper: '#0e0e0e',
+      ink: '#e0c060',
+      numeral: '#ffffff',
+      plaque: '#c9a43c',
+      wax: '#c9a43c',
+      rod: '#c9a43c',
+      rodLight: '#f0d070',
+      rodShade: '#7a6024',
+      rodLine: '#000000',
+    },
+    seal: { src: dimidiatusSeal, width: 30, height: 30 },
+  },
   // his ritual's tab: a temple plaque like his name's, in dusty sage with a darker sage line, a
   // small cream Wheel either side of its name
   ritual: {
@@ -495,6 +638,24 @@ const IGOR: NpcSkin = {
     { src: igorWrapTilt, width: 15, height: 12, at: { bottom: -13, left: 104 } },
   ],
   mark: DIAMOND,
+  // his quests on a wooden sign like the one his name hangs on, its boards lighting up pumpkin
+  questList: {
+    look: 'sign',
+    plank: { src: igorSignPlank, width: 46, height: 9 },
+    rope: { src: igorSignRope, width: 2, height: 7 },
+    titlePlank: { src: igorSignTitle, width: 46, height: 12 },
+    colours: {
+      outline: '#140d18', // the name sign's own outline
+      wood: '#7a4e2c',
+      grain: '#5e3b20',
+      rope: '#c9a56a',
+      row: '#8a5c36',
+      rowLine: '#a5774a',
+      text: '#fff6ea',
+      hover: '#e8792a',
+      title: '#ffe0a0',
+    },
+  },
   textDrop: 15,
 };
 
@@ -518,6 +679,46 @@ const OPENINGS: Record<string, Opening> = {
 };
 export const getOpening = (npcName: string): Opening =>
   OPENINGS[npcName.trim().toLowerCase()] ?? {};
+
+// quest lists by name, for npcs keeping the default cloud (a skin brings its own)
+const QUEST_LISTS: Record<string, QuestListLook> = {
+  // alaina: a cabinet like the shelf in her room, of little potions like the jars she found and
+  // named, each tagged with a quest, in one of eight colours by the quest's index
+  alaina: {
+    look: 'bottles',
+    colours: {
+      line: '#573359',
+      paper: '#f6ecd2',
+      string: '#d8c9a8',
+      number: '#8a6a4a',
+    },
+    shelf: {
+      top: { src: shelfTop, width: 24, height: 5 },
+      wall: { src: shelfWall, width: 21, height: 10 },
+      post: { src: shelfPost, width: 5, height: 8 },
+      base: { src: shelfBase, width: 24, height: 5 },
+      baseEnd: { src: shelfBaseEnd, width: 3, height: 5 },
+      foot: { src: shelfFoot, width: 5, height: 5 },
+      apron: { src: shelfApron, width: 9, height: 4 },
+    },
+    bottles: [
+      potionGreen,
+      potionPink,
+      potionYellow,
+      potionBlue,
+      potionOrange,
+      potionRed,
+      potionPurple,
+      potionTeal,
+    ].map((src) => ({
+      src,
+      width: 26,
+      height: 26,
+    })),
+  },
+};
+export const getQuestList = (npcName: string, skin?: NpcSkin): QuestListLook | undefined =>
+  skin?.questList ?? QUEST_LISTS[npcName.trim().toLowerCase()];
 
 // the ritual tab's colours: a skin's own, else by name for npcs keeping the default cloud
 const RITUAL_COLOURS: Record<string, RitualColours> = {
