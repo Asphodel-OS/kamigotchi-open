@@ -259,6 +259,18 @@ const main = async () => {
   );
   const read = (holder: string | number, index: number, type: string): Promise<bigint> =>
     values.safeGet(dataID(holder, index, type));
+  // after a send errors: is the owner's settle on chain at this power? a pending tx gets a few tries
+  const landed = async (owner: string, cycle: number, power: bigint) => {
+    for (let attempt = 1; attempt <= RETRIES; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 5_000 * attempt));
+      try {
+        const record = await read(owner, cycle, 'BALLOT_POWER');
+        if (record === power) return true;
+        if (record > 0n) return false; // settled at another power: the after-send check flags it
+      } catch {} // rpc still down: try again
+    }
+    return false;
+  };
 
   if (argv.resetLock) {
     const cycle = argv.resetLock;
@@ -305,6 +317,8 @@ const main = async () => {
   // BALLOT_RATES[4]: least yominet share (bps) that builds the streak; unset means 100%
   const streakMin = BigInt(rates[4] || 10_000);
   const streakPower = BigInt(Math.max(rates[5], tiers[7])) * 1_000_000n;
+  // under floorMin a voter earns 0 Ballots and no streak: settling them only spends our gas
+  const dustPower = BigInt(tiers[7]) * 1_000_000n;
 
   // closed cycles/epochs, oldest first. L1 opens them lazily, so the stored one may be closed too
   const store = await view('get_module_store', []);
@@ -379,7 +393,13 @@ const main = async () => {
     }
 
     // simulate the rest first: owners with no account are skipped without spending gas
-    const todo = live.filter((v, i) => records[i] === 0n && !held.has(v.owner));
+    // dust stays in the eligible weight (it's locked from every voter), it just isn't sent
+    const dust = live.filter((v, i) => records[i] === 0n && v.power < dustPower);
+    if (dust.length)
+      console.log(`  dust         ${dust.length} voters under ${tiers[7]} INIT, not settled`);
+    const todo = live.filter(
+      (v, i) => records[i] === 0n && v.power >= dustPower && !held.has(v.owner)
+    );
     for (const v of live) if (held.has(v.owner)) console.log(`  held         ${v.owner}`);
     const sims = await mapLimit(todo, CONCURRENCY, async (v) => {
       try {
@@ -417,6 +437,16 @@ const main = async () => {
         settled.push(v);
         console.log(`  settled      ${label} -> ${sim.ballots} ballots (${tx.hash})`);
       } catch (e: any) {
+        // the rpc can drop the connection after the tx went out (ECONNRESET): if the settle
+        // landed anyway, count it, or the after-send check sees one more on chain and fails the run
+        if (await landed(v.owner, cycle, v.power)) {
+          sent++;
+          settled.push(v);
+          console.log(
+            `  settled      ${label} -> ${sim.ballots} ballots (landed despite: ${revertText(e)})`
+          );
+          continue;
+        }
         failed++;
         held.add(v.owner);
         console.log(`  skip         ${label}: ${revertText(e)}`);
