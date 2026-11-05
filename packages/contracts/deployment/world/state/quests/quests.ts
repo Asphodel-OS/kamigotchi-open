@@ -47,10 +47,9 @@ export async function initQuests(api: AdminAPI, indices?: number[], all?: boolea
   if (indices && indices.length == 0) return console.log('No quests given to initialize');
   console.log('\n==INITIALIZING QUESTS==');
 
-  // TODO: support test environment statuses
   // TODO: standardize env->status mapping in shared helper function
   const validStatuses = ['To Deploy'];
-  if (process.env.NODE_ENV !== 'production') validStatuses.push('Test');
+  // Test quests never deploy in bulk, only when named by index (--args)
   if (all || indices !== undefined) validStatuses.push('In Game');
 
   // process quests
