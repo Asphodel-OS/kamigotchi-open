@@ -95,6 +95,8 @@ export const useTypewriter = (
       }
       return;
     }
+    // already typed out: a changed callback or flag must not fire onComplete again
+    if (indexRef.current >= text.length) return;
 
     // one timeout after another, so a character can hold the next one back
     let timer: ReturnType<typeof setTimeout>;

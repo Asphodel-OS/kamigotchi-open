@@ -33,6 +33,13 @@ import { useComponentEntities } from 'network/utils/hooks';
 import { NpcDialogue } from './NpcDialogue';
 import { REDIRECT_ITEM_INDICES, resolveDialogueRedirect } from './redirects';
 
+// a quest list that comes out the same as before keeps its array, so the cloud isn't re-rendered
+// (and its lists re-measured) for an update that changed nothing it shows
+const keepSame = (next: Quest[]) => (prev: Quest[]) =>
+  prev.length === next.length && prev.every((quest, i) => quest.entity === next[i].entity)
+    ? prev
+    : next;
+
 const NEWBIE_VENDOR_MAX_ACCOUNT_AGE_SECONDS = 24 * 60 * 60;
 
 // TODO: maybe in the future
@@ -232,8 +239,8 @@ export const DialogueModal: UIComponent = {
           (quest) => quest.subType.toLowerCase() === npc.name.toLowerCase() && !quest.complete
         );
       };
-      setAvailableQuests(filterMinaQuests(available));
-      setOngoingQuests(filterMinaQuests(filteredOngoing));
+      setAvailableQuests(keepSame(filterMinaQuests(available)));
+      setOngoingQuests(keepSame(filterMinaQuests(filteredOngoing)));
     }, [
       dialogueModalOpen,
       dialogueIndex,
@@ -453,7 +460,6 @@ export const DialogueModal: UIComponent = {
           key={openCount} /* remount per open so text retypes fresh */
           hasAvailableQuests={availableQuests}
           hasOngoingQuests={ongoingQuests}
-          npcColor='#000000ff'
           accent={npc.color}
           npcName={npcDisplayName}
           npcKey={npc.name}
