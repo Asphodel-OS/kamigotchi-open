@@ -38,6 +38,7 @@ warn(){ printf '%s  ~ %s%s\n' "$YELLOW" "$*" "$RESET"; }
 err() { printf '%s  ✗ %s%s\n' "$RED"   "$*" "$RESET" >&2; }
 
 world_addr() { (. "$CONTRACTS/.env.local" && printf '%s' "$WORLD"); }
+local_player_wallet() { (. "$CONTRACTS/.env.local" && printf '%s' "${LOCAL_PLAYER_WALLET:-}"); }
 anvil_up()   { cast block-number --rpc-url "$RPC" >/dev/null 2>&1; }
 client_up()  { curl -sf -o /dev/null "$CLIENT_URL" 2>/dev/null; }
 world_up()   { [ "$(cast code "$(world_addr)" --rpc-url "$RPC" 2>/dev/null)" != "0x" ]; }

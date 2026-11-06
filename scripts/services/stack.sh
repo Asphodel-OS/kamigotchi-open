@@ -329,7 +329,8 @@ cmd_start() {
   echo "  ${BOLD}$CLIENT_URL/?worldAddress=$(world_addr)&initialBlockNumber=${start:-0}${RESET}"
 
   # a fresh chain reset every wallet balance — offer a re-fund when interactive
-  if [ "${DID_FRESH_DEPLOY:-0}" = 1 ] && [ -t 0 ]; then
+  # (skipped when LOCAL_PLAYER_WALLET is set: the deploy already funded it)
+  if [ "${DID_FRESH_DEPLOY:-0}" = 1 ] && [ -t 0 ] && [ -z "$(local_player_wallet)" ]; then
     local fundaddr
     read -r -p "$(printf '%s▸ fresh chain — address to fund with 10 ETH (enter to skip): %s' "$CYAN" "$RESET")" fundaddr
     if [ -n "$fundaddr" ]; then cmd_fund "$fundaddr"; fi

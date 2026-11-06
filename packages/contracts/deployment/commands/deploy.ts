@@ -7,12 +7,19 @@ dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 import { clearInitWorld } from '../scripts/codegen';
 import { generateAndDeploy } from '../scripts/deployer';
 import { genInitScript } from '../scripts/worldIniter';
-import { assertProductionBranch, setAutoMine, setTimestamp } from '../utils';
+import {
+  assertLocalPlayerWallet,
+  assertProductionBranch,
+  fundLocalPlayer,
+  setAutoMine,
+  setTimestamp,
+} from '../utils';
 
 const argv = yargs(hideBin(process.argv)).argv;
 
 const run = async () => {
   await assertProductionBranch();
+  assertLocalPlayerWallet();
 
   const partialDeployment =
     argv.partial ??
@@ -47,6 +54,7 @@ const run = async () => {
 
   await setAutoMine(false);
   if (init) await setTimestamp();
+  if (!partialDeployment) await fundLocalPlayer(); // a partial deploy keeps the chain's balances
 };
 
 run();

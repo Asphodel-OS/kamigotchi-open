@@ -1,5 +1,5 @@
 export { WorldAddresses, getAddrByID, getCompAddr, getSystemAddr } from './addresses';
-export { setAutoMine, setTimestamp } from './anvil';
+export { assertLocalPlayerWallet, fundLocalPlayer, setAutoMine, setTimestamp } from './anvil';
 export { getProvider, getSigner } from './chain';
 export { deferred } from './deferred';
 export {

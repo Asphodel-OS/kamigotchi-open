@@ -91,6 +91,9 @@ fresh db — rerun them after the first backfill if you need them.
   `packages/client/.env.local` predates the 31337 standardization: set
   `VITE_CHAIN_ID=31337` (and check `VITE_WORLD_ADDRESS=0xa852...`), then
   restart vite — dotenv is read at server start, not hot-reloaded.
+- Set `LOCAL_PLAYER_WALLET=0x...` in `packages/contracts/.env.local` to give that
+  wallet 10 ETH after every fresh local deploy. This also skips the re-fund prompt.
+  Other wallets still use `stack.sh fund <address>`.
 - Local env files are `.env.local` in both packages (renamed from `.env.puter`;
   the deploy tooling runs with `NODE_ENV=local`). Vite forbids `local` as a
   *mode* name, so `pnpm -F client dev:local` runs `--mode development`. Vite
