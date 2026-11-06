@@ -75,8 +75,10 @@ export const isSettled = (world: World, comps: Components, accID: EntityID, cycl
 
 // streak as of a cycle/epoch's settle; only streak votes record one
 
+// cycles start at 1 on a fresh world, so looking back can go below 0. no streak exists there,
+// and a negative index would throw when hashed, crashing the whole client
 export const getStreakAt = (world: World, comps: Components, accID: EntityID, cycle: number) =>
-  getData(world, comps, accID, 'BALLOT_STREAK', cycle);
+  cycle < 0 ? 0 : getData(world, comps, accID, 'BALLOT_STREAK', cycle);
 
 // a vote builds the streak from a BALLOT_RATES[4] yominet share (judged by the reporter) and
 // BALLOT_RATES[5] INIT on yominet (checked by LibBallot). power in raw uinit, as L1 reports it
