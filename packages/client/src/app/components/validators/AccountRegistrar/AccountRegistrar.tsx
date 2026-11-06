@@ -1,5 +1,5 @@
 import { EntityID, EntityIndex, getComponentValue } from 'engine/recs';
-import { useEffect } from 'react';
+import { useEffect, useReducer } from 'react';
 import { v4 as uuid } from 'uuid';
 import { AccountCache, getAccount } from 'app/cache/account';
 import { ValidatorWrapper } from 'app/components/library';
@@ -16,6 +16,8 @@ import {
 import { didActionSucceed } from 'network/utils';
 import { GasConstants } from 'constants/gas';
 import { Registration } from './Registration';
+
+const RECHECK_INTERVAL = 1000;
 
 export const AccountRegistrar: UIComponent = {
   id: 'AccountRegistrar',
@@ -94,6 +96,15 @@ export const AccountRegistrar: UIComponent = {
 
     /////////////////
     // SUBSCRIPTION
+
+    // nothing here re-renders when chain data arrives, so a new account could go
+    // unseen and leave the player stuck. re-check while the registrar is on screen
+    const [, recheck] = useReducer((count: number) => count + 1, 0);
+    useEffect(() => {
+      if (!accountRegistrarVisible) return;
+      const timerID = setInterval(recheck, RECHECK_INTERVAL);
+      return () => clearInterval(timerID);
+    }, [accountRegistrarVisible]);
 
     // update the Kami Account and validation based on changes to the
     // connected address and detected account in the world.

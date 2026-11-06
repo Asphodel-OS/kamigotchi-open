@@ -5,7 +5,7 @@ import styled from 'styled-components';
 
 import { IconButton, TextTooltip } from 'app/components/library';
 import { triggerBridgeModal } from 'app/triggers';
-import { useTokens } from 'app/stores';
+import { useAccount, useTokens } from 'app/stores';
 import { copy } from 'app/utils';
 import { MenuIcons } from 'assets/images/icons/menu';
 import { GasConstants } from 'constants/gas';
@@ -21,6 +21,8 @@ const STAGED_NAME_PREFIX = 'kami:stagedUsername:';
 // pastel confirm/docs palette shared with FundOperator + token portal
 const CONFIRM_GREEN = '#C2F0C2';
 const DOCS_BLUE = '#d6e4f8';
+
+const CREATED_UNSEEN_DELAY = 30000;
 
 export const Registration = ({
   address,
@@ -48,6 +50,8 @@ export const Registration = ({
   // is created automatically (wallet still prompts) once ETH lands
   const [autoCreate, setAutoCreate] = useState(() => localStorage.getItem(storageKey) !== null);
   const autoFiringRef = useRef(false);
+  const selectedWalletRef = useRef(address.selected);
+  selectedWalletRef.current = address.selected;
 
   // re-sync staged state when the selected wallet changes without a remount —
   // one wallet's staged name must never register under another wallet
@@ -55,10 +59,23 @@ export const Registration = ({
     const staged = localStorage.getItem(storageKey);
     setName(staged ?? '');
     setAutoCreate(staged !== null);
+    setCreated(false);
+    setCreatedUnseen(false);
   }, [address.selected]);
 
   // creation attempt reverted (most likely a name race lost while bridging)
   const [createFailed, setCreateFailed] = useState(false);
+
+  // the tx confirmed, but the account may take a moment to reach the client.
+  // if it never does (e.g. a dropped connection), offer a way out of this screen
+  const [created, setCreated] = useState(false);
+  const [createdUnseen, setCreatedUnseen] = useState(false);
+  const accountExists = useAccount((s) => s.validations.accountExists);
+  useEffect(() => {
+    if (!created) return;
+    const timerID = setTimeout(() => setCreatedUnseen(true), CREATED_UNSEEN_DELAY);
+    return () => clearTimeout(timerID);
+  }, [created]);
 
   // cache-first with a live ECS fallback: a name registered on-chain after
   // the boot-time cache fill is still caught here
@@ -116,6 +133,9 @@ export const Registration = ({
   }, [ethBalance, autoCreate, name]);
 
   const handleAccountCreation = async (): Promise<boolean> => {
+    // a result only applies to this screen if the wallet that started it is still selected
+    const startingWallet = address.selected;
+    const isSameWallet = () => selectedWalletRef.current === startingWallet;
     playSignup();
     utils.toggleFixtures(true);
 
@@ -132,11 +152,14 @@ export const Registration = ({
       OperatorCache.clear();
       NameCache.clear();
       localStorage.removeItem(storageKey); // staged name no longer needed
-      setCreateFailed(false);
+      if (isSameWallet()) {
+        setCreateFailed(false);
+        setCreated(true);
+      }
       return true;
     } catch (e) {
       console.error('ERROR CREATING ACCOUNT:', e);
-      setCreateFailed(true); // surface the revert (likely a lost name race)
+      if (isSameWallet()) setCreateFailed(true); // surface the revert (likely a lost name race)
       return false;
     }
   };
@@ -190,6 +213,26 @@ export const Registration = ({
   };
 
   const nameError = getError();
+
+  if (createdUnseen && !accountExists) {
+    return (
+      <Container>
+        <CreateFlow>
+          <CompactSection padding={0.25}>
+            <Description size={0.88}>Your account was created. Reload to continue.</Description>
+          </CompactSection>
+          <InputActionRow>
+            <IconButton
+              scale={2.4}
+              text='Reload'
+              color={CONFIRM_GREEN}
+              onClick={() => window.location.reload()}
+            />
+          </InputActionRow>
+        </CreateFlow>
+      </Container>
+    );
+  }
 
   if (needsToBridge()) {
     return (
