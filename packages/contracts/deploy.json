@@ -121,6 +121,30 @@
       "writeAccess": ["*"]
     },
     {
+      "name": "_HarvestAdminSystem",
+      "writeAccess": [
+        "EntityType",
+        "IDOwnsInventory",
+        "Experience",
+        "Health",
+        "IdHolder",
+        "IdSource",
+        "IDAnchor",
+        "IDType",
+        "Index",
+        "IndexItem",
+        "Level",
+        "Rate",
+        "State",
+        "Time",
+        "TimeNext",
+        "TimeLast",
+        "TimeStart",
+        "Type",
+        "Value"
+      ]
+    },
+    {
       "name": "_ItemRegistrySystem",
       "writeAccess": ["*"]
     },
