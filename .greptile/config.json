@@ -1,0 +1,3 @@
+{
+  "ignorePatterns": "packages/client/abi/**\npackages/client/types/ethers-contracts/**"
+}
