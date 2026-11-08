@@ -7,6 +7,8 @@ import { useLayers } from 'app/root/hooks';
 import { UIComponent } from 'app/root/types';
 import { useNetwork } from 'app/stores';
 import { QuestsIcon } from 'assets/images/icons/menu';
+import { mainQuestIcon } from 'assets/images/icons/misc';
+import { ItemImages } from 'assets/images/items';
 import { DEAD_ADDRESS } from 'constants/addresses';
 import { NullAccount, getAccount, queryAccountFromEmbedded } from 'network/shapes/Account';
 import { getItemBalance as _getItemBalance } from 'network/shapes/Item';
@@ -26,10 +28,21 @@ import {
 import { BaseQuest } from 'network/shapes/Quest/quest';
 import { getRoomIndexByName } from 'network/shapes/Room';
 import { getIsDisabled } from 'network/shapes/utils/component';
+import { getFactionImage } from 'network/shapes/utils/images';
 import { getFromDescription } from 'network/shapes/utils/parse';
 import { useComponentEntities } from 'network/utils/hooks';
 import { List } from './list/List';
 import { Tabs } from './Tabs';
+
+// the same emblem a quest card leads with. empty for quests with none
+const FACTION_EMBLEMS: Record<number, string> = { 1: 'agency', 2: 'mina', 3: 'nursery' };
+const getQuestEmblem = (quest: Quest): string => {
+  if (quest.typeComp === 'MAIN') return mainQuestIcon;
+  if (quest.repeatable) return ItemImages.blue_pansy;
+  const reputation = quest.rewards.find((reward) => reward.type === 'REPUTATION');
+  const faction = FACTION_EMBLEMS[reputation?.index ?? 0];
+  return faction ? getFactionImage(faction) : '';
+};
 
 export const QuestModal: UIComponent = {
   id: 'QuestModal',
@@ -161,7 +174,7 @@ export const QuestModal: UIComponent = {
     useEffect(() => {
       if (!isNetworkReady) return;
       updateCompletableNotifications();
-    }, [completable.length, isNetworkReady]);
+    }, [completable.map((quest) => quest.index).join(), isNetworkReady]);
 
     /////////////////
     // HELPERS
@@ -193,21 +206,32 @@ export const QuestModal: UIComponent = {
       const id = 'Quest Ready' as EntityID;
       const n = completable.length;
 
+      if (n == 0) {
+        if (notifications.has(id)) notifications.remove(id);
+        return;
+      }
+
+      const title = n == 1 ? 'Completable Quest!' : 'Completable Quests!';
+      // one line per emblem, with that emblem's quests inlined
+      const lines = new Map<string, string[]>();
+      completable.forEach((quest) => {
+        const emblem = getQuestEmblem(quest);
+        lines.set(emblem, [...(lines.get(emblem) ?? []), quest.name]);
+      });
+      const description = [...lines.values()].map((names) => names.join(', ')).join('\n');
+      const questEmblems = [...lines.keys()];
+      const questIndex = completable[n - 1].entity;
       if (notifications.has(id)) {
-        if (n == 0) notifications.remove(id);
-        else {
-          const quest = completable[n - 1];
-          notifications.update(id, { description: `You can complete: ${quest.name}`, questIndex: quest.entity });
-        }
-      } else if (n > 0) {
-        const quest = completable[n - 1];
+        notifications.update(id, { title, description, questIndex, questEmblems });
+      } else {
         notifications.add({
           id,
-          title: `Quest Ready!`,
-          description: `You can complete: ${quest.name}`,
+          title,
+          description,
           time: Date.now().toString(),
           modal: 'questDialogue',
-          questIndex: quest.entity,
+          questIndex,
+          questEmblems,
         });
       }
     };

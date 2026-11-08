@@ -18,4 +18,5 @@ export type NotificationData = {
   questIndex?: EntityIndex;
   itemIndices?: number[];
   itemAmounts?: string[];
+  questEmblems?: string[]; // one per line of the description
 };

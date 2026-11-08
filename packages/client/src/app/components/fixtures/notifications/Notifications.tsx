@@ -4,9 +4,14 @@ import styled, { keyframes } from 'styled-components';
 import { useLayers } from 'app/root/hooks';
 import { UIComponent } from 'app/root/types';
 import { Modals, useSelected, useVisibility } from 'app/stores';
+import { QuestsIcon } from 'assets/images/icons/menu';
 import { getItemRarities } from 'constants/itemRarities';
 import { getItemByIndex } from 'network/shapes/Item';
 import { useComponentEntities } from 'network/utils/hooks';
+
+const COMPLETABLE_TITLE = 'Completable Quest';
+const AVAILABLE_COLOR = '#E0A000';
+const READY_COLOR = '#23AD41';
 
 export const NotificationFixture: UIComponent = {
   id: 'NotificationFixture',
@@ -87,18 +92,51 @@ export const NotificationFixture: UIComponent = {
         );
       };
 
+      const open = () =>
+        handleClick(
+          notification.modal as string | undefined,
+          entity,
+          notification.questIndex as EntityIndex | undefined
+        );
+
+      if (notification.modal === 'questDialogue') {
+        const emblems = notification.questEmblems as string[] | undefined;
+        const accent = (notification.title as string).startsWith(COMPLETABLE_TITLE)
+          ? READY_COLOR
+          : AVAILABLE_COLOR;
+        return (
+          <QuestCard key={entity.toString()} $accent={accent}>
+            <ExitButton onClick={() => dismiss(entity)}>X</ExitButton>
+            <QuestContent onClick={open}>
+              <QuestIcon src={QuestsIcon} alt='' $accent={accent} />
+              <QuestText>
+                <QuestTitle>{notification.title}</QuestTitle>
+                {emblems ? (
+                  (notification.description as string).split('\n').map((name, i) => (
+                    <QuestRow key={i}>
+                      {emblems[i] ? (
+                        <QuestEmblem src={emblems[i]} alt='' />
+                      ) : (
+                        <EmblemSlot>
+                          <PixelNub />
+                        </EmblemSlot>
+                      )}
+                      <QuestName>{name}</QuestName>
+                    </QuestRow>
+                  ))
+                ) : (
+                  <QuestDescription>{notification.description}</QuestDescription>
+                )}
+              </QuestText>
+            </QuestContent>
+          </QuestCard>
+        );
+      }
+
       return (
         <Card key={entity.toString()}>
           <ExitButton onClick={() => dismiss(entity)}>X</ExitButton>
-          <div
-            onClick={() =>
-              handleClick(
-                notification.modal as string | undefined,
-                entity,
-                notification.questIndex as EntityIndex | undefined
-              )
-            }
-          >
+          <div onClick={open}>
             <Title>{notification.title}</Title>
             {renderDescription()}
           </div>
@@ -157,6 +195,118 @@ const Card = styled.div`
 
   pointer-events: auto;
   cursor: pointer;
+`;
+
+// blinks for a few seconds when it appears, then stays highlighted so it isn't distracting.
+// the outer glow stays within Contents' 0.6vw padding, since Wrapper scrolls and clips anything past
+// it; the inner glow carries the rest of the pulse. no transform, which would add to the scroll area
+const questBlink = (accent: string) => keyframes`
+  0%, 100% { box-shadow: 0 0 0.3vw ${accent}, inset 0 0 0 ${accent}; }
+  50% { box-shadow: 0 0 0.5vw 0.1vw ${accent}, inset 0 0 1.2vw ${accent}; }
+`;
+
+const QuestCard = styled.div<{ $accent: string }>`
+  position: relative;
+  width: 100%;
+  padding: 0.7vw 0.9vw;
+  background-color: #fff;
+  border: 0.25vw solid ${({ $accent }) => $accent};
+  border-radius: 0.8vw;
+  box-shadow: 0 0 0.3vw ${({ $accent }) => $accent};
+  animation: ${({ $accent }) => questBlink($accent)} 0.9s ease-in-out 6;
+  pointer-events: auto;
+  cursor: pointer;
+
+  &:hover {
+    box-shadow: 0 0 0.6vw ${({ $accent }) => $accent};
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`;
+
+const QuestContent = styled.div`
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  gap: 0.7vw;
+`;
+
+const QuestIcon = styled.img<{ $accent: string }>`
+  flex-shrink: 0;
+  width: 2.2vw;
+  height: 2.2vw;
+  padding: 0.25vw;
+  border: 0.15vw solid ${({ $accent }) => $accent};
+  border-radius: 0.6vw;
+  image-rendering: pixelated;
+`;
+
+// lets long quest lines shrink to the card instead of widening it
+const QuestText = styled.div`
+  min-width: 0;
+`;
+
+const QuestTitle = styled.p`
+  padding: 0.2vw 0 0.5vw;
+  font-family: Pixel;
+  font-size: 1vw;
+  color: #333;
+`;
+
+const QuestRow = styled.div`
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  gap: 0.4vw;
+  padding: 0.05vw 0 0 0.5vw;
+  font-family: Pixel;
+  font-size: 0.75vw;
+  color: #777;
+  white-space: nowrap;
+`;
+
+// inlined quest names stay on one row of the card
+const QuestName = styled.span`
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const QuestEmblem = styled.img`
+  flex-shrink: 0;
+  width: 1.15vw;
+  height: 1.15vw;
+  image-rendering: pixelated;
+`;
+
+const EmblemSlot = styled.div`
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15vw;
+  height: 1.15vw;
+`;
+
+// a small pixel plus, for quests with no emblem of their own
+const PixelNub = styled.div`
+  width: 0.2vw;
+  height: 0.2vw;
+  background-color: #666;
+  box-shadow:
+    0.2vw 0 #666,
+    -0.2vw 0 #666,
+    0 0.2vw #666,
+    0 -0.2vw #666;
+`;
+
+const QuestDescription = styled.div`
+  white-space: pre-line;
+  font-family: Pixel;
+  font-size: 0.75vw;
+  line-height: 1.2vw;
+  color: #333;
 `;
 
 const Title = styled.p`

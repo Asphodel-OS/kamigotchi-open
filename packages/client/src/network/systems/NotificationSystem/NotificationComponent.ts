@@ -11,6 +11,7 @@ export function defineNotificationComponent<T = undefined>(world: World) {
       questIndex: Type.OptionalNumber,
       itemIndices: Type.OptionalNumberArray,
       itemAmounts: Type.OptionalStringArray,
+      questEmblems: Type.OptionalStringArray,
     },
     { id: 'Notification' }
   );
