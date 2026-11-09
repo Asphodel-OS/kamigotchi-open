@@ -115,6 +115,46 @@ export async function initListings(
   }
 }
 
+const MINA_NPC_INDEX = 1;
+const MINA_KAMI_FOOD = [11001, 11301, 11303, 11304];
+const DEMO_RATE_DIVISOR = 5;
+
+// Public demo: Mina's Kami food sells at a fifth of its usual rate. Undo with restoreListingRates.
+export async function setDemoListingRates(api: AdminAPI) {
+  await setMinaFoodRates(api, DEMO_RATE_DIVISOR);
+}
+
+// Restores those rates from pricing.csv. Prices go back to target.
+export async function restoreListingRates(api: AdminAPI) {
+  await setMinaFoodRates(api, 1);
+}
+
+// reset=true clears sales and restarts the schedule, since old sales would misprice at a new rate
+async function setMinaFoodRates(api: AdminAPI, divisor: number) {
+  if (process.env.NODE_ENV === 'production')
+    throw new Error('Listing rate resets are test world only');
+  const listingCSV = await getSheet('listings', 'listings');
+  if (!listingCSV) return console.log('No listings/listings.csv found');
+  const pricingCSV = await getSheet('listings', 'pricing');
+  if (!pricingCSV) return console.log('No listings/pricing.csv found');
+
+  for (let i = 0; i < listingCSV.length; i++) {
+    const row = listingCSV[i];
+    const npcIndex = Number(row['NPC Index']);
+    const itemIndex = Number(row['Item Index']);
+    if (npcIndex !== MINA_NPC_INDEX || !MINA_KAMI_FOOD.includes(itemIndex)) continue;
+    const price = pricingCSV.find((p: any) => p['Key'] === String(row['Buy Price']));
+    if (!price || String(price['Type']) !== 'GDA')
+      throw new Error(`No GDA price for ${row['Name']}`);
+
+    const period = Number(price['Period']);
+    const decay = Math.round(Number(price['Decay']) * 1e6);
+    const rate = Number(price['Rate']) / divisor;
+    await api.listing.set.price.buy.gda(npcIndex, itemIndex, period, decay, rate, true);
+    console.log(`${row['Name']}: rate ${rate} per ${period}s, reset`);
+  }
+}
+
 // indices = item index. todo: upgrade to multiple merchants
 export async function deleteListings(api: AdminAPI, indices: number[], npcIndices?: number[]) {
   const listingCSV = await getSheet('listings', 'listings');

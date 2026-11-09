@@ -103,6 +103,7 @@ export { initAuth } from './auth';
 export {
   initBallotConfigs,
   initConfigs,
+  initDemoConfigs,
   initHarvestConfigs,
   initLiquidationConfigs,
   initLocalConfigs,
@@ -112,12 +113,19 @@ export {
   initTestingConfigs,
   initTokenConfigs,
   initTradeConfigs,
+  resetDemoConfigs,
 } from './configs';
 export { deleteFactions, initFactions, reviseFactions } from './factions';
 export { initGachaPool, mintToGachaPool } from './gacha';
 export { deleteGoalRewards, deleteGoals, enableGoals, initGoals } from './goals';
 export { deleteItems, initItems, reviseItems } from './items';
-export { deleteListings, initListings, reviseListings } from './listings';
+export {
+  deleteListings,
+  initListings,
+  restoreListingRates,
+  reviseListings,
+  setDemoListingRates,
+} from './listings';
 export { initNpcs, initNPCDroptables, reviseNpcs } from './npcs';
 export { initPortalTokens, setPortalTokens, unsetPortalTokens } from './portal';
 export { deleteQuests, initQuests, reviseQuests } from './quests';

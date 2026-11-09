@@ -22,6 +22,7 @@ import {
   initAuth,
   initBallotConfigs,
   initConfigs,
+  initDemoConfigs,
   initFactions,
   initGachaPool,
   initGoals,
@@ -47,6 +48,8 @@ import {
   initTradeConfigs,
   initTraits,
   mintToGachaPool,
+  resetDemoConfigs,
+  restoreListingRates,
   reviseAuctions,
   reviseFactions,
   reviseItems,
@@ -58,6 +61,7 @@ import {
   reviseRecipes,
   reviseRooms,
   reviseSkills,
+  setDemoListingRates,
   setPortalTokens,
   setRoomText,
   unsetPortalTokens,
@@ -121,6 +125,8 @@ export class WorldState {
     configs: {
       init: () => this.genCalls(initConfigs),
       initTesting: () => this.genCalls(initTestingConfigs),
+      initDemo: () => this.genCalls(initDemoConfigs),
+      resetDemo: () => this.genCalls(resetDemoConfigs),
       initBallots: () => this.genCalls(initBallotConfigs),
       initHarvest: () => this.genCalls(initHarvestConfigs),
       initLiquidation: () => this.genCalls(initLiquidationConfigs),
@@ -156,6 +162,8 @@ export class WorldState {
         this.genCalls((api) => deleteListings(api, indices || [], npcIndices)),
       revise: (indices?: number[], npcIndices?: number[]) =>
         this.genCalls((api) => reviseListings(api, indices, npcIndices)),
+      setDemoRates: () => this.genCalls(setDemoListingRates),
+      restoreRates: () => this.genCalls(restoreListingRates),
     },
     npcs: {
       init: (indices?: number[]) => this.genCalls((api) => initNpcs(api, indices)),

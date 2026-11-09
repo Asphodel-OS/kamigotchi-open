@@ -1,6 +1,7 @@
 export {
   initBallots as initBallotConfigs,
   initConfigs,
+  initDemoConfigs,
   initHarvest as initHarvestConfigs,
   initLiquidation as initLiquidationConfigs,
   initLocalConfigs,
@@ -11,4 +12,5 @@ export {
   initTestingConfigs,
   initTokens as initTokenConfigs,
   initTrade as initTradeConfigs,
+  resetDemoConfigs,
 } from './configs';

@@ -21,17 +21,8 @@ export async function initConfigs(api: AdminAPI) {
 
 // local config settings for faster testing
 export async function initLocalConfigs(api: AdminAPI) {
-  await api.config.set.array('ACCOUNT_STAMINA', [
-    100, // total stamina
-    1, // recovery period per point
-    5, // movement cost (in stamina)
-    5, // experience per move
-  ]);
+  await setLocalTuning(api);
   await api.config.set.number('KAMI_LVL_REQ_BASE', 5); // experience required for level 1->2
-  await api.config.set.number('KAMI_STANDARD_COOLDOWN', 30);
-  await api.config.set.array('KAMI_HARV_FERTILITY', [0, 0, 100, 0, 0, 0, 1000, 3]);
-  await api.config.set.array('KAMI_HARV_INTENSITY', [1, 0, 2, 0, 0, 0, 0, 0]); // 960x testnet rate
-  await api.config.set.array('KAMI_REST_METABOLISM', [0, 0, 100, 0, 0, 0, 1000, 3]);
 
   // ballots: local cycle/epoch 1 starts at deploy
   await initBallots(api);
@@ -45,6 +36,20 @@ export async function initLocalConfigs(api: AdminAPI) {
     0,
     0,
   ]);
+}
+
+// faster stamina, cooldown, harvest and rest for local play. also what resetDemoConfigs restores locally
+async function setLocalTuning(api: AdminAPI) {
+  await api.config.set.array('ACCOUNT_STAMINA', [
+    100, // total stamina
+    1, // recovery period per point
+    5, // movement cost (in stamina)
+    5, // experience per move
+  ]);
+  await api.config.set.number('KAMI_STANDARD_COOLDOWN', 30);
+  await api.config.set.array('KAMI_HARV_FERTILITY', [0, 0, 100, 0, 0, 0, 1000, 3]);
+  await api.config.set.array('KAMI_HARV_INTENSITY', [1, 0, 2, 0, 0, 0, 0, 0]); // 960x testnet rate
+  await api.config.set.array('KAMI_REST_METABOLISM', [0, 0, 100, 0, 0, 0, 1000, 3]);
 }
 
 export async function initTestingConfigs(api: AdminAPI) {
@@ -61,6 +66,35 @@ export async function initTestingConfigs(api: AdminAPI) {
     1, // flat tax (in resulting item)
     50, // % tax in basis points
   ]);
+}
+
+// Public demo/playtest tuning: 300x harvest with unchanged HP drain per MUSU, 150x resting, faster actions.
+// Test world only. Undo with resetDemoConfigs.
+export async function initDemoConfigs(api: AdminAPI) {
+  assertNotProduction();
+  await api.config.set.array('KAMI_HARV_FERTILITY', [0, 0, 450000, 3, 0, 0, 1000, 3]);
+  await api.config.set.array('KAMI_HARV_INTENSITY', [5, 0, 480, 0, 0, 0, 3000, 0]);
+  await api.config.set.array('KAMI_REST_METABOLISM', [20, 0, 90000, 3, 0, 0, 1000, 3]);
+  await api.config.set.number('KAMI_STANDARD_COOLDOWN', 10);
+  await api.config.set.array('ACCOUNT_STAMINA', [100, 10, 5, 5]);
+  // mints draw only from the filled pool. read by the mint system from #2537; harmless before it
+  await api.config.set.bool('GACHA_AUTO_CREATE_DISABLED', true);
+}
+
+// Restores the standard values from initHarvest, initStats and initAccount; a local world gets its own tuning back.
+export async function resetDemoConfigs(api: AdminAPI) {
+  assertNotProduction();
+  await api.config.set.bool('GACHA_AUTO_CREATE_DISABLED', false);
+  if (process.env.NODE_ENV === 'local') return setLocalTuning(api);
+  await api.config.set.array('KAMI_HARV_FERTILITY', [0, 0, 1500, 3, 0, 0, 1000, 3]);
+  await api.config.set.array('KAMI_HARV_INTENSITY', [5, 0, 480, 0, 0, 0, 10, 0]);
+  await api.config.set.array('KAMI_REST_METABOLISM', [20, 0, 600, 3, 0, 0, 1000, 3]);
+  await api.config.set.number('KAMI_STANDARD_COOLDOWN', 180);
+  await api.config.set.array('ACCOUNT_STAMINA', [100, 60, 5, 5]);
+}
+
+function assertNotProduction() {
+  if (process.env.NODE_ENV === 'production') throw new Error('Demo configs are test world only');
 }
 
 export async function initProdConfigs(api: AdminAPI) {
