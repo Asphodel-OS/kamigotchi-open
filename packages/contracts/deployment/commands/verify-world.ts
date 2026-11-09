@@ -432,6 +432,16 @@ async function run() {
       if (forAddr !== ZERO_ADDR) forContract = new ethers.Contract(forAddr, StringCompABI, provider);
     }
 
+    // a node pays its stored K and has no default, so one without K pays nothing. only presence is
+    // checked: K is live state and can differ from the CSV. no component means no node has K
+    let multContract: ethers.Contract | undefined;
+    let multMissing = false;
+    if (entityType.label === 'Nodes') {
+      const multAddr = await getCompAddr('component.harvest.multiplier');
+      if (multAddr !== ZERO_ADDR) multContract = new ethers.Contract(multAddr, UintCompABI, provider);
+      else multMissing = true;
+    }
+
     console.log(`\n  ${entityType.label} (${rows.length} entries)`);
 
     for (const row of rows) {
@@ -473,6 +483,13 @@ async function run() {
             state = 'STALE';
             detail = `for ${actualFor || '(none)'} on-chain, ${expectedFor || '(none)'} in CSV: items revise`;
           }
+        }
+        if (multMissing && onChain && state === 'CURRENT') {
+          state = 'STALE';
+          detail = 'harvest multiplier component not registered: deploy it, then nodes setMultipliers';
+        } else if (multContract && onChain && state === 'CURRENT' && !(await multContract.has(entityID))) {
+          state = 'STALE';
+          detail = 'no harvest multiplier stored, so it pays nothing: nodes setMultipliers';
         }
         const icon = STATE_ICONS[state];
         stateResults.push({ category: entityType.label, name: `${name} (#${idx})`, status: csvStatus, onChain, state, detail });

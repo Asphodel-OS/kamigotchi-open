@@ -6,6 +6,7 @@ export {
   calcLifeTime as calcHarvestLifeTime,
   calcNetBounty as calcHarvestNetBounty,
   calcRawNetBounty as calcHarvestRawNetBounty,
+  settleStretch as settleHarvestStretch,
   updateRates as updateHarvestRates,
 } from './calcs';
 export { getItem as getHarvestItem } from './functions';

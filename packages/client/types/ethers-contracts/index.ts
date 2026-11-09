@@ -51,6 +51,7 @@ export type { GoalContributeSystem } from "./GoalContributeSystem";
 export type { HarmonyComponent } from "./HarmonyComponent";
 export type { HarvestCollectSystem } from "./HarvestCollectSystem";
 export type { HarvestLiquidateSystem } from "./HarvestLiquidateSystem";
+export type { HarvestMultiplierComponent } from "./HarvestMultiplierComponent";
 export type { HarvestStartSystem } from "./HarvestStartSystem";
 export type { HarvestStopSystem } from "./HarvestStopSystem";
 export type { HasFlagComponent } from "./HasFlagComponent";

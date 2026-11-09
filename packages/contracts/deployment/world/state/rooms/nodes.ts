@@ -4,7 +4,7 @@ import { UintCompABI } from '../../../contracts/mappings/worldABIs';
 import { getCompAddr } from '../../../utils/addresses';
 import { getProvider } from '../../../utils/chain';
 import { AdminAPI } from '../../api';
-import { getSheet, toDelete, toRevise } from '../utils';
+import { getSheet, toDelete, toPerMille, toRevise } from '../utils';
 import { addScavengeDT, removeScavenge } from './scavenges';
 
 // Initialize a single node from a data entry
@@ -16,11 +16,17 @@ async function initNode(api: AdminAPI, entry: any) {
   const affinity = entry['Affinity'].toUpperCase().replace(',', '-').replace(' ', '');
 
   try {
-    console.log(`Creating Node: (${index}) ${name} (${affinity})`);
-    await api.node.create(index, 'HARVEST', item, index, name, description, affinity);
+    const k = toPerMille(entry['Harvest Multiplier']);
+    console.log(`Creating Node: (${index}) ${name} (${affinity}), harvest multiplier ${k / 1000}`);
+    await api.node.create(index, 'HARVEST', item, index, name, description, affinity, k);
   } catch (e) {
     console.error(`Could not create node ${index}`, e);
   }
+}
+
+// throws on an invalid Harvest Multiplier cell among the given rows, before anything is queued
+function verifyMultipliers(entries: any[]) {
+  for (const entry of entries) toPerMille(entry['Harvest Multiplier']);
 }
 
 ///////////////////
@@ -36,16 +42,16 @@ export async function initNodes(api: AdminAPI, indices?: number[], all?: boolean
   const validStatuses = ['To Deploy'];
   if (all || indices !== undefined) validStatuses.push('Ready', 'In Game', 'To Update');
 
-  for (let i = 0; i < nodesCSV.length; i++) {
-    const entry = nodesCSV[i];
+  // if indices are overridden skip any not included, otherwise check status
+  const selected = nodesCSV.filter((entry: any) =>
+    indices && indices.length > 0
+      ? indices.includes(Number(entry['Index']))
+      : validStatuses.includes(entry['Status'])
+  );
+  verifyMultipliers(selected);
+
+  for (const entry of selected) {
     const index = Number(entry['Index']);
-    const status = entry['Status'];
-
-    // if indices are overridden skip any not included, otherwise check status
-    if (indices && indices.length > 0) {
-      if (!indices.includes(index)) continue;
-    } else if (!validStatuses.includes(status)) continue;
-
     try {
       await initNode(api, entry);
       if (entry['Level Limit'] !== '') await addRequirement(api, entry);
@@ -91,6 +97,8 @@ export async function reviseNodes(api: AdminAPI, overrideIndices?: number[]) {
     }
   }
 
+  // a bad cell must not leave a node deleted and not re-created
+  verifyMultipliers(nodesCSV.filter((entry: any) => indices.includes(Number(entry['Index']))));
   await deleteNodes(api, indices);
   await initNodes(api, indices);
 }
@@ -178,6 +186,28 @@ export async function addNodeRequirements(api: AdminAPI, indices: number[]) {
       continue;
     }
     await addRequirement(api, entry);
+  }
+}
+
+///////////////////
+// MULTIPLIER (K)
+
+// set each node's K from the CSV, on live nodes (no revise, harvests untouched)
+export async function setNodeMultipliers(api: AdminAPI, indices?: number[]) {
+  if (!indices || indices.length == 0) return console.log('No nodes given: pass --args <indices>');
+  const nodesCSV = await getSheet('rooms', 'nodes');
+  if (!nodesCSV) return console.log('No rooms/nodes.csv found');
+  console.log('\n==SETTING NODE MULTIPLIERS==');
+
+  for (const index of indices) {
+    const entry = nodesCSV.find((e: any) => Number(e['Index']) === index);
+    if (!entry) {
+      console.error(`Node ${index} not found in rooms/nodes.csv`);
+      continue;
+    }
+    const k = toPerMille(entry['Harvest Multiplier']);
+    console.log(`  setting harvest multiplier ${k / 1000} on node ${index}`);
+    await api.node.multiplier.set(index, k);
   }
 }
 

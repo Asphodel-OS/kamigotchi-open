@@ -1,4 +1,10 @@
-import { calcHarvestIdleTime, calcHarvestNetBounty, calcHarvestRawNetBounty, updateHarvestRates } from 'app/cache/harvest';
+import {
+  calcHarvestIdleTime,
+  calcHarvestNetBounty,
+  calcHarvestRawNetBounty,
+  settleHarvestStretch,
+  updateHarvestRates,
+} from 'app/cache/harvest';
 import { Kami } from 'network/shapes/Kami/types';
 import { isHarvesting } from './base';
 
@@ -28,6 +34,7 @@ export const updateHarvestRate = (kami: Kami): number => {
   const maxMusu = calcMaxMusu(kami);
   if (maxMusu <= 0 || calcHarvestNetBounty(kami.harvest) >= maxMusu) {
     kami.harvest.rates.total = { average: 0, spot: 0 };
+    kami.harvest.rates.output = { average: 0, spot: 0 };
     return 0;
   }
 
@@ -53,7 +60,14 @@ export const calcOutput = (kami: Kami): number => {
   const netBounty = calcHarvestRawNetBounty(kami.harvest, kami);
   const maxMusu = calcMaxMusu(kami);
   const capped = netBounty < maxMusu ? netBounty : maxMusu;
-  return kami.harvest.balance + capped;
+  return kami.harvest.balance + calcHarvestCredit(kami, capped);
+};
+
+// what a sync credits for today's capped bounty, as LibHarvest.calcCredit: the bounty × the K the
+// open stretch copied, rounded to the nearest whole MUSU
+const calcHarvestCredit = (kami: Kami, bounty: number): number => {
+  if (!kami.harvest || bounty <= 0) return 0;
+  return settleHarvestStretch(kami.harvest.multiplier, bounty);
 };
 
 ////////////////////
@@ -90,6 +104,5 @@ export const calcMaxMusu = (kami: Kami): number => {
   const denom = ratio * boost;
   if (denom === 0) return Infinity;
 
-  return Math.floor((hp * (harmony + baseHarmony)) / denom);
+  return Math.floor((hp * (harmony + baseHarmony)) / denom + 1e-9); // float error, not a true fraction
 };
-

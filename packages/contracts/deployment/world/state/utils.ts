@@ -13,6 +13,17 @@ export const ItemRarities = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary'];
 export const toItemRarity = (name?: string): number =>
   ItemRarities.indexOf((name ?? '').trim()) + 1;
 
+// "Harvest Multiplier" cell, required: a decimal factor (0.8) stored per mille (800), 0.1 to 60 as
+// on chain; anything else throws instead of rounding into range
+export const toPerMille = (cell: any): number => {
+  const raw = String(cell ?? '').trim();
+  if (!/^\d+(\.\d{1,3})?$/.test(raw) || Number(raw) < 0.1 || Number(raw) > 60)
+    throw new Error(
+      `invalid Harvest Multiplier "${raw}" (required, 0.1 to 60, at most 3 decimals)`
+    );
+  return Math.round(Number(raw) * 1000);
+};
+
 ////////////////
 // DATA SHEETS
 

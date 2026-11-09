@@ -9,6 +9,7 @@ import { IWorld } from "solecs/interfaces/IWorld.sol";
 import { getAddrByID, getCompByID } from "solecs/utils.sol";
 import { LibTypes } from "solecs/LibTypes.sol";
 
+import { HarvestMultiplierComponent } from "components/HarvestMultiplierComponent.sol";
 import { IdHolderComponent, ID as IdHolderCompID } from "components/IdHolderComponent.sol";
 import { IdSourceComponent, ID as IdSourceCompID } from "components/IdSourceComponent.sol";
 import { StateComponent, ID as StateCompID } from "components/StateComponent.sol";
@@ -26,7 +27,7 @@ import { LibEmitter } from "libraries/utils/LibEmitter.sol";
 import { LibEntityType } from "libraries/utils/LibEntityType.sol";
 import { LibInventory } from "libraries/LibInventory.sol";
 import { LibKami } from "libraries/LibKami.sol";
-import { LibNode } from "libraries/LibNode.sol";
+import { LibNode, HARV_MULT_PREC } from "libraries/LibNode.sol";
 import { LibPhase } from "libraries/utils/LibPhase.sol";
 import { LibTax } from "libraries/LibTax.sol";
 import { LibStat } from "libraries/LibStat.sol";
@@ -110,6 +111,8 @@ library LibHarvest {
     TimeStartComponent(getAddrByID(components, TimeStartCompID)).set(id, block.timestamp);
     TimeResetComponent(getAddrByID(components, TimeResetCompID)).set(id, block.timestamp); // intensity reset time
     TimeLastComponent(getAddrByID(components, TimeLastCompID)).set(id, block.timestamp);
+    // the first stretch pays the node's K as of now
+    setCopy(components, id, LibNode.getBaseMultiplier(components, getNode(components, id)));
   }
 
   /// @notice Stops an _existing_ harvest
@@ -123,14 +126,38 @@ library LibHarvest {
     ValueComponent(getAddrByID(components, ValueCompID)).set(id, 0);
   }
 
-  // snapshot a harvest's balance and time. return the balance gained
-  // also logs the harvest time since the last sync
+  // snapshot a harvest's balance and time. return today's bounty, the whole base MUSU HP strain is
+  // charged on; the balance takes it × the K copied when the stretch opened
   function sync(IUintComp components, uint256 id) internal returns (uint256 netBounty) {
     if (isActive(components, id)) {
       netBounty = calcBounty(components, id);
-      incBounty(components, id, netBounty);
+      incBounty(components, id, calcCredit(components, id, netBounty));
+      setCopy(components, id, LibNode.getBaseMultiplier(components, getNode(components, id)));
       TimeLastComponent(getAddrByID(components, TimeLastCompID)).set(id, block.timestamp);
     }
+  }
+
+  /// @notice what a sync credits a stretch that earned `bounty` (today's whole base MUSU): the bounty ×
+  ///  the copied K, rounded to the nearest whole MUSU. 0 stays 0, so nothing is paid past zero HP
+  function calcCredit(
+    IUintComp components,
+    uint256 id,
+    uint256 bounty
+  ) internal view returns (uint256) {
+    return (bounty * getCopy(components, id) + HARV_MULT_PREC / 2) / HARV_MULT_PREC;
+  }
+
+  /// @notice the K the harvest's open stretch pays: its copy, or the node's current K for a harvest
+  ///  from before K, which has no copy (a stored K is never 0)
+  function getCopy(IUintComp components, uint256 id) internal view returns (uint32 k) {
+    k = uint16(LibNode.getMultiplierComp(components).safeGet(id));
+    if (k == 0) k = LibNode.getBaseMultiplier(components, getNode(components, id));
+  }
+
+  // pin the K a stretch pays when it opens, written only on change
+  function setCopy(IUintComp components, uint256 id, uint32 k) internal {
+    HarvestMultiplierComponent comp = LibNode.getMultiplierComp(components);
+    if (comp.safeGet(id) != k) comp.set(id, k);
   }
 
   function incBounty(IUintComp components, uint256 id, uint256 amt) internal {

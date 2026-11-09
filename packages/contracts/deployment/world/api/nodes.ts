@@ -8,6 +8,7 @@ export function nodesAPI(generateCallData: GenerateCallData, compiledCalls: stri
   // @param name        name of the node
   // @param description description of the node, exposed on the UI
   // @param affinity    affinity of the node [ NORMAL | EERIE | INSECT | SCRAP ]
+  // @param k           harvest multiplier K, per mille (1000 = today's output)
   async function createNode(
     index: number,
     type: string,
@@ -15,13 +16,14 @@ export function nodesAPI(generateCallData: GenerateCallData, compiledCalls: stri
     room: number,
     name: string,
     description: string,
-    affinity: string
+    affinity: string,
+    k: number
   ) {
     const callData = generateCallData(
       'system.node.registry',
-      [index, type, item, room, name, description, affinity],
+      [index, type, item, room, name, description, affinity, k],
       'create',
-      ['uint32', 'string', 'uint32', 'uint32', 'string', 'string', 'string']
+      ['uint32', 'string', 'uint32', 'uint32', 'string', 'string', 'string', 'uint32']
     );
     compiledCalls.push(callData);
   }
@@ -96,11 +98,21 @@ export function nodesAPI(generateCallData: GenerateCallData, compiledCalls: stri
     compiledCalls.push(callData);
   }
 
+  // harvest multiplier K, per mille (1000 = today's output). typed call, so no types array
+  // (a types array ABI-encodes one `bytes arguments` blob, which this setter does not take)
+  async function setMultiplier(nodeIndex: number, k: number) {
+    const callData = generateCallData('system.node.registry', [nodeIndex, k], 'setMultiplier');
+    compiledCalls.push(callData);
+  }
+
   return {
     create: createNode,
     delete: deleteNode,
     bonus: {
       add: addBonus,
+    },
+    multiplier: {
+      set: setMultiplier,
     },
     requirement: {
       add: addRequirement,

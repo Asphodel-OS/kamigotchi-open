@@ -62,6 +62,7 @@ import {
   reviseRooms,
   reviseSkills,
   setDemoListingRates,
+  setNodeMultipliers,
   setPortalTokens,
   setRoomText,
   unsetPortalTokens,
@@ -179,6 +180,9 @@ export class WorldState {
         this.genCalls((api) => reviseNodeScavenges(api, indices)),
       addRequirements: (indices: number[]) =>
         this.genCalls((api) => addNodeRequirements(api, indices)),
+      // harvest multiplier K from the CSV column: --args <nodeIndex>...
+      setMultipliers: (indices?: number[]) =>
+        this.genCalls((api) => setNodeMultipliers(api, indices)),
     } as SubFunc,
     mint: {
       init: () => this.genCalls((api) => initGachaPool(api, 333)),

@@ -452,6 +452,15 @@ export const getTimePause = (comps: Components, entity: EntityIndex): string | u
   return getComponentValue(TimePause, entity)?.value as string | undefined;
 };
 
+// raw harvest multiplier K (see Node/multiplier.ts getStoredMultiplier); undefined when none is stored
+export const getHarvestMultiplier = (
+  comps: Components,
+  entity: EntityIndex
+): string | undefined => {
+  const { HarvestMultiplier } = comps;
+  return getComponentValue(HarvestMultiplier, entity)?.value as string | undefined;
+};
+
 export const getStartTime = (comps: Components, entity: EntityIndex, debug = false): number => {
   const { StartTime } = comps;
   const result = getComponentValue(StartTime, entity)?.value;

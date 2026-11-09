@@ -35,6 +35,10 @@
     "id": "system.goal.registry",
    "encodedID": "0xc2374ee3f94ece5db237068bf60fe3603f499e1bde80caca63dba33684b42226"
   },
+  "_HarvestAdminSystem": {
+    "id": "system.harvest.admin",
+   "encodedID": "0x045662bf7aa183ff50a0d0cdc03bce3c72f7382cb837dbc82ce68b09965ad061"
+  },
   "_ItemRegistrySystem": {
     "id": "system.item.registry",
    "encodedID": "0xe540c39ea350313a7676d87bdc33d09680e043842329fa660af0e97dc382711a"

@@ -158,6 +158,13 @@ export const NodeModal: UIComponent = {
       setNode(node);
     }, [nodeIndex]);
 
+    // re-read the node while open: an admin can change its multiplier at any time
+    useEffect(() => {
+      if (!nodeModalOpen) return;
+      const fresh = getNode(nodeIndex);
+      if (fresh !== node) setNode(fresh);
+    }, [nodeModalOpen, tick]);
+
     /////////////////
     // ACTIONS
 

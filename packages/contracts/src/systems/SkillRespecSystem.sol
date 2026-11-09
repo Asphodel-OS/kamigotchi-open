@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.28;
 
-import { LibString } from "solady/utils/LibString.sol";
 import { System } from "solecs/System.sol";
 import { IWorld } from "solecs/interfaces/IWorld.sol";
-import { getAddrByID } from "solecs/utils.sol";
 
 import { LibEntityType } from "libraries/utils/LibEntityType.sol";
 
@@ -25,17 +23,10 @@ contract SkillRespecSystem is System {
     uint256 targetID = abi.decode(arguments, (uint256));
     uint256 accID = LibAccount.getByOperator(components, msg.sender);
 
-    // LibSkill.verifyResettable(components, targetID);
-    // state and ownership checks
-    string memory targetShape = LibEntityType.get(components, targetID);
-    bool isKami = LibString.eq(targetShape, "KAMI");
-    if (isKami) {
-      LibKami.verifyAccount(components, targetID, accID);
-    } else {
-      // if not kami, check account ownership
-      if (targetID != accID) revert("not ur account");
-      LibKami.verifyState(components, targetID, "RESTING"); // kami must be resting
-    }
+    // the potion is for kamis; a resting one, as for skill upgrades
+    if (!LibEntityType.isShape(components, targetID, "KAMI")) revert("SkillRespec: not a kami");
+    LibKami.verifyAccount(components, targetID, accID);
+    LibKami.verifyState(components, targetID, "RESTING");
 
     // use respec potion
     LibInventory.decFor(components, accID, RESPEC_POTION_INDEX, 1);
@@ -44,11 +35,11 @@ contract SkillRespecSystem is System {
     // respec skills
     // LibSkill.useReset(components, targetID);
     LibSkill.resetAll(components, targetID);
-    if (isKami) LibKami.sync(components, targetID);
+    LibKami.sync(components, targetID);
 
     // standard logging and tracking
     LibAccount.updateLastTs(components, accID);
-    LibItem.logUse(components, accID, RESPEC_POTION_INDEX, 1, targetShape);
+    LibItem.logUse(components, accID, RESPEC_POTION_INDEX, 1, "KAMI");
 
     return "";
   }

@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { Account } from 'app/cache/account';
-import { TextTooltip } from 'app/components/library';
+import { MultiplierText, TextTooltip } from 'app/components/library';
 import { DropdownToggle } from 'app/components/library/buttons/DropdownToggle';
 import { triggerNodeModal } from 'app/triggers';
 import { insectIcon } from 'assets/images/icons/affinities';
@@ -15,6 +15,7 @@ import { Zones } from 'constants/zones';
 import { Allo } from 'network/shapes/Allo';
 import { BaseKami } from 'network/shapes/Kami/types';
 import { Node } from 'network/shapes/Node';
+import { formatMultiplier, MULT_PREC } from 'network/shapes/Node/multiplier';
 import { checkQuestObjective, getQuest, queryOngoingQuests } from 'network/shapes/Quest';
 import { calculatePathStaminaCost, findPath, NullRoom, Room } from 'network/shapes/Room';
 import { DetailedEntity, getAffinityImage } from 'network/shapes/utils';
@@ -135,6 +136,13 @@ export const Grid = ({
     });
     return { levelCapMap, nodeLookMap };
   }, [rooms]);
+
+  // a node's multiplier can change at any time: re-read each tick, one cached node read per node room
+  const multiplierMap = useMemo(() => {
+    const map = new Map<number, number>();
+    nodeLookMap.forEach((_, index) => map.set(index, getNode(index).multiplier));
+    return map;
+  }, [nodeLookMap, tick]);
 
   // activity view only: kamis on each node and operators in each room (accounts that acted in the
   // last 30 days), each graded against its own average over active rooms (1 some, 2 busy, 3 hot)
@@ -375,6 +383,7 @@ export const Grid = ({
           <Row key={i}>
             {row.map((room, j) => {
               const backgroundColor = getTileColor(room);
+              const multiplier = multiplierMap.get(room.index) ?? MULT_PREC;
               return (
                 <TextTooltip
                   key={j}
@@ -403,6 +412,14 @@ export const Grid = ({
                           <TitleMarkIcon src={ExclamIcon} alt='' />
                         )}
                       </RoomName>
+                      {multiplier !== MULT_PREC && (
+                        <TitleSubtext>
+                          Node Multiplier:{' '}
+                          <MultiplierText $k={multiplier}>
+                            {formatMultiplier(multiplier)}
+                          </MultiplierText>
+                        </TitleSubtext>
+                      )}
                       {isRoomBlocked(room) && <BlockedTag>blocked</BlockedTag>}
                       {(levelCapMap.get(room.index) ?? 0) > 0 && (
                         <TitleSubtext>Max kami level {levelCapMap.get(room.index)}</TitleSubtext>

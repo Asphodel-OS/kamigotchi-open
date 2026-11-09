@@ -26,8 +26,9 @@ contract _NodeRegistrySystem is System, AuthRoles {
       uint32 room,
       string memory name,
       string memory description,
-      string memory affinity
-    ) = abi.decode(arguments, (uint32, string, uint32, uint32, string, string, string));
+      string memory affinity,
+      uint32 k
+    ) = abi.decode(arguments, (uint32, string, uint32, uint32, string, string, string, uint32));
     id = LibNode.getByIndex(components, index);
     require(id == 0, "Node: already exists");
 
@@ -35,6 +36,12 @@ contract _NodeRegistrySystem is System, AuthRoles {
       components,
       LibNode.Base(index, nodeType, item, room, name, description, affinity)
     );
+    LibNode.setMultiplierByIndex(components, index, k);
+  }
+
+  // the node's harvest multiplier K, per mille (1000 = today's output); a harvest picks it up at its next sync
+  function setMultiplier(uint32 index, uint32 k) public onlyAdmin(components) {
+    LibNode.setMultiplierByIndex(components, index, k);
   }
 
   // removes the entire node and all associated entities

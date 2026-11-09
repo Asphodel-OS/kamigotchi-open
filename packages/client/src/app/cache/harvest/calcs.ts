@@ -1,6 +1,7 @@
 import { Harvest, RateDetails } from 'network/shapes/Harvest/types';
 import { Kami } from 'network/shapes/Kami';
 import { Efficacy } from 'network/shapes/Kami/configs';
+import { MULT_PREC, scaleByMultiplier } from 'network/shapes/Node/multiplier';
 import { getKamiBodyAffinity, getKamiHandAffinity } from '../kami';
 
 /////////////////
@@ -60,6 +61,15 @@ export const calcRawNetBounty = (harvest: Harvest, kami: Kami): number => {
   return Math.floor(duration * rate);
 };
 
+// a stretch as LibHarvest.calcCredit credits it: today's bounty × the copied K, rounded to the nearest
+// whole MUSU
+export const settleStretch = (k: number, bounty: number): number => {
+  return Math.floor((bounty * k + MULT_PREC / 2) / MULT_PREC);
+};
+
+// a rate floored to 1e-6 MUSU/s as on chain; the nudge absorbs float error, far below any true step
+const floorRate = (rate: number) => Math.floor(rate * 1e6 + 1e-6) / 1e6;
+
 /////////////////
 // RATE CALCS
 
@@ -75,12 +85,17 @@ export const updateRates = (harvest: Harvest, kami: Kami) => {
   const fertility = calcFertility(harvest, kami);
   const intensity = calcIntensity(harvest, kami);
 
+  const total = {
+    average: boost * (fertility + intensity.average),
+    spot: boost * (fertility + intensity.spot),
+  };
   harvest.rates = {
     fertility,
     intensity,
-    total: {
-      average: boost * (fertility + intensity.average),
-      spot: boost * (fertility + intensity.spot),
+    total,
+    output: {
+      average: scaleByMultiplier(harvest.multiplier, total.average),
+      spot: scaleByMultiplier(harvest.multiplier, total.spot),
     },
   };
   return harvest.rates.total.average;
@@ -94,7 +109,7 @@ export const calcFertility = (harvest: Harvest, kami: Kami): number => {
   const efficacy = config.boost.value + calcEfficacyShifts(harvest, kami);
   const power = kami.stats?.power.total ?? 0;
   const fertility = (power * ratio * efficacy) / 3600;
-  return Math.floor(fertility * 1e6) / 1e6;
+  return floorRate(fertility);
 };
 
 // calculate the intensity rates of a harvest, measured in musu/s
@@ -108,8 +123,8 @@ export const calcIntensity = (harvest: Harvest, kami: Kami): RateDetails => {
   const spot = initial + 2 * (current - initial);
 
   return {
-    average: Math.floor(current * 1e6) / 1e6,
-    spot: Math.floor(spot * 1e6) / 1e6,
+    average: floorRate(current),
+    spot: floorRate(spot),
   };
 };
 

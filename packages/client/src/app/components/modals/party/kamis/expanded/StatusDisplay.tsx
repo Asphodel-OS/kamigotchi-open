@@ -81,7 +81,7 @@ export const StatusDisplay = ({ kami, tick }: { kami: Kami; tick: number }) => {
       text = [`${healthRate} HP/hr`];
     } else if (isHarvesting(kami) && kami.harvest) {
       const harvest = kami.harvest;
-      const harvestRate = getRateDisplay(harvest.rates.total.spot, 2);
+      const harvestRate = getRateDisplay(harvest.rates.output.spot, 2);
       const node = harvest.node ?? NullNode;
       const item = getHarvestItem(harvest);
 

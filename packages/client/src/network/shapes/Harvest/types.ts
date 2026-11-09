@@ -4,7 +4,7 @@ import { Components } from 'network/';
 import { getKami, Kami } from '../Kami';
 import { Node } from '../Node';
 import { getBalance, getLastTime, getResetTime, getStartTime, getState } from '../utils/component';
-import { getNode } from './node';
+import { getMultiplier, getNode } from './node';
 
 // standardized shape of an Harvest Entity
 export interface Harvest {
@@ -12,6 +12,7 @@ export interface Harvest {
   entity: EntityIndex;
   balance: number;
   state: string;
+  multiplier: number; // the K its open stretch pays, per mille
   rates: HarvestRates;
   time: {
     last: number;
@@ -25,7 +26,8 @@ export interface Harvest {
 interface HarvestRates {
   fertility: number;
   intensity: RateDetails;
-  total: RateDetails;
+  total: RateDetails; // today's rate: the bounty, HP strain and the starve cap use it
+  output: RateDetails; // total × the harvest's copied K: what the balance takes, for display
 }
 
 export interface RateDetails {
@@ -51,6 +53,7 @@ export const getHarvest = (
     entity,
     state: getState(components, entity),
     balance: getBalance(components, entity, false),
+    multiplier: getMultiplier(world, components, entity),
     time: {
       last: getLastTime(components, entity),
       reset: getResetTime(components, entity),
@@ -64,6 +67,10 @@ export const getHarvest = (
         spot: 0,
       },
       total: {
+        average: 0,
+        spot: 0,
+      },
+      output: {
         average: 0,
         spot: 0,
       },

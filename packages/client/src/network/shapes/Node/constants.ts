@@ -1,5 +1,6 @@
 import { EntityID, EntityIndex } from 'engine/recs';
 
+import { MULT_PREC } from './multiplier';
 import { Node } from './types';
 
 export const NullNode: Node = {
@@ -15,4 +16,5 @@ export const NullNode: Node = {
   affinity: ['NORMAL'] as string[],
   drops: [],
   requirements: [],
+  multiplier: MULT_PREC,
 };

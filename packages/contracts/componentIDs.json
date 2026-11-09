@@ -71,6 +71,10 @@
     "id": "component.stat.health",
     "encodedID": "0x7f11100822994501b15df98b1bd24b3eb0d73863f512da0bf8f165b0150c537d"
   },
+  "HarvestMultiplier": {
+    "id": "component.harvest.multiplier",
+    "encodedID": "0x017545640be52d18b8419842ba4066eb26707a37978580d5a2c11caa5f5b1552"
+  },
   "FromID": {
     "id": "component.id.from",
     "encodedID": "0xa95ad5d9865792db0c7d344e1ab96ff451848e8df32d75b494b0c861955ff49e"

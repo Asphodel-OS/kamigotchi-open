@@ -42,6 +42,7 @@ export interface _NodeRegistrySystemInterface extends Interface {
       | "removeScavenge"
       | "renounceOwnership"
       | "requestOwnershipHandover"
+      | "setMultiplier"
       | "transferOwnership"
   ): FunctionFragment;
 
@@ -103,6 +104,10 @@ export interface _NodeRegistrySystemInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "setMultiplier",
+    values: [BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "transferOwnership",
     values: [AddressLike]
   ): string;
@@ -151,6 +156,10 @@ export interface _NodeRegistrySystemInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "requestOwnershipHandover",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setMultiplier",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -309,6 +318,12 @@ export interface _NodeRegistrySystem extends BaseContract {
 
   requestOwnershipHandover: TypedContractMethod<[], [void], "payable">;
 
+  setMultiplier: TypedContractMethod<
+    [index: BigNumberish, k: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
   transferOwnership: TypedContractMethod<
     [newOwner: AddressLike],
     [void],
@@ -371,6 +386,13 @@ export interface _NodeRegistrySystem extends BaseContract {
   getFunction(
     nameOrSignature: "requestOwnershipHandover"
   ): TypedContractMethod<[], [void], "payable">;
+  getFunction(
+    nameOrSignature: "setMultiplier"
+  ): TypedContractMethod<
+    [index: BigNumberish, k: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "transferOwnership"
   ): TypedContractMethod<[newOwner: AddressLike], [void], "payable">;

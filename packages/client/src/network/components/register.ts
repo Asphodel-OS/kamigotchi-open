@@ -33,6 +33,7 @@ export function createComponents(world: World) {
     HasFlag: defineBoolComponent(world, 'HasFlag', 'component.has.flag'),
     Harmony: defineStatComponent(world, 'Harmony', 'component.stat.harmony'),
     Health: defineStatComponent(world, 'Health', 'component.stat.health'),
+    HarvestMultiplier: defineNumberComponent(world, 'HarvestMultiplier', 'component.harvest.multiplier'),
     FromID: defineStringComponent(world, 'FromID', 'component.id.from', true),
     HolderID: defineStringComponent(world, 'HolderID', 'component.id.holder', true),
     OwnsFlagID: defineStringComponent(world, 'OwnsFlagID', 'component.id.flag.owns', true),

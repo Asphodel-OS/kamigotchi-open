@@ -18,6 +18,7 @@
     { "comp": "HasFlag", "name": "HasFlag", "type": "bool" },
     { "comp": "Harmony", "name": "Harmony", "type": "Stat" },
     { "comp": "Health", "name": "Health", "type": "Stat" },
+    { "comp": "HarvestMultiplier", "name": "HarvestMultiplier", "type": "uint256" },
     { "comp": "IDFrom", "name": "FromID", "type": "uint256", "FEtype": "string", "indexed": true },
     { "comp": "IdHolder", "name": "HolderID", "type": "uint256", "FEtype": "string", "indexed": true },
     { "comp": "IDOwnsFlag", "name": "OwnsFlagID", "type": "uint256", "FEtype": "string", "indexed": true },
@@ -126,6 +127,7 @@
         "EntityType",
         "IDOwnsInventory",
         "Experience",
+        "HarvestMultiplier",
         "Health",
         "IdHolder",
         "IdSource",
@@ -437,6 +439,7 @@
       "name": "HarvestCollectSystem",
       "writeAccess": [
         "EntityType",
+        "HarvestMultiplier",
         "IDOwnsInventory",
         "Experience",
         "Health",
@@ -460,6 +463,7 @@
       "name": "HarvestLiquidateSystem",
       "writeAccess": [
         "EntityType",
+        "HarvestMultiplier",
         "IdHolder",
         "IDAnchor",
         "IDType",
@@ -483,6 +487,7 @@
       "name": "HarvestStartSystem",
       "writeAccess": [
         "EntityType",
+        "HarvestMultiplier",
         "IDAnchor",
         "IDOwnsInventory",
         "IDOwnsTax",
@@ -507,6 +512,7 @@
       "name": "HarvestStopSystem",
       "writeAccess": [
         "EntityType",
+        "HarvestMultiplier",
         "IDOwnsInventory",
         "Experience",
         "Health",

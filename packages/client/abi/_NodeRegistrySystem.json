@@ -255,6 +255,24 @@
     },
     {
       "type": "function",
+      "name": "setMultiplier",
+      "inputs": [
+        {
+          "name": "index",
+          "type": "uint32",
+          "internalType": "uint32"
+        },
+        {
+          "name": "k",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
       "name": "transferOwnership",
       "inputs": [
         {
@@ -360,6 +378,7 @@
     "removeScavenge(uint32)": "593cf789",
     "renounceOwnership()": "715018a6",
     "requestOwnershipHandover()": "25692962",
+    "setMultiplier(uint32,uint32)": "60a19408",
     "transferOwnership(address)": "f2fde38b"
   }
 }

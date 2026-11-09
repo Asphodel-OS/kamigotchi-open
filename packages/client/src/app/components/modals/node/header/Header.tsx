@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import { canHarvest, isResting, onCooldown } from 'app/cache/kami';
-import { IconListButton, TextTooltip } from 'app/components/library';
+import { IconListButton, MultiplierText, TextTooltip } from 'app/components/library';
 import { useVisibility } from 'app/stores';
 import { HarvestIcon } from 'assets/images/icons/actions';
 import { rooms } from 'constants/rooms';
@@ -12,6 +12,7 @@ import { Allo } from 'network/shapes/Allo';
 import { Condition } from 'network/shapes/Conditional';
 import { Kami } from 'network/shapes/Kami';
 import { Node } from 'network/shapes/Node';
+import { MULT_PREC, formatMultiplier } from 'network/shapes/Node/multiplier';
 import { NullRoom, Room } from 'network/shapes/Room';
 import { NullScavenge, ScavBar } from 'network/shapes/Scavenge';
 import { DetailedEntity, getAffinityImage } from 'network/shapes/utils';
@@ -139,6 +140,9 @@ export const Header = ({
     );
   }
 
+  // the node's harvest multiplier; the row is omitted at 1.0
+  const multiplier = node.multiplier;
+
   return (
     <Container id='node_header'>
       <Content>
@@ -152,6 +156,14 @@ export const Header = ({
             </TextTooltip>
             <ItemDrops node={node} scavenge={scavenge} utils={utils} />
           </Row>
+          {multiplier !== MULT_PREC && (
+            <MultiplierRow>
+              <Label>Node Multiplier: </Label>
+              <Label>
+                <MultiplierText $k={multiplier}>{formatMultiplier(multiplier)}</MultiplierText>
+              </Label>
+            </MultiplierRow>
+          )}
           <Description>{room.description}</Description>
         </Details>
         {node.requirements.length > 0 && (
@@ -219,6 +231,11 @@ const Row = styled.div`
   flex-flow: row nowrap;
   justify-content: flex-start;
   align-items: center;
+`;
+
+// the multiplier sits on its own line, clear of the type and drops row
+const MultiplierRow = styled(Row)`
+  margin-top: 0.45vw;
 `;
 
 const Label = styled.div`

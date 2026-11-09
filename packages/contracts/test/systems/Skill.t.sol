@@ -254,6 +254,32 @@ contract SkillTest is SetupTemplate {
   }
 
   ////////////////
+  // RESPEC
+
+  // a kami respecs only while resting, like a skill upgrade
+  function testSkillRespecRequiresResting() public {
+    uint256 kamiID = _mintKami(alice.index);
+    _startHarvest(kamiID, 1);
+    _giveItem(alice, RESPEC_POTION_INDEX, 1);
+
+    vm.prank(alice.operator);
+    vm.expectRevert("kami not RESTING");
+    _SkillRespecSystem.executeTyped(kamiID);
+
+    _fastForward(_idleRequirement);
+    _stopHarvest(LibHarvest.getForKami(components, kamiID));
+    _resetSkills(alice, kamiID);
+  }
+
+  // the potion is for kamis: an account target reverts instead of burning it
+  function testSkillRespecKamiOnly() public {
+    _giveItem(alice, RESPEC_POTION_INDEX, 1);
+    vm.prank(alice.operator);
+    vm.expectRevert("SkillRespec: not a kami");
+    _SkillRespecSystem.executeTyped(alice.id);
+  }
+
+  ////////////////
   // UTILS
 
   function _resetSkills(PlayerAccount memory acc, uint256 targetID) internal {

@@ -1,7 +1,7 @@
 import { EntityIndex, World } from 'engine/recs';
 
 import { Components } from 'network/';
-import { Harvest, getHarvest } from 'network/shapes/Harvest';
+import { Harvest, getHarvest, getHarvestMultiplier } from 'network/shapes/Harvest';
 import {
   getLastTime,
   getResetTime,
@@ -40,6 +40,7 @@ export const get = (world: World, comps: Components, entity: EntityIndex, option
     if (updateDelta > options.live) {
       harvest.balance = getValue(comps, entity);
       harvest.state = getState(comps, entity);
+      harvest.multiplier = getHarvestMultiplier(world, comps, entity); // the copy moves with syncs
       harvest.time = {
         start: getStartTime(comps, entity),
         reset: getResetTime(comps, entity),

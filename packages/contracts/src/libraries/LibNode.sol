@@ -8,6 +8,7 @@ import { getAddrByID, getCompByID } from "solecs/utils.sol";
 
 import { AffinityComponent, ID as AffCompID } from "components/AffinityComponent.sol";
 import { DescriptionComponent, ID as DescCompID } from "components/DescriptionComponent.sol";
+import { HarvestMultiplierComponent, ID as HarvMultCompID } from "components/HarvestMultiplierComponent.sol";
 import { IndexItemComponent, ID as IndexItemCompID } from "components/IndexItemComponent.sol";
 import { IndexNodeComponent, ID as IndexNodeCompID } from "components/IndexNodeComponent.sol";
 import { IndexRoomComponent, ID as RoomCompID } from "components/IndexRoomComponent.sol";
@@ -20,6 +21,12 @@ import { LibBonus } from "libraries/LibBonus.sol";
 import { LibData } from "libraries/LibData.sol";
 import { Condition, LibConditional } from "libraries/LibConditional.sol";
 import { LibScavenge } from "libraries/LibScavenge.sol";
+
+// harvest multiplier K is per mille: 1000 = today's output; writes stay within 0.1 and 60, so a stored
+// K is never 0. node and harvest values hold K in the low 16 bits
+uint32 constant HARV_MULT_PREC = 1000;
+uint32 constant HARV_MULT_MIN = 100;
+uint32 constant HARV_MULT_MAX = 60000;
 
 /** @notice
  * Nodes are shapes that can be harvested on.
@@ -109,6 +116,8 @@ library LibNode {
     AffinityComponent(getAddrByID(components, AffCompID)).remove(id);
     DescriptionComponent(getAddrByID(components, DescCompID)).remove(id);
     NameComponent(getAddrByID(components, NameCompID)).remove(id);
+    // K is kept: in a revise (remove, then create) a harvest on the node must not read a missing K;
+    // create overwrites it
 
     LibBonus.regRemoveByAnchor(components, genBonusAnchor(index));
 
@@ -117,6 +126,28 @@ library LibNode {
 
     uint256 scavID = getScavBar(components, index);
     if (scavID != 0) LibScavenge.remove(components, scavID);
+  }
+
+  ///////////////
+  // MULTIPLIER (K)
+
+  /// @notice the node's K, set at creation: what a harvest copies when its stretch opens
+  function getBaseMultiplier(IUintComp components, uint256 id) internal view returns (uint32) {
+    return uint16(getMultiplierComp(components).safeGet(id));
+  }
+
+  /// @dev public, so the node registry links it instead of inlining it (the registry is near the size limit)
+  function setMultiplierByIndex(IUintComp components, uint32 index, uint32 k) public {
+    uint256 id = getByIndex(components, index);
+    require(id != 0, "Node: does not exist");
+    require(k >= HARV_MULT_MIN && k <= HARV_MULT_MAX, "Node: multiplier out of range");
+    getMultiplierComp(components).set(id, k);
+  }
+
+  function getMultiplierComp(
+    IUintComp components
+  ) internal view returns (HarvestMultiplierComponent) {
+    return HarvestMultiplierComponent(getAddrByID(components, HarvMultCompID));
   }
 
   ///////////////

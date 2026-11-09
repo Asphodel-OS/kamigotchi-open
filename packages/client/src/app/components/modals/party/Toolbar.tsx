@@ -106,8 +106,8 @@ export const Toolbar = ({
         break;
       case 'harvest rate':
         sorted.sort((a, b) => {
-          const rateA = isHarvesting(a) ? (a.harvest?.rates?.total?.average ?? 0) : 0;
-          const rateB = isHarvesting(b) ? (b.harvest?.rates?.total?.average ?? 0) : 0;
+          const rateA = isHarvesting(a) ? (a.harvest?.rates?.output?.average ?? 0) : 0;
+          const rateB = isHarvesting(b) ? (b.harvest?.rates?.output?.average ?? 0) : 0;
           return rateB - rateA;
         });
         break;

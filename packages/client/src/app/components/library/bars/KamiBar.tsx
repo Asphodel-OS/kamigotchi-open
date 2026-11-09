@@ -180,8 +180,8 @@ export const KamiBar = ({
     // harvesting case
     if (isHarvesting(kami) && kami.harvest) {
       const harvest = kami.harvest;
-      const spotRate = getRateDisplay(harvest.rates.total.spot, 2);
-      const avgRate = getRateDisplay(harvest.rates.total.average, 2);
+      const spotRate = getRateDisplay(harvest.rates.output.spot, 2);
+      const avgRate = getRateDisplay(harvest.rates.output.average, 2);
       const item = getHarvestItem(harvest);
       const node = harvest.node ?? NullNode;
 

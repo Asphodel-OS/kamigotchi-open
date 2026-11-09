@@ -802,7 +802,7 @@ abstract contract SetupTemplate is TestSetupImports {
     vm.prank(deployer);
     return
       __NodeRegistrySystem.create(
-        abi.encode(index, "HARVEST", item, room, name, description, affinity)
+        abi.encode(index, "HARVEST", item, room, name, description, affinity, uint32(1000)) // K 1.0
       );
   }
 

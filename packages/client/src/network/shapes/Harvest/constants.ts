@@ -1,5 +1,6 @@
 import { EntityID, EntityIndex } from 'engine/recs';
 import { NullNode } from '../Node';
+import { MULT_PREC } from '../Node/multiplier';
 import { Harvest } from './types';
 
 export const NullHarvest: Harvest = {
@@ -7,6 +8,7 @@ export const NullHarvest: Harvest = {
   entity: 0 as EntityIndex,
   state: '',
   balance: 0,
+  multiplier: MULT_PREC,
   rates: {
     fertility: 0,
     intensity: {
@@ -14,6 +16,10 @@ export const NullHarvest: Harvest = {
       spot: 0,
     },
     total: {
+      average: 0,
+      spot: 0,
+    },
+    output: {
       average: 0,
       spot: 0,
     },
