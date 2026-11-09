@@ -5,7 +5,7 @@ import { useBalance, useGasPrice, useWatchBlockNumber } from 'wagmi';
 import { IconButton, TextTooltip } from 'app/components/library';
 import { useAccount } from 'app/stores';
 import { TriggerIcons } from 'assets/images/icons/triggers';
-import { GasConstants, GasExponent } from 'constants/gas';
+import { GasConstants, GasExponent, isGasSponsored } from 'constants/gas';
 import { parseTokenBalance } from 'utils/numbers';
 import { GasGauge } from './GasGauge';
 
@@ -61,12 +61,14 @@ export const Controls = ({
 
   // calculated the gas gauge level
   const calcGaugeSetting = (): number => {
+    if (isGasSponsored) return 1.0;
     const level = operatorGas / GasConstants.Full;
     return Math.min(level, 1.0);
   };
 
   const getGaugeTooltip = () => {
     const tooltip = [`Gas Tank`, ''];
+    if (isGasSponsored) return [...tooltip, 'Gas is on us for this demo ^-^'];
     let description = '';
 
     const balance = getScaledBalance();

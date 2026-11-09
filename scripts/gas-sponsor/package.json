@@ -1,0 +1,18 @@
+{
+  "name": "gas-sponsor",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "api": "node --env-file=.env.api src/api.ts",
+    "signer": "node --env-file=.env.signer src/signer.ts",
+    "dry-run": "node --env-file=.env.signer src/signer.ts --dry-run",
+    "report": "node --env-file=.env.api src/manage.ts report",
+    "remove": "node --env-file=.env.signer src/manage.ts remove",
+    "test": "node --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@initia/initia.js": "1.1.0",
+    "@privy-io/server-auth": "1.32.5"
+  }
+}

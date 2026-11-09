@@ -5,16 +5,17 @@ import { formatUnits, parseEther } from 'viem';
 import { useBalance, useWatchBlockNumber } from 'wagmi';
 
 import { IconButton, StepButton, ValidatorWrapper } from 'app/components/library';
-import { triggerBridgeModal } from 'app/triggers';
 import { useLayers } from 'app/root/hooks';
 import { UIComponent } from 'app/root/types';
 import { useAccount, useNetwork, useTokens, useVisibility } from 'app/stores';
+import { triggerBridgeModal } from 'app/triggers';
 import { MenuIcons } from 'assets/images/icons/menu';
 import { TokenIcons } from 'assets/images/tokens';
-import { GasConstants, GasExponent } from 'constants/gas';
+import { GasConstants, GasExponent, isGasSponsored } from 'constants/gas';
 import { EntityID, EntityIndex } from 'engine/recs';
 import { waitForActionCompletion } from 'network/utils';
 import { playFund, playSuccess } from 'utils/sounds';
+import { useGasSponsor } from './useGasSponsor';
 
 const MIN_FUND_ETH = 0.00001;
 const ETH_INPUT_REGEX = /^\d*\.?\d{0,7}$/;
@@ -23,7 +24,7 @@ const ETH_INPUT_REGEX = /^\d*\.?\d{0,7}$/;
 // default eats the owner's kami budget during onboarding. soft default only;
 // the player can type any amount. keep in sync with FundOperator.tsx
 const FUND_TIERS = [
-  GasConstants.Low,     // 0.001
+  GasConstants.Low, // 0.001
   GasConstants.Warning, // 0.0001
 ];
 
@@ -77,6 +78,7 @@ export const GasHarasser: UIComponent = {
     const { data: operatorBalance, refetch } = useBalance({
       address: account.operatorAddress,
     });
+    const sponsor = useGasSponsor(account.ownerAddress, account.operatorAddress);
 
     const { data: ownerBalanceData } = useBalance({
       address: account.ownerAddress,
@@ -88,11 +90,11 @@ export const GasHarasser: UIComponent = {
     useEffect(() => {
       if (!validations.operatorMatches) return;
       if (!operatorBalance) return; // Don't evaluate until balance RPC returns
-      const hasGas = hasEnoughGas(operatorBalance.value);
+      const hasGas = sponsor.isWhitelisted || hasEnoughGas(operatorBalance.value);
       if (hasGas !== validations.operatorHasGas) {
         setValidations({ ...validations, operatorHasGas: hasGas });
       }
-    }, [validations.operatorMatches, operatorBalance]);
+    }, [validations.operatorMatches, operatorBalance, sponsor.isWhitelisted]);
 
     useEffect(() => {
       const isVisible =
@@ -144,7 +146,8 @@ export const GasHarasser: UIComponent = {
       }
     }, [amount, ownerBalanceWei]);
 
-    const isAmountValid = !!parsedWei && parsedWei >= parseEther(MIN_FUND_ETH.toString()) && !overBudget;
+    const isAmountValid =
+      !!parsedWei && parsedWei >= parseEther(MIN_FUND_ETH.toString()) && !overBudget;
 
     /////////////////
     // ACTION
@@ -237,10 +240,26 @@ export const GasHarasser: UIComponent = {
           </BalanceDisplay>
         </BalanceSection>
 
-        {needsToBridge() ? (
+        {isGasSponsored ? (
+          <BridgeGroup>
+            <StatusText $warn={!!sponsor.error}>
+              {sponsor.error || 'Gas is on us for this demo.'}
+            </StatusText>
+            <IconButton
+              img={MenuIcons.kami}
+              onClick={sponsor.request}
+              text={sponsor.isPending ? 'Setting up your wallets...' : 'Get Free Gas'}
+              disabled={sponsor.isPending}
+            />
+          </BridgeGroup>
+        ) : needsToBridge() ? (
           <BridgeGroup>
             <StatusText $warn>You need to bridge some ETH first.</StatusText>
-            <IconButton img={MenuIcons.kami} onClick={() => triggerBridgeModal()} text='Bridge ETH' />
+            <IconButton
+              img={MenuIcons.kami}
+              onClick={() => triggerBridgeModal()}
+              text='Bridge ETH'
+            />
           </BridgeGroup>
         ) : (
           <FundSection>

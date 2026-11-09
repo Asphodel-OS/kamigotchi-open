@@ -4,14 +4,15 @@ import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 
 import { IconButton, TextTooltip } from 'app/components/library';
-import { triggerBridgeModal } from 'app/triggers';
 import { useAccount, useTokens } from 'app/stores';
+import { triggerBridgeModal } from 'app/triggers';
 import { copy } from 'app/utils';
 import { MenuIcons } from 'assets/images/icons/menu';
-import { GasConstants } from 'constants/gas';
+import { GasConstants, isGasSponsored } from 'constants/gas';
 import { NameCache, OperatorCache } from 'network/shapes/Account';
 import { abbreviateAddress } from 'utils/address';
 import { playSignup } from 'utils/sounds';
+import { useGasSponsor } from '../useGasSponsor';
 import { Description, Row } from './components';
 import { Section } from './components/shared';
 
@@ -43,6 +44,7 @@ export const Registration = ({
   };
 }) => {
   const ethBalance = useTokens((s) => s.eth.balance);
+  const sponsor = useGasSponsor(address.selected, address.burner);
 
   const storageKey = `${STAGED_NAME_PREFIX}${address.selected}`;
   const [name, setName] = useState(() => localStorage.getItem(storageKey) ?? '');
@@ -88,6 +90,7 @@ export const Registration = ({
   };
 
   const needsToBridge = () => {
+    if (isGasSponsored) return !sponsor.isWhitelisted;
     return ethBalance < GasConstants.Empty && import.meta.env.MODE !== 'development';
   };
 
@@ -109,7 +112,8 @@ export const Registration = ({
     if (getError()) return;
     localStorage.setItem(storageKey, name);
     setAutoCreate(true);
-    triggerBridgeModal();
+    if (isGasSponsored) sponsor.request();
+    else triggerBridgeModal();
   };
 
   // fire the staged creation once funds arrive (the owner wallet still
@@ -130,7 +134,7 @@ export const Registration = ({
     handleAccountCreation().finally(() => {
       autoFiringRef.current = false;
     });
-  }, [ethBalance, autoCreate, name]);
+  }, [ethBalance, sponsor.isWhitelisted, autoCreate, name]);
 
   const handleAccountCreation = async (): Promise<boolean> => {
     // a result only applies to this screen if the wallet that started it is still selected
@@ -240,8 +244,10 @@ export const Registration = ({
         <BridgeFlow>
           <Section padding={0.6}>
             <Description size={0.88}>
-              You need to bridge Ether to Yominet before you can play. Pick your username now — your
-              account is created automatically the moment your ETH arrives.
+              {isGasSponsored
+                ? 'Gas is on us for this demo. Pick your username and we will set up your wallets.'
+                : `You need to bridge Ether to Yominet before you can play. Pick your username now — your
+              account is created automatically the moment your ETH arrives.`}
             </Description>
             <Actions>
               <Input
@@ -258,9 +264,16 @@ export const Registration = ({
                 text={
                   nameError
                     ? [nameError]
-                    : autoCreate
-                      ? ['Your account will be created automatically when your ETH lands.', 'Click to reopen the bridge.']
-                      : []
+                    : isGasSponsored
+                      ? sponsor.error
+                        ? [sponsor.error]
+                        : []
+                      : autoCreate
+                        ? [
+                            'Your account will be created automatically when your ETH lands.',
+                            'Click to reopen the bridge.',
+                          ]
+                        : []
                 }
                 cursor={nameError ? 'help' : 'pointer'}
               >
@@ -272,8 +285,18 @@ export const Registration = ({
                   // no amount prefill — the bridge modal defaults to Zevana's
                   // live price + operator gas headroom. re-clicking while armed
                   // just reopens the bridge modal (arming is idempotent)
-                  text={autoCreate ? 'Waiting for ETH...' : 'Bridge ETH and Create Account'}
-                  disabled={!!nameError}
+                  text={
+                    isGasSponsored
+                      ? sponsor.isPending
+                        ? 'Setting up your wallets...'
+                        : sponsor.error
+                          ? 'Try Again'
+                          : 'Get Free Gas and Create Account'
+                      : autoCreate
+                        ? 'Waiting for ETH...'
+                        : 'Bridge ETH and Create Account'
+                  }
+                  disabled={!!nameError || sponsor.isPending}
                   onClick={armAutoCreate}
                 />
               </TextTooltip>
@@ -433,4 +456,3 @@ const FailNotice = styled.div`
   font-size: 0.72vw;
   text-align: center;
 `;
-

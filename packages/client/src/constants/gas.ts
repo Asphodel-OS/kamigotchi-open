@@ -12,3 +12,10 @@ export const GasConstants = {
 };
 
 export const GasExponent = 18;
+
+// when set, gas is sponsored: players are added to Yominet's fee whitelist and send at price 0
+export const GasSponsorURL: string | undefined = import.meta.env.VITE_GAS_SPONSOR_URL;
+export const isGasSponsored = !!GasSponsorURL;
+
+// the chain rejects any tx from a whitelisted wallet whose gas limit is above this
+export const FreeLaneGasLimit = 4_500_000n;

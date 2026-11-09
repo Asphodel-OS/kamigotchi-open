@@ -1,4 +1,6 @@
 import { baseGasPrice, DefaultChain } from 'constants/chains';
+import { FreeLaneGasLimit, isGasSponsored } from 'constants/gas';
+import { isSponsoredWallet } from './sponsoredGas';
 import {
   keccak256,
   Overrides,
@@ -275,7 +277,13 @@ export async function sendTx(
   }
 
   txData.chainId = DefaultChain.id;
-  txData.maxFeePerGas = baseGasPrice;
+  // free only for wallets the sponsor has whitelisted; everyone else pays as usual
+  const sender = isGasSponsored ? await signer.getAddress().catch(() => undefined) : undefined;
+  const sponsored = isGasSponsored && isSponsoredWallet(sender);
+  txData.maxFeePerGas = sponsored ? 0 : baseGasPrice;
+  if (sponsored && BigInt(txData.gasLimit ?? FreeLaneGasLimit) > FreeLaneGasLimit) {
+    txData.gasLimit = FreeLaneGasLimit; // anything above is rejected, including hardcoded limits
+  }
   txData.maxPriorityFeePerGas = 0;
 
   log.time.info('[queue] Signing tx');

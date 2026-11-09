@@ -4,6 +4,7 @@
 // Live values are set per-deploy as Vercel project env vars.
 interface ImportMetaEnv {
   // hard maintenance wall: skips the entire network boot (see src/boot.tsx)
+  readonly VITE_GAS_SPONSOR_URL?: string;
   readonly VITE_MAINTENANCE?: 'true' | 'false';
   // optional copy for the maintenance wall; unset = generic copy
   readonly VITE_MAINTENANCE_TITLE?: string;
