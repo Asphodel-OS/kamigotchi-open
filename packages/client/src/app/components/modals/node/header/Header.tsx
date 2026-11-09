@@ -140,7 +140,7 @@ export const Header = ({
   }
 
   return (
-    <Container>
+    <Container id='node_header'>
       <Content>
         <Image src={getNodeImage()} />
         <Details>

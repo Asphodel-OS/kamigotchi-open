@@ -144,6 +144,13 @@ export const Room = ({ index, completedQuests }: { index: number; completedQuest
 
   // keyed by room and position: object names repeat (room 77 has two 'coop trigger'), and a duplicate
   // key leaves a stale clickbox mounted in the next rooms
+  // a repeated name (room 77 has two 'coop trigger') gets -2, -3: ids must be unique for lookups
+  const getClickboxId = (object: RoomAsset, i: number) => {
+    const base = `room-object-${object.name.replace(/\s+/g, '-')}`;
+    const repeat = room.objects.slice(0, i).filter((o) => o.name === object.name).length;
+    return repeat ? `${base}-${repeat + 1}` : base;
+  };
+
   const getClickbox = (object: RoomAsset, i: number) => {
     const key = `${room.index}-${i}`;
     const coords = object.coordinates;
@@ -159,7 +166,15 @@ export const Room = ({ index, completedQuests }: { index: number; completedQuest
     else if (object.onClick) onClick = object.onClick;
 
     return object.name !== 'trading' ? (
-      <Clickbox key={key} x1={x1} y1={y1} x2={x2} y2={y2} onClick={onClick} />
+      <Clickbox
+        key={key}
+        id={getClickboxId(object, i)}
+        x1={x1}
+        y1={y1}
+        x2={x2}
+        y2={y2}
+        onClick={onClick}
+      />
     ) : (
       <Clickbox
         key={key}

@@ -35,6 +35,10 @@ const options = [
   { text: 'Level Gating', img: ExpIcon, object: 'LevelGate' },
 ];
 
+// shop quests lead to the shop door at Tunnel of Trees: Supporting Local Businesses (main),
+// Smart Shopper (test world demo)
+const QUEST_WAYPOINTS: Record<number, number> = { 8: 2, 20012: 2 };
+
 export const Grid = ({
   data: { account, accountKamis, rooms, roomIndex, zone, isViewingDifferentZone = false },
   actions: { move },
@@ -221,6 +225,13 @@ export const Grid = ({
         if (!names.includes(quest.name)) names.push(quest.name);
         map.set(obj.target.index, names);
       });
+      // a quest whose destination isn't one of its objectives can still mark the way
+      const waypoint = QUEST_WAYPOINTS[quest.index];
+      if (waypoint) {
+        const names = map.get(waypoint) ?? [];
+        if (!names.includes(quest.name)) names.push(quest.name);
+        map.set(waypoint, names);
+      }
     });
     return map;
   }, [network, account?.id, tick]);
@@ -372,6 +383,7 @@ export const Grid = ({
                       ? [
                           <GridTooltip
                             room={room}
+                            hasNode={!!queryNodeByIndex(room.index)}
                             rolls={rolls}
                             yourKamiIconsMap={yourKamiIconsMap}
                             getNode={getNode}

@@ -6,6 +6,7 @@ import { ClockFixture } from './fixtures/clock';
 import { LeftMenuFixture, RightMenuFixture } from './fixtures/menu';
 import { NotificationFixture } from './fixtures/notifications';
 import { ActionQueue } from './fixtures/queue';
+import { HarvestTutorial, MapTutorial, ShopTutorial } from './fixtures/tutorial';
 
 import { AccountModal } from './modals/account';
 import { BridgeModal } from './modals/bridge';
@@ -97,6 +98,18 @@ export const allComponents: UIComponentWithGrid[] = [
   },
   {
     uiComponent: OperatorUpdater,
+    gridConfig: { colStart: 1, colEnd: 100, rowStart: 1, rowEnd: 100 },
+  },
+  {
+    uiComponent: MapTutorial,
+    gridConfig: { colStart: 1, colEnd: 100, rowStart: 1, rowEnd: 100 },
+  },
+  {
+    uiComponent: HarvestTutorial,
+    gridConfig: { colStart: 1, colEnd: 100, rowStart: 1, rowEnd: 100 },
+  },
+  {
+    uiComponent: ShopTutorial,
     gridConfig: { colStart: 1, colEnd: 100, rowStart: 1, rowEnd: 100 },
   },
   {

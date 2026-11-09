@@ -438,6 +438,7 @@ export const DialogueModal: UIComponent = {
           {actions.map((action, i) => (
             <ActionButton
               key={i}
+              id={`dialogue-action-${action.label.toLowerCase().replace(/\s+/g, '-')}`}
               text={action.label}
               disabled={isDisabled(action)}
               onClick={() => {

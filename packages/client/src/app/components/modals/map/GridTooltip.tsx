@@ -6,6 +6,7 @@ import { getAffinityImage } from 'network/shapes/utils';
 
 export const GridTooltip = ({
   room,
+  hasNode,
   rolls,
   yourKamiIconsMap,
   getNode,
@@ -15,6 +16,7 @@ export const GridTooltip = ({
   friendsCount,
 }: {
   room: Room;
+  hasNode: boolean;
   rolls: Map<number, number>;
   yourKamiIconsMap: Map<number, string[]>;
   getNode: (index: number) => any;
@@ -24,6 +26,18 @@ export const GridTooltip = ({
   friendsCount: number;
 }) => {
   if (!room.index) return null;
+
+  // rooms without a node only have a description and whoever is standing there
+  if (!hasNode) {
+    return (
+      <Card>
+        {room.description && <Description>{room.description}</Description>}
+        <BottomSection>
+          <PlayersPill count={playerEntitiesLength} friends={friendsCount} />
+        </BottomSection>
+      </Card>
+    );
+  }
 
   const node = getNode(room.index);
   const drops = node.drops ?? [];
@@ -58,10 +72,7 @@ export const GridTooltip = ({
           ))}
           <Muted>Rolls: {rollsCount}</Muted>
         </Pill>
-        <Pill>
-          <Icon src={OperatorIcon} />
-          Players here: {playerEntitiesLength} Friends: {friendsCount}
-        </Pill>
+        <PlayersPill count={playerEntitiesLength} friends={friendsCount} />
         <Pill>
           <Icon src={KamiIcon} />
           Kami here: {kamiEntitiesLength} Yours: {owned}
@@ -78,6 +89,13 @@ export const GridTooltip = ({
     </Card>
   );
 };
+
+const PlayersPill = ({ count, friends }: { count: number; friends: number }) => (
+  <Pill>
+    <Icon src={OperatorIcon} />
+    Players here: {count} Friends: {friends}
+  </Pill>
+);
 
 // own layout: the tooltip text block sets an absolute vw line-height and pre-line wrapping
 const Card = styled.div`

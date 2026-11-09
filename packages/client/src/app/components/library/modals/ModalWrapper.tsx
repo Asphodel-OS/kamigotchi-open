@@ -112,6 +112,7 @@ export const ModalWrapper = ({
         isOpen={isVisible}
         truncate={truncate}
         data-resizable={id === 'trading'}
+        data-modal-content
       >
         {header && <Header noBorder={noInternalBorder}>{header}</Header>}
         {canExit && (

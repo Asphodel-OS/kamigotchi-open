@@ -6,6 +6,7 @@ import { TextTooltip } from '../tooltips';
 
 // ActionButton is a text button that triggers an Action when clicked
 export const ActionButton = ({
+  id,
   onClick,
   text,
   disabled = false,
@@ -16,6 +17,7 @@ export const ActionButton = ({
   tooltip,
   noBorder = false,
 }: {
+  id?: string; // lets a tutorial hint point at this button
   onClick: Function;
   text: string;
   disabled?: boolean;
@@ -92,7 +94,7 @@ export const ActionButton = ({
     );
   else
     result = (
-      <Button onClick={!disabled ? handleClick : () => {}} style={setStyles()}>
+      <Button id={id} onClick={!disabled ? handleClick : () => {}} style={setStyles()}>
         {text}
       </Button>
     );
