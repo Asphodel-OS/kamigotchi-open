@@ -8,6 +8,7 @@ import { Auction } from 'network/shapes/Auction';
 import { GachaMintData } from 'network/shapes/Gacha';
 import { Kami } from 'network/shapes/Kami';
 import { Filter, Sort, TabType, ViewMode } from '../types';
+import { Mystery } from './mystery/Mystery';
 import { Pool } from './pool/Pool';
 import { Reroll } from './reroll/Reroll';
 
@@ -99,7 +100,8 @@ export const Display = ({
         utils={utils}
         isVisible={tab === 'REROLL'}
       />
-      <Overlay top={0.9} right={0.6}>
+      <Mystery isVisible={tab === 'MYSTERY'} />
+      <Overlay top={0.9} right={0.6} zIndex={3}>
         {isButtonVisible() && <ActionButton text={getButtonText()} onClick={toggleMode} />}
       </Overlay>
     </Container>

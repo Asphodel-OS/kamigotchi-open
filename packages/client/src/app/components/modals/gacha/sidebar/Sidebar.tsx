@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import { calcAuctionCost } from 'app/cache/auction';
+import { Overlay, Pairing } from 'app/components/library';
 import { useVisibility } from 'app/stores';
 import { GACHA_TICKET_INDEX, MUSU_INDEX, ONYX_INDEX, REROLL_TICKET_INDEX } from 'constants/items';
 import { Auction } from 'network/shapes/Auction';
@@ -10,7 +11,7 @@ import { Commit } from 'network/shapes/Commit';
 import { Inventory } from 'network/shapes/Inventory';
 import { Item, NullItem } from 'network/shapes/Item';
 import { Kami } from 'network/shapes/Kami/types';
-import { Filter, Sort, TabType, ViewMode } from '../types';
+import { Filter, getAuctionStatus, Sort, TabType, ViewMode } from '../types';
 import { Controls } from './controls/Controls';
 import { Footer } from './Footer';
 import { Tabs } from './Tabs';
@@ -154,20 +155,45 @@ export const Sidebar = ({
   ////////////////
   // RENDER
 
+  const auctionStatus = getAuctionStatus(tab === 'REROLL' ? auctions.reroll : auctions.gacha);
+
+  if (tab === 'MYSTERY') {
+    const musu = getItem(MUSU_INDEX);
+    return (
+      <Container>
+        <Tabs tab={tab} setTab={setTab} />
+        <Placeholder>
+          <PlaceholderText size={1.8}>coming soon</PlaceholderText>
+          <PlaceholderText size={1.1}>
+            something new is brewing in the vending machine
+          </PlaceholderText>
+          <Overlay right={0.75} bottom={0.75}>
+            <Pairing
+              icon={musu.image}
+              text={getItemBalance(MUSU_INDEX).toLocaleString()}
+              tooltip={[musu.name]}
+              reverse
+            />
+          </Overlay>
+        </Placeholder>
+      </Container>
+    );
+  }
+
   return (
     <Container>
       <Tabs tab={tab} setTab={setTab} />
       <Controls
         actions={actions}
         controls={controls}
-        data={{ balance, commits, payItem, saleItem }}
+        data={{ auctionStatus, balance, commits, payItem, saleItem }}
         state={{ ...state, price }}
         utils={utils}
       />
       <Footer
         actions={actions}
         controls={controls}
-        data={{ ...data, balance, payItem, saleItem, startTs }}
+        data={{ ...data, auctionStatus, balance, payItem, saleItem, startTs }}
         state={{ ...state, price, setPrice }}
       />
     </Container>
@@ -183,4 +209,24 @@ const Container = styled.div`
   flex-flow: column nowrap;
   justify-content: space-between;
   align-items: flex-start;
+`;
+
+const Placeholder = styled.div`
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 2.4vw;
+
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1.2vw;
+`;
+
+const PlaceholderText = styled.div<{ size: number }>`
+  color: black;
+  font-size: ${({ size }) => size}vw;
+  line-height: ${({ size }) => size * 1.6}vw;
+  text-align: center;
 `;

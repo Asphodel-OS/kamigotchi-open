@@ -1,15 +1,9 @@
 import styled from 'styled-components';
 
 import { playClick } from 'utils/sounds';
-import { TABS, TabType } from '../types';
+import { TAB_LABELS, TABS, TabType } from '../types';
 
-export const Tabs = ({
-  tab,
-  setTab,
-}: {
-  tab: TabType;
-  setTab: (tab: TabType) => void;
-}) => {
+export const Tabs = ({ tab, setTab }: { tab: TabType; setTab: (tab: TabType) => void }) => {
   // layer on a sound effect
   const handleTab = async (tab: TabType) => {
     playClick();
@@ -23,9 +17,10 @@ export const Tabs = ({
           key={t}
           onClick={() => handleTab(t)}
           disabled={tab === t}
+          isActive={tab === t}
           style={{ borderLeft: i == 0 ? '' : 'solid black .15vw' }}
         >
-          {t.toLowerCase()}
+          {TAB_LABELS[t]}
         </Button>
       ))}
     </Container>
@@ -43,9 +38,12 @@ const Container = styled.div`
   justify-content: space-around;
 `;
 
-const Button = styled.button`
+const Button = styled.button<{ isActive: boolean }>`
   border: none;
-  padding: 1.2vw;
+  border-bottom: 0.3vw solid ${({ isActive }) => (isActive ? '#6c6' : 'transparent')};
+  padding: 1.2vw 1.2vw 0.9vw;
+  background-color: #fff;
+  color: ${({ isActive }) => (isActive ? '#000' : '#555')};
   justify-content: center;
   align-items: center;
   width: 100%;
@@ -63,7 +61,7 @@ const Button = styled.button`
     background-color: #ddd;
   }
   &:disabled {
-    background-color: #bbb;
+    background-color: #efe;
     cursor: default;
     pointer-events: none;
   }

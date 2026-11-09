@@ -2,7 +2,7 @@ import styled from 'styled-components';
 
 import { Commit } from 'network/shapes/Commit';
 import { Item } from 'network/shapes/Item';
-import { Filter, Sort, TabType, ViewMode } from '../../../types';
+import { AuctionStatus, Filter, Sort, TabType, ViewMode } from '../../../types';
 import { PricePanel } from '../PricePanel';
 import { KamiPanel } from './KamiPanel';
 
@@ -26,6 +26,7 @@ export const Pool = ({
     commits: Commit[];
     payItem: Item;
     saleItem: Item;
+    auctionStatus: AuctionStatus;
   };
   state: {
     price: number;

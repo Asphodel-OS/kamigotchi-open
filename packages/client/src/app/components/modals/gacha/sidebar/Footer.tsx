@@ -6,7 +6,7 @@ import { GACHA_MAX_PER_TX } from 'constants/gacha';
 import { Item } from 'network/shapes/Item';
 import { Kami } from 'network/shapes/Kami';
 import { playClick, playSuccess } from 'utils/sounds';
-import { TabType, ViewMode } from '../types';
+import { AuctionStatus, TabType, ViewMode } from '../types';
 
 export const Footer = ({
   actions,
@@ -29,6 +29,7 @@ export const Footer = ({
     saleItem: Item;
     balance: number;
     startTs?: number;
+    auctionStatus: AuctionStatus;
   };
   state: {
     quantity: number;
@@ -41,15 +42,17 @@ export const Footer = ({
 }) => {
   const { approve, bid, pull, reroll } = actions;
   const { mode, tab } = controls;
-  const { payItem, saleItem, balance, startTs } = data;
+  const { auctionStatus, payItem, saleItem, balance, startTs } = data;
   const { selectedKamis, setSelectedKamis } = state;
   const { quantity, setQuantity, price } = state;
 
   const [isDisabled, setIsDisabled] = useState(true);
 
   useEffect(() => {
-    setIsDisabled(quantity <= 0 || needsFunds() || exceedsMax() || !hasStarted());
-  }, [price, balance, quantity, startTs]);
+    setIsDisabled(
+      quantity <= 0 || needsFunds() || exceedsMax() || !hasStarted() || isAuctionShut()
+    );
+  }, [price, balance, quantity, startTs, auctionStatus, mode]);
 
   /////////////////
   // CHECKERS
@@ -59,6 +62,9 @@ export const Footer = ({
     if (tab === 'GACHA' && mode === 'DEFAULT') return quantity > GACHA_MAX_PER_TX;
     return false;
   };
+
+  // check if the auction being bid on no longer sells
+  const isAuctionShut = () => mode === 'ALT' && auctionStatus !== 'OPEN';
 
   // check if a user needs further spend approval for a token
   const needsApproval = () => {
@@ -146,6 +152,11 @@ export const Footer = ({
 
   // get the error description for the submit button tooltip
   const getErrorDescription = () => {
+    if (isAuctionShut()) {
+      return auctionStatus === 'CLOSED'
+        ? [`this auction has closed`]
+        : [`this auction is sold out`];
+    }
     // gacha
     if (tab === 'GACHA') {
       if (mode === 'DEFAULT') {
@@ -260,10 +271,11 @@ const Submit = styled.div<{ disabled?: boolean }>`
         pointer-events: auto;
         cursor: default; `
       : `
+        background-color: #beb;
         &:hover {
-          background-color: #ddd;
+          background-color: #ada;
         }
         &:active {
-          background-color: #bbb;
+          background-color: #9c9;
         }`}
 `;

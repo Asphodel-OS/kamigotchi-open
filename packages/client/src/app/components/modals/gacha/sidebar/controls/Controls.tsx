@@ -6,7 +6,7 @@ import { Commit } from 'network/shapes/Commit';
 import { Item } from 'network/shapes/Item';
 import { Kami } from 'network/shapes/Kami';
 
-import { Filter, Sort, TabType, ViewMode } from '../../types';
+import { AuctionStatus, Filter, Sort, TabType, ViewMode } from '../../types';
 import { Pool } from './pool/Pool';
 import { Reroll } from './reroll/Reroll';
 
@@ -34,6 +34,7 @@ export const Controls = ({
     commits: Commit[];
     payItem: Item;
     saleItem: Item;
+    auctionStatus: AuctionStatus;
   };
   state: {
     quantity: number;

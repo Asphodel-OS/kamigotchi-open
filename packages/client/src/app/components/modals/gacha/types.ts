@@ -1,8 +1,22 @@
 import { KamiIcon } from 'assets/images/icons/menu';
 import { StatIcons } from 'constants/stats';
+import { Auction } from 'network/shapes/Auction';
 
-export type TabType = 'GACHA' | 'REROLL';
-export const TABS: TabType[] = ['GACHA', 'REROLL'];
+export type TabType = 'GACHA' | 'REROLL' | 'MYSTERY';
+export const TABS: TabType[] = ['GACHA', 'REROLL', 'MYSTERY'];
+export const TAB_LABELS: Record<TabType, string> = {
+  GACHA: 'gacha',
+  REROLL: 'reroll',
+  MYSTERY: '???',
+};
+
+// whether an auction still sells: removed auctions read as the null auction (entity 0)
+export type AuctionStatus = 'OPEN' | 'SOLD_OUT' | 'CLOSED';
+export const getAuctionStatus = (auction: Auction): AuctionStatus => {
+  if (!auction.entity) return 'CLOSED';
+  if (auction.supply.total > 0 && auction.supply.sold >= auction.supply.total) return 'SOLD_OUT';
+  return 'OPEN';
+};
 
 export type ViewMode = 'DEFAULT' | 'ALT';
 

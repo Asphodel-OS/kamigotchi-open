@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { Commit } from 'network/shapes/Commit';
 import { Item } from 'network/shapes/Item';
 import { Kami } from 'network/shapes/Kami';
-import { ViewMode } from '../../../types';
+import { AuctionStatus, ViewMode } from '../../../types';
 import { PricePanel } from '../PricePanel';
 import { KamiPanel } from './KamiPanel';
 
@@ -21,6 +21,7 @@ export const Reroll = ({
     commits: Commit[];
     payItem: Item;
     saleItem: Item;
+    auctionStatus: AuctionStatus;
   };
   state: {
     price: number;
