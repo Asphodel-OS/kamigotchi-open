@@ -30,7 +30,7 @@ contract AuctionTest is SetupTemplate {
       DECAY,
       RATE,
       MAX,
-      block.timestamp
+      vm.getBlockTimestamp()
     );
   }
 
@@ -41,10 +41,10 @@ contract AuctionTest is SetupTemplate {
   function testPauseRestoresPrePausePrice() public {
     _fastForward(1 days);
     uint256 before = _price(1);
-    uint64 pauseStart = uint64(block.timestamp);
+    uint64 pauseStart = uint64(vm.getBlockTimestamp());
 
     _fastForward(3 days); // the chain is halted
-    uint64 pauseEnd = uint64(block.timestamp);
+    uint64 pauseEnd = uint64(vm.getBlockTimestamp());
     assertLt(_price(1), before);
 
     _setPause(pauseStart, pauseEnd);
@@ -58,9 +58,9 @@ contract AuctionTest is SetupTemplate {
   /// @dev only the window counts: a pause in the past still skips just its own length
   function testPauseSkipsOnlyItsWindow() public {
     _fastForward(1 days);
-    uint64 pauseStart = uint64(block.timestamp);
+    uint64 pauseStart = uint64(vm.getBlockTimestamp());
     _fastForward(2 days);
-    uint64 pauseEnd = uint64(block.timestamp);
+    uint64 pauseEnd = uint64(vm.getBlockTimestamp());
     _fastForward(1 days); // set late, a day after the chain came back
 
     _setPause(pauseStart, pauseEnd);
@@ -77,7 +77,7 @@ contract AuctionTest is SetupTemplate {
       DECAY,
       RATE,
       MAX,
-      block.timestamp - 2 days
+      vm.getBlockTimestamp() - 2 days
     );
     assertEq(withPause, LibAuction.calcBuy(components, refID, 1));
   }
@@ -93,13 +93,13 @@ contract AuctionTest is SetupTemplate {
       DECAY,
       RATE,
       MAX,
-      block.timestamp
+      vm.getBlockTimestamp()
     );
-    uint64 pauseStart = uint64(block.timestamp);
+    uint64 pauseStart = uint64(vm.getBlockTimestamp());
     _fastForward(2 days);
     uint256 otherBefore = LibAuction.calcBuy(components, otherID, 1);
 
-    _setPause(pauseStart, uint64(block.timestamp));
+    _setPause(pauseStart, uint64(vm.getBlockTimestamp()));
     assertEq(LibAuction.calcBuy(components, otherID, 1), otherBefore);
     assertGt(_price(1), otherBefore);
   }
@@ -107,9 +107,9 @@ contract AuctionTest is SetupTemplate {
   function testBuyChargesPausedPrice() public {
     _fastForward(1 days);
     uint256 before = _price(2);
-    uint64 pauseStart = uint64(block.timestamp);
+    uint64 pauseStart = uint64(vm.getBlockTimestamp());
     _fastForward(3 days);
-    _setPause(pauseStart, uint64(block.timestamp));
+    _setPause(pauseStart, uint64(vm.getBlockTimestamp()));
 
     uint256 musu = before + 1000;
     _giveItem(alice, MUSU_INDEX, musu);
@@ -126,7 +126,7 @@ contract AuctionTest is SetupTemplate {
     _fastForward(1 days);
     vm.prank(alice.owner);
     vm.expectRevert("Auth: not an admin");
-    __AuctionRegistrySystem.setPause(ITEM, uint64(block.timestamp - 1 hours), uint64(block.timestamp));
+    __AuctionRegistrySystem.setPause(ITEM, uint64(vm.getBlockTimestamp() - 1 hours), uint64(vm.getBlockTimestamp()));
   }
 
   function testSetPauseUnknownAuction() public {
@@ -138,7 +138,7 @@ contract AuctionTest is SetupTemplate {
   /// @dev bad windows fail at the admin tx instead of breaking buys
   function testSetPauseRejectsBadWindows() public {
     _fastForward(1 days);
-    uint64 now_ = uint64(block.timestamp);
+    uint64 now_ = uint64(vm.getBlockTimestamp());
     uint64 startTs = uint64(LibAuctionRegistry.getStartTs(components, auctionID));
 
     vm.startPrank(deployer);
@@ -157,7 +157,7 @@ contract AuctionTest is SetupTemplate {
 
   function testSetPauseReplacesAndClears() public {
     _fastForward(2 days);
-    uint64 now_ = uint64(block.timestamp);
+    uint64 now_ = uint64(vm.getBlockTimestamp());
     _setPause(now_ - 2 days, now_ - 1 days);
     _setPause(now_ - 1 days, now_);
     assertEq(_TimePauseComponent.get(auctionID), (uint256(now_ - 1 days) << 64) | now_);
@@ -168,7 +168,7 @@ contract AuctionTest is SetupTemplate {
 
   function testRemoveClearsPause() public {
     _fastForward(1 days);
-    _setPause(uint64(block.timestamp - 1 hours), uint64(block.timestamp));
+    _setPause(uint64(vm.getBlockTimestamp() - 1 hours), uint64(vm.getBlockTimestamp()));
     vm.prank(deployer);
     __AuctionRegistrySystem.remove(ITEM);
     assertFalse(_TimePauseComponent.has(auctionID));

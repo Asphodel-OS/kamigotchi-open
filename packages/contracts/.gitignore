@@ -30,3 +30,5 @@ temp/
 **/CLAUDE.md
 # ballots settle job cache
 .ballots-cache/
+out-solar/
+cache-solar/

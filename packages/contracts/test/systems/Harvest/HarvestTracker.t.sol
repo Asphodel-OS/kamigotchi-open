@@ -14,7 +14,9 @@ contract HarvestTrackerTest is SetupTemplate {
   }
 
   function testTrackHarvestTime() public {
-    uint256 startTime = block.timestamp;
+    // vm.getBlockTimestamp(), not block.timestamp: a compiler may read block.timestamp once per
+    // call, which ignores the vm.warp calls below
+    uint256 startTime = vm.getBlockTimestamp();
     uint32 nodeIndex = 1;
 
     uint256 prodID = _startHarvest(aKamiID, nodeIndex);
@@ -31,6 +33,9 @@ contract HarvestTrackerTest is SetupTemplate {
     // // stop harvest - logs time
     _fastForward(_idleRequirement + 50);
     _stopHarvest(prodID);
-    assertEq(block.timestamp - startTime, LibData.get(components, alice.id, 0, "HARVEST_TIME"));
+    assertEq(
+      vm.getBlockTimestamp() - startTime,
+      LibData.get(components, alice.id, 0, "HARVEST_TIME")
+    );
   }
 }

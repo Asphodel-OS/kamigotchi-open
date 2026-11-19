@@ -137,6 +137,8 @@ VITE_RPC_WS_URL='wss://jsonrpc-ws-yominet-1.anvil.asia-southeast.initia.xyz'
 
 _first you'll need to have [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) and [foundry](https://getfoundry.sh/introduction/installation) installed_
 
+_foundry 1.9.0 or later (`foundryup`) also installs [Solar](https://github.com/paradigmxyz/solar), used by the `*:solar` scripts in `packages/contracts`. deploys still compile with solc_
+
 you'll also want the following environment files
 
 ```sh
