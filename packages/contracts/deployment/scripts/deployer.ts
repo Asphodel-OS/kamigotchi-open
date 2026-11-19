@@ -4,6 +4,7 @@ import { findLog } from '../utils/findLog';
 import { verifyContracts } from '../utils/forge';
 import { deploymentDir } from '../utils/paths';
 import { generateLibDeploy } from './codegen';
+import { broadcastToAnvil } from './localBroadcast';
 import execa = require('execa');
 
 export async function deploy(
@@ -13,12 +14,15 @@ export async function deploy(
   forge?: string,
   initWorld?: boolean
 ) {
+  // locally, forge only simulates and we replay its transaction list ourselves:
+  // its broadcaster takes 20-45 minutes for a world deploy that anvil mines in seconds
+  const local = process.env.NODE_ENV === 'local';
   const child = execa(
     'forge',
     [
       'script',
       'deployment/contracts/Deploy.s.sol:Deploy',
-      '--broadcast',
+      ...(local ? [] : ['--broadcast']),
       '--sig',
       'deploy(uint256,address,bool,bool,bool,address,bool)',
       process.env.PRIV_KEY!, // deployer
@@ -47,6 +51,11 @@ export async function deploy(
   child.stdout?.on('data', (data) => console.log(data.toString()));
   // Extract world address from deploy script
   const lines = (await child).stdout?.split('\n');
+  if (local) {
+    const runFile = findLog(lines, 'Transactions saved to:');
+    if (!runFile) throw new Error('forge did not report a transaction file');
+    await broadcastToAnvil(runFile, process.env.RPC!);
+  }
   const deployedWorldAddress = findLog(lines, 'world: contract World');
   const startBlock = findLog(lines, 'startBlock: uint256');
 
@@ -93,6 +102,7 @@ export async function generateAndDeploy(args: DeployOptions) {
     startBlock = result.startBlock;
   } catch (e) {
     console.error(e);
+    process.exitCode = 1; // callers (stack.sh, CI) must see a failed deploy
   }
 
   return { deployedWorldAddress, startBlock };
