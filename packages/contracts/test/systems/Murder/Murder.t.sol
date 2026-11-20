@@ -90,6 +90,76 @@ contract MurderTest is SetupTemplate {
     );
   }
 
+  // a salvage ratio above 100% pays the victim the whole bounty and the kill still goes through
+  function testMurderSalvageCapped() public {
+    uint256 victimID = _mintKami(alice);
+    uint256 killerID = _mintKami(bob);
+    _fastForward(_idleRequirement);
+
+    uint256 aProdID = _startHarvestByNodeID(victimID, _nodeIDs[0]);
+    _fastForward(24 hours);
+    uint256 bProdID = _startHarvestByNodeID(killerID, _nodeIDs[0]);
+    _fastForward(_idleRequirement);
+
+    _setLiqRatio("KAMI_LIQ_SALVAGE", victimID, 1500);
+    uint256 initialBalance = _getHarvestBounty(bProdID);
+    uint256 bounty = _getHarvestBounty(aProdID);
+    assertGt(bounty, 0, "no bounty to check");
+
+    _liquidateHarvest(killerID, aProdID);
+
+    assertEq(_getItemBal(alice, MUSU_INDEX), bounty, "salvage not capped at the bounty");
+    assertEq(
+      LibHarvest.getBalance(components, bProdID),
+      initialBalance,
+      "spoils without remainder"
+    );
+    assertTrue(LibKami.isState(components, victimID, "DEAD"), "victim not dead");
+  }
+
+  // a spoils ratio above 100% pays the killer what is left after salvage, never more
+  function testMurderSpoilsCapped() public {
+    uint256 victimID = _mintKami(alice);
+    uint256 killerID = _mintKami(bob);
+    _fastForward(_idleRequirement);
+
+    uint256 aProdID = _startHarvestByNodeID(victimID, _nodeIDs[0]);
+    _fastForward(24 hours);
+    uint256 bProdID = _startHarvestByNodeID(killerID, _nodeIDs[0]);
+    _fastForward(_idleRequirement);
+
+    _setLiqRatio("KAMI_LIQ_SPOILS", killerID, 1500);
+    uint256 initialBalance = _getHarvestBounty(bProdID);
+    uint256 bounty = _getHarvestBounty(aProdID);
+    uint256 salvage = LibKill.calcSalvage(components, victimID, bounty);
+    assertGt(bounty - salvage, 0, "no remainder to check");
+
+    _liquidateHarvest(killerID, aProdID);
+
+    assertEq(
+      LibHarvest.getBalance(components, bProdID),
+      initialBalance + bounty - salvage,
+      "spoils not capped at the remainder"
+    );
+  }
+
+  // both ratios scale below 100% and return the full amount from 100% up
+  function testLiqRatioCapBounds() public {
+    uint256 kamiID = _mintKami(alice);
+    uint256 amt = 1e6;
+    uint32[7] memory ratios = [uint32(500), 999, 1000, 1001, 1999, 2000, 3000];
+
+    for (uint i = 0; i < ratios.length; i++) {
+      uint256 expected = ratios[i] >= 1000 ? amt : (amt * ratios[i]) / 1000;
+
+      _setLiqRatio("KAMI_LIQ_SALVAGE", kamiID, ratios[i]);
+      assertEq(LibKill.calcSalvage(components, kamiID, amt), expected, "salvage ratio bound");
+
+      _setLiqRatio("KAMI_LIQ_SPOILS", kamiID, ratios[i]);
+      assertEq(LibKill.calcSpoils(components, kamiID, amt), expected, "spoils ratio bound");
+    }
+  }
+
   // test that the correct account must call the liquidation
   function testMurderPermissionConstraints() public {
     uint numAccounts = 5;
@@ -413,6 +483,14 @@ contract MurderTest is SetupTemplate {
     uint256 existing = LibHarvest.getBalance(components, harvID);
     uint256 increase = LibHarvest.calcBounty(components, harvID);
     return existing + increase;
+  }
+
+  // sets a salvage or spoils config so this kami's total ratio is exactly ratio (precision 1e3)
+  function _setLiqRatio(string memory key, uint256 kamiID, uint32 ratio) internal {
+    uint256 power = uint256(int256(LibStat.getTotal(components, "POWER", kamiID)));
+    uint32 powerTuning = uint32(power) * 10;
+    require(ratio >= powerTuning, "ratio below the kami's power tuning");
+    _setConfig(key, [uint32(0), 2, ratio - powerTuning, 3, 0, 0, 0, 0]);
   }
 
   // stocks an account with a bunch of revives

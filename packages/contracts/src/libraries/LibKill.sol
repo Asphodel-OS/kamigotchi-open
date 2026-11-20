@@ -233,7 +233,7 @@ library LibKill {
     uint256 ratio = config[2] + powerTuning + ratioBonus.toUint256();
 
     uint256 precision = 10 ** uint256(config[3]);
-    if (ratio / precision > 1) return amt;
+    if (ratio >= precision) return amt;
     return (amt * ratio) / precision;
   }
 
@@ -251,7 +251,7 @@ library LibKill {
     uint256 ratio = config[2] + powerTuning + ratioBonus.toUint256();
 
     uint256 precision = 10 ** uint256(config[3]);
-    if (ratio / precision > 1) return amt;
+    if (ratio >= precision) return amt;
     return (amt * ratio) / precision;
   }
 

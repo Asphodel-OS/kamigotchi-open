@@ -84,7 +84,7 @@ const calcSalvage = (kami: Kami, balance?: number): number => {
   if (!balance) balance = calcOutput(kami);
   const powerTuning = power / 100 + config.nudge.value;
   const ratio = config.ratio.value + powerTuning + ratioBonus;
-  const salvage = balance * ratio;
+  const salvage = balance * Math.min(1, ratio);
   return Math.floor(salvage);
 };
 
