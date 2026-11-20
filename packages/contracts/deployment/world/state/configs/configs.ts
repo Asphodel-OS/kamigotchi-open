@@ -234,9 +234,9 @@ async function initSkills(api: AdminAPI) {
 }
 
 async function initVIP(api: AdminAPI) {
-  // starts on April 24, 2025 8:00:00 AM UTC
-  // each stage is 2 weeks
-  await api.config.set.array('VIP_STAGE', [1745481600, 1209600, 0, 0, 0, 0, 0, 0]);
+  // each stage is 2 weeks. stage 41 ran three (to 2026-11-26 08:00 UTC), so the start sits a
+  // week after the real one, May 1, 2025 8:00:00 AM UTC, to keep later stages on Initia's grid
+  await api.config.set.array('VIP_STAGE', [1746086400, 1209600, 0, 0, 0, 0, 0, 0]);
 }
 
 // scoped (`configs initBallots`), not part of initConfigs. BALLOT_REPORTER is the wallet that
@@ -266,9 +266,10 @@ export async function initBallots(api: AdminAPI) {
     120, // 1 per 120 (about 2x the pool today, so the pool always splits; 4:1 caps split gains)
     10, // the floor applies from 10 INIT
   ]);
-  // [start, length, base]: L1 gauge cycle/epoch `base` starts at `start` (40: 2026-10-22 08:00 UTC),
-  // 2 weeks each; base is also the first that can settle. At deploy, move both to the launch one
-  await api.config.set.array('BALLOT_CYCLE', [1792656000, 1209600, 40, 0, 0, 0, 0, 0]);
+  // [start, length, base]: L1 gauge cycle/epoch `base` starts at `start`, 2 weeks each; base is also
+  // the first that can settle. 41 ran three weeks (to 2026-11-26 08:00 UTC), so 40's start sits a
+  // week late to keep 42 onward on L1's grid. At deploy, move both to the launch one
+  await api.config.set.array('BALLOT_CYCLE', [1793260800, 1209600, 40, 0, 0, 0, 0, 0]);
 }
 
 async function initNewbieVendor(api: AdminAPI) {

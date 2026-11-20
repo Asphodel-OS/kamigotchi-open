@@ -42,14 +42,14 @@ const TICK_MS = 30 * 1000; // countdowns show minutes
 const VOTE_CLOSE_LEAD = 1800; // L1 voting closes 30 minutes before the cycle/epoch ends
 
 // offline estimate of the L1 gauge, used only after the LCD fails: yominet's BALLOT_CYCLE clock,
-// anchored to L1 at deploy (unset on fresh worlds: cycle/epoch 39 started 1791446400)
+// anchored to L1 at deploy (unset on fresh worlds: cycle/epoch 42 started 1795680000)
 const estimateCycle = (clock: ReturnType<typeof getCycleClock>, now: number): GaugeCycle => {
   if (clock.configured) {
     const start = clock.end - clock.length;
     return { cycle: clock.cycle, start, end: clock.end, votingEnd: clock.end - VOTE_CLOSE_LEAD };
   }
-  const cycle = 39 + Math.floor((now - 1791446400) / 1209600);
-  const start = 1791446400 + (cycle - 39) * 1209600;
+  const cycle = 42 + Math.floor((now - 1795680000) / 1209600);
+  const start = 1795680000 + (cycle - 42) * 1209600;
   return { cycle, start, end: start + 1209600, votingEnd: start + 1207800 };
 };
 

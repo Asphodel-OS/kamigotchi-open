@@ -5,7 +5,7 @@ import { getConfigFieldValueArray } from '../Config';
 // VIP_STAGE: [start, epoch length], hardcoded fallbacks fix race condition loads
 const getStageInfo = (world: World, comps: Components) => {
   const stageInfo = getConfigFieldValueArray(world, comps, 'VIP_STAGE');
-  return { start: stageInfo[0] || 1745481600, duration: stageInfo[1] || 1209600 };
+  return { start: stageInfo[0] || 1746086400, duration: stageInfo[1] || 1209600 };
 };
 
 // get the current vip epoch

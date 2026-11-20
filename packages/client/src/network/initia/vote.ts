@@ -44,21 +44,32 @@ const view = async <T>(fn: string, args: (string | number)[] = []): Promise<T> =
   return JSON.parse(body.data) as T;
 };
 
+// the open proposal's voting end, which the reporter settles by; L1 can move it with the
+// cycle/epoch's end. unreadable: the usual lead before the end
+const getVotingEnd = async (cycle: number, fallback: number) => {
+  try {
+    const proposal = await view<{ voting_end_time: string }>('get_proposal', [cycle]);
+    return Number(proposal.voting_end_time) || fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 // L1 opens a cycle/epoch lazily, on its first vote, so the stored one can be past its end: the
 // next is then current_cycle + 1 from the latest boundary, as weight_vote::create_proposal does
 export const getGaugeCycle = async (): Promise<GaugeCycle> => {
   const store = await view<Record<string, string>>('get_module_store');
   const now = Math.floor(Date.now() / 1000);
   const interval = Number(store.cycle_interval);
-  let cycle = Number(store.current_cycle);
-  let start = Number(store.cycle_start_time);
-  let end = Number(store.cycle_end_time);
+  const lead = interval - Number(store.voting_period); // voting closes this long before the end
+  const cycle = Number(store.current_cycle);
+  const end = Number(store.cycle_end_time);
   if (now > end) {
-    cycle += 1;
-    start = end + Math.floor((now - end) / interval) * interval;
-    end = start + interval;
+    const start = end + Math.floor((now - end) / interval) * interval;
+    return { cycle: cycle + 1, start, end: start + interval, votingEnd: start + interval - lead };
   }
-  return { cycle, start, end, votingEnd: start + Number(store.voting_period) };
+  const votingEnd = await getVotingEnd(cycle, end - lead);
+  return { cycle, start: Number(store.cycle_start_time), end, votingEnd };
 };
 
 export const getVotingPower = async (address: string) =>

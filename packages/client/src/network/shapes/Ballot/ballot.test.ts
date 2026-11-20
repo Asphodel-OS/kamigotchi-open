@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { buildVoteMsg, getWeightVote } from 'network/initia/vote';
+import { buildVoteMsg, getGaugeCycle, getWeightVote } from 'network/initia/vote';
 import { BallotConfig, calcBase, calcWeight, isStreakVote } from '.';
 
 const cfg: BallotConfig = {
@@ -47,7 +47,45 @@ describe('ballot maths', () => {
       if (!(fn in results)) return { ok: false, json: async () => ({ message: `${fn} aborted` }) };
       return { ok: true, json: async () => ({ data: JSON.stringify(results[fn]) }) };
     });
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  // cycle/epoch 41 as L1 stores it once its end moved a week, to 2026-11-26 08:00 UTC
+  const extended = {
+    current_cycle: '41',
+    cycle_start_time: '1793865600',
+    cycle_end_time: '1795680000',
+    cycle_interval: '1209600',
+    voting_period: '1207800',
+  };
+  const at = (iso: string) => vi.spyOn(Date, 'now').mockReturnValue(Date.parse(iso));
+
+  it("closes voting at the open proposal's end when L1 extends a cycle/epoch", async () => {
+    at('2026-11-20T05:00:00Z');
+    stubL1({ get_module_store: extended, get_proposal: { voting_end_time: '1795679000' } });
+    expect(await getGaugeCycle()).toEqual({
+      cycle: 41,
+      start: 1793865600,
+      end: 1795680000,
+      votingEnd: 1795679000,
+    });
+    // proposal unreadable: the usual 30 minutes before the moved end
+    stubL1({ get_module_store: extended });
+    expect((await getGaugeCycle()).votingEnd).toBe(1795680000 - 1800);
+  });
+
+  it('counts the next cycle/epoch from the moved end once it has passed', async () => {
+    at('2026-11-27T00:00:00Z');
+    stubL1({ get_module_store: extended, get_proposal: { voting_end_time: '1795679000' } });
+    expect(await getGaugeCycle()).toEqual({
+      cycle: 42,
+      start: 1795680000,
+      end: 1795680000 + 1209600,
+      votingEnd: 1795680000 + 1207800,
+    });
+  });
 
   it('sums every yominet entry of a vote, truncating each as L1 tallies them', async () => {
     stubL1({
