@@ -64,7 +64,60 @@
     },
     {
       "type": "function",
+      "name": "executeAllowFailure",
+      "inputs": [
+        {
+          "name": "arguments",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
       "name": "executeBatched",
+      "inputs": [
+        {
+          "name": "kamiIDs",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "nodeIndex",
+          "type": "uint32",
+          "internalType": "uint32"
+        },
+        {
+          "name": "taxerID",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "taxAmt",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes[]",
+          "internalType": "bytes[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "executeBatchedAllowFailure",
       "inputs": [
         {
           "name": "kamiIDs",
@@ -266,7 +319,9 @@
     "completeOwnershipHandover(address)": "f04e283e",
     "deprecate()": "0fcc0c28",
     "execute(bytes)": "09c5eabe",
+    "executeAllowFailure(bytes)": "f00c4431",
     "executeBatched(uint256[],uint32,uint256,uint256)": "68f37c94",
+    "executeBatchedAllowFailure(uint256[],uint32,uint256,uint256)": "49814834",
     "executeTyped(uint256,uint32,uint256,uint256)": "c8372a87",
     "owner()": "8da5cb5b",
     "ownershipHandoverExpiresAt(address)": "fee81cf4",

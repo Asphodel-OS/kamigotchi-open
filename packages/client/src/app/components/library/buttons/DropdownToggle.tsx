@@ -40,7 +40,7 @@ export const DropdownToggle = ({
   balance?: number;
   radius?: number;
   simplified?: boolean;
-  limit?: number;
+  limit?: number | number[]; // one for every mode, or one per mode
   clearTrigger?: boolean;
   trigger?: React.ReactNode;
   hideActionButton?: boolean;
@@ -57,6 +57,7 @@ export const DropdownToggle = ({
   const currentMode = options.length === 1 ? 0 : modeSelected;
   const modeOptions = options[currentMode] ?? [];
   const modeDisabled = disabled?.[currentMode] ?? false;
+  const modeLimit = Array.isArray(limit) ? limit[currentMode] : limit;
 
   // sync checked state with options/selected
   useEffect(() => {
@@ -94,7 +95,17 @@ export const DropdownToggle = ({
     setChecked(Array(modeOptions.length).fill(false));
   }, [clearTrigger, modeOptions.length]);
 
-  const maxSelectable = Math.min(limit ?? modeOptions.length, modeOptions.length);
+  // a selection carried over from another mode is cut down to this mode's limit
+  useEffect(() => {
+    if (!modeLimit) return;
+    setChecked((prev) => {
+      let kept = 0;
+      const next = prev.map((isChecked) => isChecked && ++kept <= modeLimit);
+      return kept > modeLimit ? next : prev;
+    });
+  }, [currentMode, modeLimit]);
+
+  const maxSelectable = Math.min(modeLimit ?? modeOptions.length, modeOptions.length);
   const selectedCount = checked.filter(Boolean).length;
   const allSelected = selectedCount >= maxSelectable;
 
@@ -115,7 +126,7 @@ export const DropdownToggle = ({
         const selected = prev.filter(Boolean).length;
         // !prev[index] is neccesary so the player can decrease
         // the number of selected options when the limit is reached
-        if (!prev[index] && limit && selected >= limit) return prev;
+        if (!prev[index] && modeLimit && selected >= modeLimit) return prev;
         const next = prev.map((val, i) => (i === index ? !val : val));
         if (hideActionButton) onClick[currentMode]?.(getSelectedObjects(next));
         return next;
@@ -165,7 +176,7 @@ export const DropdownToggle = ({
           />
           <span>
             {text}
-            {isSelectAll && limit && selectedCount >= limit ? ` (max ${limit})` : ''}
+            {isSelectAll && modeLimit && selectedCount >= modeLimit ? ` (max ${modeLimit})` : ''}
           </span>
         </Row>
         {imageSrc && <Image src={imageSrc} />}

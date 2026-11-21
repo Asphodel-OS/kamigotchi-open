@@ -20,3 +20,7 @@ export const ViewIcons: Record<View, string> = {
   expanded: TriggerIcons.eyeOpen,
   external: TriggerIcons.eyeClosed,
 };
+
+// most kamis one transaction takes. the harvest sizes keep it under about 9M gas:
+// the rpc cannot estimate a transaction above about 10M
+export const BatchLimits = { add: 8, collect: 5, stop: 5, stake: 12 };

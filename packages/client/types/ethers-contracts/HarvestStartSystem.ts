@@ -30,7 +30,9 @@ export interface HarvestStartSystemInterface extends Interface {
       | "completeOwnershipHandover"
       | "deprecate"
       | "execute"
+      | "executeAllowFailure"
       | "executeBatched"
+      | "executeBatchedAllowFailure"
       | "executeTyped"
       | "owner"
       | "ownershipHandoverExpiresAt"
@@ -58,7 +60,15 @@ export interface HarvestStartSystemInterface extends Interface {
   encodeFunctionData(functionFragment: "deprecate", values?: undefined): string;
   encodeFunctionData(functionFragment: "execute", values: [BytesLike]): string;
   encodeFunctionData(
+    functionFragment: "executeAllowFailure",
+    values: [BytesLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "executeBatched",
+    values: [BigNumberish[], BigNumberish, BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "executeBatchedAllowFailure",
     values: [BigNumberish[], BigNumberish, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
@@ -94,7 +104,15 @@ export interface HarvestStartSystemInterface extends Interface {
   decodeFunctionResult(functionFragment: "deprecate", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "executeAllowFailure",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "executeBatched",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "executeBatchedAllowFailure",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -222,7 +240,24 @@ export interface HarvestStartSystem extends BaseContract {
 
   execute: TypedContractMethod<[arguments: BytesLike], [string], "nonpayable">;
 
+  executeAllowFailure: TypedContractMethod<
+    [arguments: BytesLike],
+    [string],
+    "nonpayable"
+  >;
+
   executeBatched: TypedContractMethod<
+    [
+      kamiIDs: BigNumberish[],
+      nodeIndex: BigNumberish,
+      taxerID: BigNumberish,
+      taxAmt: BigNumberish
+    ],
+    [string[]],
+    "nonpayable"
+  >;
+
+  executeBatchedAllowFailure: TypedContractMethod<
     [
       kamiIDs: BigNumberish[],
       nodeIndex: BigNumberish,
@@ -279,7 +314,22 @@ export interface HarvestStartSystem extends BaseContract {
     nameOrSignature: "execute"
   ): TypedContractMethod<[arguments: BytesLike], [string], "nonpayable">;
   getFunction(
+    nameOrSignature: "executeAllowFailure"
+  ): TypedContractMethod<[arguments: BytesLike], [string], "nonpayable">;
+  getFunction(
     nameOrSignature: "executeBatched"
+  ): TypedContractMethod<
+    [
+      kamiIDs: BigNumberish[],
+      nodeIndex: BigNumberish,
+      taxerID: BigNumberish,
+      taxAmt: BigNumberish
+    ],
+    [string[]],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "executeBatchedAllowFailure"
   ): TypedContractMethod<
     [
       kamiIDs: BigNumberish[],

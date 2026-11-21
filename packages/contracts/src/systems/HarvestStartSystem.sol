@@ -58,6 +58,19 @@ contract HarvestStartSystem is System {
     return abi.encode(id);
   }
 
+  /// @dev executes, but does not revert on a start a game rule rejects. returns 0 instead
+  function executeAllowFailure(bytes memory arguments) public returns (bytes memory) {
+    // a self delegatecall keeps msg.sender and undoes every write of a start that fails
+    (bool success, bytes memory result) = address(this).delegatecall(
+      abi.encodeCall(this.execute, (arguments))
+    );
+    if (success) return abi.decode(result, (bytes));
+    // every rule reverts with a reason. a failure without one may be gas running out, and
+    // skipping that would make the result depend on the gas limit
+    if (result.length == 0) revert("start reverted without reason");
+    return abi.encode(uint256(0));
+  }
+
   function executeTyped(
     uint256 kamiID,
     uint32 nodeIndex,
@@ -77,6 +90,25 @@ contract HarvestStartSystem is System {
     bytes[] memory results = new bytes[](kamiIDs.length);
     for (uint256 i; i < kamiIDs.length; i++)
       results[i] = executeTyped(kamiIDs[i], nodeIndex, taxerID, taxAmt);
+    return results;
+  }
+
+  /// @dev executes, but does not revert on failure. returns 0 for array entry instead
+  /// @dev still reverts on what every entry shares: operator, node and account room
+  function executeBatchedAllowFailure(
+    uint256[] memory kamiIDs,
+    uint32 nodeIndex,
+    uint256 taxerID,
+    uint256 taxAmt
+  ) public returns (bytes[] memory) {
+    uint256 accID = LibAccount.getByOperator(components, msg.sender);
+    uint256 nodeID = LibNode.getByIndex(components, nodeIndex);
+    if (nodeID == 0) revert("node does not exist");
+    LibRoom.verifySharedRoom(components, accID, nodeID);
+
+    bytes[] memory results = new bytes[](kamiIDs.length);
+    for (uint256 i; i < kamiIDs.length; i++)
+      results[i] = executeAllowFailure(abi.encode(kamiIDs[i], nodeIndex, taxerID, taxAmt));
     return results;
   }
 }

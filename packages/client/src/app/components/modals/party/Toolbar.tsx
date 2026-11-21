@@ -19,7 +19,7 @@ import { ArrowIcons } from 'assets/images/icons/arrows';
 import { PORTAL_ROOM_INDEX } from 'constants/rooms';
 import { Account } from 'network/shapes';
 import { Kami } from 'network/shapes/Kami';
-import { SortIcons, ViewIcons } from './constants';
+import { BatchLimits, SortIcons, ViewIcons } from './constants';
 import { Sort, View } from './types';
 
 interface DropdownOption {
@@ -196,6 +196,12 @@ export const Toolbar = ({
     return [HarvestIcon, CollectIcon, StopIcon];
   };
 
+  // get DropDownToggle selection limits, depending on view
+  const getDDTLimits = (mode: View) => {
+    if (mode === 'external') return [BatchLimits.stake];
+    return [BatchLimits.add, BatchLimits.collect, BatchLimits.stop];
+  };
+
   // get DropDownToggle selection options, depending on view
   const getDDTOptions = (mode: View) => {
     if (mode === 'external') return [stakeOptions];
@@ -231,7 +237,7 @@ export const Toolbar = ({
         <IconListButton img={SortIcons[sort]} text={sort} options={SortOptions} radius={0.6} />
       </Section>
       <DropdownToggle
-        limit={12}
+        limit={getDDTLimits(view)}
         button={{
           images: getDDTIcons(view),
           tooltips: getDDTTooltips(view),
